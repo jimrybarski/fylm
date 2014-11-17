@@ -1,0 +1,51 @@
+from skimage.filter import rank, threshold_otsu, vsobel
+from skimage.morphology import disk, remove_small_objects
+from scipy import ndimage
+import os.path
+
+
+class FileWriter(object):
+    def __init__(self, model):
+        self._model = model
+
+    @property
+    def file_already_exists(self):
+        return os.path.isfile(self._model.path)
+
+    def write(self):
+        with open(self._model.path, "w+") as f:
+            for line in self._model.lines:
+                f.write(line + "\n")
+
+
+class ImageUtilities(object):
+    @staticmethod
+    def create_vertical_segments(image_data):
+        """
+        Creates a binary image with blobs surrounding areas that have a lot of vertical edges
+
+        :param image_data:  a 2D numpy array
+
+        """
+        # Find edges that have a strong vertical direction
+        vertical_edges = vsobel(image_data)
+        # Separate out the areas where there is a large amount of vertically-oriented stuff
+        return ImageUtilities._segment_edge_areas(vertical_edges)
+
+    @staticmethod
+    def _segment_edge_areas(edges, disk_size=9, mean_threshold=200, min_object_size=500):
+        """
+        Takes a greyscale image (with brighter colors corresponding to edges) and returns a binary image where white
+        indicates an area with high edge density and black indicates low density.
+
+        """
+        # Convert the greyscale edge information into black and white (ie binary) image
+        threshold = threshold_otsu(edges)
+        # Filter out the edge data below the threshold, effectively removing some noise
+        raw_channel_areas = edges <= threshold
+        # Smooth out the data
+        channel_areas = rank.mean(raw_channel_areas, disk(disk_size)) < mean_threshold
+        # Remove specks and blobs that are the result of artifacts
+        clean_channel_areas = remove_small_objects(channel_areas, min_size=min_object_size)
+        # Fill in any areas that are completely surrounded by the areas (hopefully) covering the channels
+        return ndimage.binary_fill_holes(clean_channel_areas)
