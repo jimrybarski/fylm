@@ -13,7 +13,7 @@ class Experiment(object):
         # set start date
         start_date = StartDate(experiment_start_date)
         if not start_date.is_valid:
-            terminal_error("Invalid start date: %s" % experiment_start_date)
+            terminal_error("Invalid start date: %s (use the format: YYMMDD)" % experiment_start_date)
         experiment.start_date = start_date
 
         # set the base directory
