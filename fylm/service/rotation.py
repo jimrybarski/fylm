@@ -1,6 +1,6 @@
 from nd2reader import Nd2
 from skimage import transform
-from fylm.service.utilities import ImageUtilities, FileWriter
+from fylm.service.utilities import ImageUtilities, FileInteractor
 from skimage.morphology import skeletonize
 from fylm.model import Constants, Rotation
 import numpy as np
@@ -18,9 +18,9 @@ class RotationCorrector(object):
     def __init__(self, experiment):
         self._rotation_model = Rotation()
         self._rotation_model.base_path = experiment.experiment_path
-        self._writer = FileWriter(self._rotation_model)
         self._nd2_filename = experiment.nd2_filename
         self._field_of_view = experiment.field_of_view
+        self._writer = FileInteractor(self._rotation_model)
 
     def save(self):
         if self._writer.file_already_exists:
@@ -31,7 +31,7 @@ class RotationCorrector(object):
             image = nd2.get_image(0, self._field_of_view, "", "0")
             offset = self._determine_rotation_offset(image)
             self._rotation_model.offset = offset
-            self._writer.write()
+            self._writer.write_text()
 
     @staticmethod
     def _determine_rotation_offset(image):

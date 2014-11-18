@@ -4,18 +4,43 @@ from scipy import ndimage
 import os.path
 
 
-class FileWriter(object):
+class FileInteractor(object):
     def __init__(self, model):
+        """
+        A utility to help store models on disk.
+
+        :param model:   fylm.model.base.BaseFile()
+
+        """
         self._model = model
 
     @property
     def file_already_exists(self):
+        """
+        Determines whether the file that represents the model on disk exists already. If it does,
+        we generally don't want to overwrite that file, though that decision is left up to the service
+        implementation. This does not determine if the file is valid or even contains data.
+
+        """
         return os.path.isfile(self._model.path)
 
-    def write(self):
+    def write_text(self):
+        """
+        Saves a model to disk.
+
+        """
         with open(self._model.path, "w+") as f:
             for line in self._model.lines:
                 f.write(line + "\n")
+
+    def read_text(self):
+        """
+        Loads a model from disk.
+
+        """
+        with open(self._model.path) as f:
+            data = f.read(-1)
+            self._model.load(data)
 
 
 class ImageUtilities(object):

@@ -1,4 +1,4 @@
-from abc import abstractproperty
+from abc import abstractproperty, abstractmethod
 
 
 class BaseFile(object):
@@ -17,6 +17,17 @@ class BaseFile(object):
     def path(self):
         """
         Returns the path relative to the base directory where the file should be written to.
+
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def load(self, data):
+        """
+        Populates some or all of the model's attributes from a text stream.
+
+        :param data:    a stream of text representing the data in a model
+        :type data:     str
 
         """
         raise NotImplemented

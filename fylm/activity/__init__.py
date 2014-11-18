@@ -5,6 +5,6 @@ class Activity(object):
     def __init__(self, experiment):
         self._experiment = experiment
 
-    def rotation(self):
-        service = RotationCorrector(self._experiment)
-        service.save()
+    def calculate_rotation_offset(self):
+        corrector = RotationCorrector(self._experiment)
+        corrector.save()

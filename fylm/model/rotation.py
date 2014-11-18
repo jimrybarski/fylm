@@ -10,6 +10,9 @@ class Rotation(BaseFile):
         super(Rotation, self).__init__()
         self._offset = None
 
+    def load(self, data):
+        self.offset = data.strip("\n ")
+
     @property
     def offset(self):
         """
