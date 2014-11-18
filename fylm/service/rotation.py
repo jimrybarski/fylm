@@ -1,8 +1,7 @@
-from nd2reader import Nd2
 from skimage import transform
 from fylm.service.utilities import ImageUtilities, FileInteractor
 from skimage.morphology import skeletonize
-from fylm.model import Constants, Rotation
+from fylm.model import Constants
 import numpy as np
 import math
 import logging
@@ -16,22 +15,24 @@ class RotationCorrector(object):
 
     """
     def __init__(self, experiment):
-        self._rotation_model = Rotation()
-        self._rotation_model.base_path = experiment.experiment_path
-        self._nd2_filename = experiment.nd2_filename
-        self._field_of_view = experiment.field_of_view
-        self._writer = FileInteractor(self._rotation_model)
+        self._experiment = experiment
 
     def save(self):
-        if self._writer.file_already_exists:
-            log.warn("Rotation file already exists, not overwriting.")
-        else:
-            nd2 = Nd2(self._nd2_filename)
-            # gets the first in-focus image from the first timpoint in the stack
-            image = nd2.get_image(0, self._field_of_view, "", "0")
-            offset = self._determine_rotation_offset(image)
-            self._rotation_model.offset = offset
-            self._writer.write_text()
+        for rotation_model in self._experiment.remaining_rotations:
+            writer = FileInteractor(rotation_model)
+            if writer.file_already_exists:
+                log.debug("Skipping rotation file %s: already exists" % rotation_model.filename)
+            else:
+                log.debug("Creating rotation file %s" % rotation_model.filename)
+                # This is a pretty naive loop - the same file will get opened 8-12 times
+                # There are obvious ways to optimize this but that can be done later if it matters
+                # It probably doesn't matter though and I like simple things
+                nd2 = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
+                # gets the first in-focus image from the first timpoint in the stack
+                image = nd2.get_image(0, rotation_model.field_of_view, "bf", "in_focus")
+                offset = self._determine_rotation_offset(image)
+                rotation_model.offset = offset
+                writer.write_text()
 
     @staticmethod
     def _determine_rotation_offset(image):

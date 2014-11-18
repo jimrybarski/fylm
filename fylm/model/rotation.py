@@ -8,6 +8,8 @@ class Rotation(BaseFile):
     """
     def __init__(self):
         super(Rotation, self).__init__()
+        self.timepoint = None
+        self.field_of_view = None
         self._offset = None
 
     def load(self, data):
@@ -30,5 +32,9 @@ class Rotation(BaseFile):
         yield str(self._offset)
 
     @property
+    def filename(self):
+        return "tp%s-fov%s-rotation.txt" % (self.timepoint, self.field_of_view)
+
+    @property
     def path(self):
-        return "%s/%s" % (self.base_path, "rotation.txt")
+        return "%s/rotation/%s" % (self.base_path, self.filename)

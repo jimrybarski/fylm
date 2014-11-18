@@ -13,9 +13,11 @@ class RotationTests(unittest.TestCase):
         experiment.experiment_path = "/home/lulz/141117"
         self.rotation = Rotation()
         self.rotation.base_path = experiment.experiment_path
+        self.rotation.timepoint = 2
+        self.rotation.field_of_view = 3
 
     def test_path(self):
-        self.assertEqual(self.rotation.path, "/home/lulz/141117/rotation.txt")
+        self.assertEqual(self.rotation.path, "/home/lulz/141117/rotation/tp2-fov3-rotation.txt")
 
     def test_line(self):
         self.rotation._offset = 5.6363

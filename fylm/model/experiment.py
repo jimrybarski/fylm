@@ -1,4 +1,5 @@
 import logging
+from nd2reader import Nd2
 import re
 
 log = logging.getLogger("fylm")
