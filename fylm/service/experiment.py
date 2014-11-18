@@ -7,6 +7,7 @@ log = logging.getLogger("fylm")
 
 
 class Experiment(object):
+
     def get_experiment(self, experiment_start_date, base_dir):
         experiment = ExperimentModel()
 
@@ -21,17 +22,9 @@ class Experiment(object):
             terminal_error("Base directory does not exist: %s" % base_dir)
         experiment.base_dir = base_dir
 
+    def set_files(self, experiment):
+        """
+        Finds all ND2 files associated with the experiment and determines what work has been done.
 
-    # @staticmethod
-    # def _join_dirs(base_dir, sub_dir):
-    #     """
-    #     Creates an absolute path from a base directory and a relative directory. The resulting path
-    #     does not necessarily exist.
-    #
-    #     :param base_dir:    the base directory (an absolute path)
-    #     :type base_dir:     str
-    #     :param sub_dir:     a relative path to a directory or file
-    #     :type sub_dir:      str
-    #
-    #     """
-    #     return base_dir.rstrip("/") + "/" + sub_dir
+        """
+        

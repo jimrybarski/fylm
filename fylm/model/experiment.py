@@ -65,5 +65,5 @@ class Experiment(object):
         self._base_dir = value.rstrip("/")
 
     @property
-    def nd2_base_filename(self):
+    def _nd2_base_filename(self):
         return self.base_dir + "/" + "FYLM-%s-00" % self.start_date

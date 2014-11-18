@@ -29,7 +29,7 @@ class ExperimentTests(unittest.TestCase):
     def test_nd2_base_filename(self):
         self.ex.start_date = StartDate("140914")
         self.ex.base_dir = "/home/lulz"
-        self.assertEqual(self.ex.nd2_base_filename, "/home/lulz/FYLM-140914-00")
+        self.assertEqual(self.ex._nd2_base_filename, "/home/lulz/FYLM-140914-00")
 
 
 class StartDateTests(unittest.TestCase):
@@ -59,4 +59,12 @@ class StartDateTests(unittest.TestCase):
 
     def test_is_valid_stupid_date(self):
         sd = StartDate("14-09-21")
+        self.assertFalse(sd.is_valid)
+
+    def test_is_valid_none(self):
+        sd = StartDate(None)
+        self.assertFalse(sd.is_valid)
+
+    def test_is_valid_empty(self):
+        sd = StartDate("")
         self.assertFalse(sd.is_valid)
