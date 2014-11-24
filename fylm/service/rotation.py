@@ -1,7 +1,7 @@
 from skimage import transform
 from fylm.service.utilities import ImageUtilities, FileInteractor
 from skimage.morphology import skeletonize
-from fylm.model import Constants
+from fylm.model.constants import Constants
 import numpy as np
 import math
 import logging
@@ -27,13 +27,16 @@ class RotationCorrector(object):
     def __init__(self, experiment):
         self._experiment = experiment
 
-    def save(self):
+    def save(self, rotation_set):
         """
         Creates rotation offset files for every field of view and image stack available.
 
+        :type rotation_set:   fylm.model.RotationSet()
+
         """
-        for rotation_model in self._experiment.remaining_rotations:
+        for rotation_model in rotation_set.remaining_rotations:
             writer = FileInteractor(rotation_model)
+            # TODO: I think this overwrite check is redundant since the rotationset already knows what exists
             if writer.file_already_exists:
                 log.debug("Skipping rotation file %s: already exists" % rotation_model.filename)
             else:

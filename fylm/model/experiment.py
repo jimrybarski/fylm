@@ -1,7 +1,6 @@
 import logging
 import re
-from fylm.model.constants import Constants
-from fylm.model.rotation import Rotation
+
 
 log = logging.getLogger("fylm")
 
@@ -67,6 +66,10 @@ class Experiment(object):
 
         """
         self._base_dir = value.rstrip("/")
+
+    @property
+    def data_dir(self):
+        return self.base_dir + "/" + self.start_date
 
     @property
     def _nd2_base_filename(self):

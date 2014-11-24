@@ -1,5 +1,6 @@
-from fylm.service import RotationCorrector
+from fylm.service.rotation import RotationCorrector
 from fylm.model.rotation import RotationSet
+
 
 class Activity(object):
     def __init__(self, experiment):
@@ -8,4 +9,4 @@ class Activity(object):
     def calculate_rotation_offset(self):
         rotation_set = RotationSet(self._experiment)
         corrector = RotationCorrector(self._experiment)
-        corrector.save()
+        corrector.save(rotation_set)

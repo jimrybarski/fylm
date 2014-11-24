@@ -1,4 +1,5 @@
 from fylm.model.base import BaseFile
+import re
 
 
 class RotationSet(object):
@@ -10,7 +11,8 @@ class RotationSet(object):
         self._fields_of_view = [fov for fov in experiment.fields_of_view]
         self._timepoints = [timepoint for timepoint in experiment.timepoints]
         self._base_path = experiment.base_path
-        self.current_rotations = []
+        self._current_rotation_filenames = []
+        self._regex = re.compile(r"""tp\d+-fov\d+-rotation.txt""")
 
     @property
     def _expected_rotations(self):
@@ -27,14 +29,19 @@ class RotationSet(object):
                 rotation.base_path = self._base_path
                 yield rotation
 
+    @property
     def remaining_rotations(self):
         """
         Yields a model.Rotation for each rotation offset that needs to be calculated.
 
         """
         for rotation in self._expected_rotations:
-            if rotation.filename not in self.current_rotations:
+            if rotation.filename not in self._current_rotation_filenames:
                 yield rotation
+
+    def add_current_rotation(self, filename):
+        if self._regex.match(filename):
+            self._current_rotation_filenames.append(filename)
 
 
 class Rotation(BaseFile):
