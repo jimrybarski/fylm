@@ -5,8 +5,18 @@ from fylm.model import Constants
 import numpy as np
 import math
 import logging
+import os
 
 log = logging.getLogger("fylm")
+
+
+class RotationSet(object):
+    def __init__(self):
+        self._os = os
+
+    def find_current_rotations(self, rotation_set):
+        for filename in self._os.listdir(rotation_set.base_dir + "/rotation"):
+            rotation_set.add_current_rotation(filename)
 
 
 class RotationCorrector(object):
@@ -18,6 +28,10 @@ class RotationCorrector(object):
         self._experiment = experiment
 
     def save(self):
+        """
+        Creates rotation offset files for every field of view and image stack available.
+
+        """
         for rotation_model in self._experiment.remaining_rotations:
             writer = FileInteractor(rotation_model)
             if writer.file_already_exists:
@@ -29,7 +43,8 @@ class RotationCorrector(object):
                 # It probably doesn't matter though and I like simple things
                 nd2 = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
                 # gets the first in-focus image from the first timpoint in the stack
-                image = nd2.get_image(0, rotation_model.field_of_view, "bf", "in_focus")
+                # TODO: Update nd2reader to figure out which one is in focus or to be able to set it
+                image = nd2.get_image(0, rotation_model.field_of_view, "", 1)
                 offset = self._determine_rotation_offset(image)
                 rotation_model.offset = offset
                 writer.write_text()

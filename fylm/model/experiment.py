@@ -1,6 +1,7 @@
 import logging
-from nd2reader import Nd2
 import re
+from fylm.model.constants import Constants
+from fylm.model.rotation import Rotation
 
 log = logging.getLogger("fylm")
 
@@ -38,6 +39,8 @@ class Experiment(object):
         """
         self._start_date = None
         self._base_dir = None
+        self._timepoints = set()
+        self.field_of_view_count = None
 
     @property
     def start_date(self):
@@ -46,10 +49,10 @@ class Experiment(object):
     @start_date.setter
     def start_date(self, value):
         """
-        :type value:    fylm.model.StartDate()
+        :type value:    str
 
         """
-        self._start_date = value
+        self._start_date = StartDate(value)
 
     @property
     def base_dir(self):
@@ -68,3 +71,35 @@ class Experiment(object):
     @property
     def _nd2_base_filename(self):
         return self.base_dir + "/" + "FYLM-%s-00" % self.start_date
+
+    @property
+    def nd2s(self):
+        """
+        Yields absolute paths to the ND2 files associated with this experiment.
+
+        :returns:   str
+
+        """
+        for timepoint in self.timepoints:
+            yield self._nd2_base_filename + "%s.nd2" % timepoint
+
+    def add_timepoint(self, number):
+        """
+        Registers the existence of an ND2 file with a given index.
+
+        :param number:  the series number (e.g. the 7 in FYLM-140909-007.nd2)
+        :type number:   int
+
+        """
+        assert number > 0
+        self._timepoints.add(number)
+
+    @property
+    def timepoints(self):
+        for timepoint in self._timepoints:
+            yield timepoint
+
+    @property
+    def fields_of_view(self):
+        for i in range(self.field_of_view_count):
+            yield i
