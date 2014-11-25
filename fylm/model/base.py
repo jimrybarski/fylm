@@ -21,6 +21,12 @@ class BaseFile(object):
         """
         raise NotImplemented
 
+    @abstractproperty
+    def filename(self):
+        """
+        Returns the name of the file.
+
+        """
     @abstractmethod
     def load(self, data):
         """
@@ -31,3 +37,28 @@ class BaseFile(object):
 
         """
         raise NotImplemented
+
+
+class BaseSet(object):
+    def __init__(self, experiment, top_level_directory):
+        self.base_path = experiment.data_dir + "/%s" % top_level_directory
+        self._current_filenames = []
+        self._regex = None
+
+    @abstractproperty
+    def _expected(self):
+        raise NotImplemented
+
+    @property
+    def remaining(self):
+        """
+        Yields a child of BaseFile that represents work needing to be done.
+
+        """
+        for model in self._expected:
+            if model.filename not in self._current_filenames:
+                yield model
+
+    def add_current(self, filename):
+        if self._regex.match(filename):
+            self._current_filenames.append(filename)

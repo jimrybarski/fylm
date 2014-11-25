@@ -6,18 +6,9 @@ import nd2reader
 import numpy as np
 import math
 import logging
-import os
+
 
 log = logging.getLogger("fylm")
-
-
-class RotationSet(object):
-    def __init__(self):
-        self._os = os
-
-    def find_current_rotations(self, rotation_set):
-        for filename in self._os.listdir(rotation_set.base_path + "/rotation"):
-            rotation_set.add_current_rotation(filename)
 
 
 class RotationCorrector(object):
@@ -36,7 +27,7 @@ class RotationCorrector(object):
 
         """
         did_work = False
-        for rotation_model in rotation_set.remaining_rotations:
+        for rotation_model in rotation_set.remaining:
             did_work = True
             writer = FileInteractor(rotation_model)
             log.debug("Creating rotation file %s" % rotation_model.filename)

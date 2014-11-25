@@ -1,21 +1,20 @@
-from fylm.model.base import BaseFile
+from fylm.model.base import BaseFile, BaseSet
 import re
 
 
-class RotationSet(object):
+class RotationSet(BaseSet):
     """
     Models all the rotation offsets for a given experiment (over any number of ND2 files).
 
     """
     def __init__(self, experiment):
+        super(RotationSet, self).__init__(experiment, "rotation")
         self._fields_of_view = [fov for fov in range(experiment.field_of_view_count)]
         self._timepoints = [timepoint for timepoint in experiment.timepoints]
-        self.base_path = experiment.data_dir
-        self._current_rotation_filenames = []
         self._regex = re.compile(r"""tp\d+-fov\d+-rotation.txt""")
 
     @property
-    def _expected_rotations(self):
+    def _expected(self):
         """
         Yields all the rotation offset models that represent all the calculations we could do for the
         available images.
@@ -28,20 +27,6 @@ class RotationSet(object):
                 rotation.field_of_view = field_of_view
                 rotation.base_path = self.base_path
                 yield rotation
-
-    @property
-    def remaining_rotations(self):
-        """
-        Yields a model.Rotation for each rotation offset that needs to be calculated.
-
-        """
-        for rotation in self._expected_rotations:
-            if rotation.filename not in self._current_rotation_filenames:
-                yield rotation
-
-    def add_current_rotation(self, filename):
-        if self._regex.match(filename):
-            self._current_rotation_filenames.append(filename)
 
 
 class Rotation(BaseFile):
@@ -80,4 +65,4 @@ class Rotation(BaseFile):
 
     @property
     def path(self):
-        return "%s/rotation/%s" % (self.base_path, self.filename)
+        return "%s/%s" % (self.base_path, self.filename)
