@@ -1,21 +1,56 @@
-from fylm.model.rotation import Rotation
+from fylm.model.rotation import Rotation, RotationSet
 import unittest
 
 
 class MockExperiment(object):
     def __init__(self):
-        self.experiment_path = None
+        self.data_dir = None
+        self.fields_of_view = None
+        self.timepoints = None
+        self.base_path = None
+        
+
+class RotationSetTests(unittest.TestCase):
+    def setUp(self):
+        experiment = MockExperiment()
+        experiment.base_path = "/home/lulz/"
+        experiment.fields_of_view = [1, 2, 3, 4, 5, 6, 7, 8]
+        experiment.timepoints = [1, 2, 3]
+        self.rset = RotationSet(experiment)
+
+    def test_expected_rotations(self):
+        rotations = [r for r in self.rset._expected_rotations]
+        self.assertEqual(len(rotations), 24)
+
+    def test_add_current_rotation(self):
+        # two valid names
+        self.rset.add_current_rotation("tp1-fov1-rotation.txt")
+        self.rset.add_current_rotation("tp1-fov5-rotation.txt")
+        # two invalid names
+        self.rset.add_current_rotation("rotation.txt")
+        self.rset.add_current_rotation("tp-fov-rotation.txt")
+        self.assertEqual(len(self.rset._current_rotation_filenames), 2)
+
+    def test_remaining_rotations(self):
+        self.rset.add_current_rotation("tp1-fov1-rotation.txt")
+        self.rset.add_current_rotation("tp1-fov5-rotation.txt")
+        rotations = [r for r in self.rset.remaining_rotations]
+        self.assertEqual(len(rotations), 22)
+
+
 
 
 class RotationTests(unittest.TestCase):
     def setUp(self):
         experiment = MockExperiment()
-        experiment.experiment_path = "/home/lulz/141117"
+        experiment.data_dir = "/home/lulz/141117"
         self.rotation = Rotation()
-        self.rotation.base_path = experiment.experiment_path
+        self.rotation.base_path = experiment.data_dir
+        self.rotation.timepoint = 2
+        self.rotation.field_of_view = 3
 
     def test_path(self):
-        self.assertEqual(self.rotation.path, "/home/lulz/141117/rotation.txt")
+        self.assertEqual(self.rotation.path, "/home/lulz/141117/rotation/tp2-fov3-rotation.txt")
 
     def test_line(self):
         self.rotation._offset = 5.6363

@@ -1,13 +1,23 @@
-from nd2reader import Nd2
 from skimage import transform
 from fylm.service.utilities import ImageUtilities, FileInteractor
 from skimage.morphology import skeletonize
-from fylm.model import Constants, Rotation
+from fylm.model.constants import Constants
+import nd2reader
 import numpy as np
 import math
 import logging
+import os
 
 log = logging.getLogger("fylm")
+
+
+class RotationSet(object):
+    def __init__(self):
+        self._os = os
+
+    def find_current_rotations(self, rotation_set):
+        for filename in self._os.listdir(rotation_set.base_path + "/rotation"):
+            rotation_set.add_current_rotation(filename)
 
 
 class RotationCorrector(object):
@@ -16,22 +26,33 @@ class RotationCorrector(object):
 
     """
     def __init__(self, experiment):
-        self._rotation_model = Rotation()
-        self._rotation_model.base_path = experiment.experiment_path
-        self._nd2_filename = experiment.nd2_filename
-        self._field_of_view = experiment.field_of_view
-        self._writer = FileInteractor(self._rotation_model)
+        self._experiment = experiment
 
-    def save(self):
-        if self._writer.file_already_exists:
-            log.warn("Rotation file already exists, not overwriting.")
-        else:
-            nd2 = Nd2(self._nd2_filename)
+    def save(self, rotation_set):
+        """
+        Creates rotation offset files for every field of view and image stack available.
+
+        :type rotation_set:   fylm.model.RotationSet()
+
+        """
+        did_work = False
+        for rotation_model in rotation_set.remaining_rotations:
+            did_work = True
+            writer = FileInteractor(rotation_model)
+            log.debug("Creating rotation file %s" % rotation_model.filename)
+            # This is a pretty naive loop - the same file will get opened 8-12 times
+            # There are obvious ways to optimize this but that can be done later if it matters
+            # It probably doesn't matter though and I like simple things
+            nd2_filename = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
+            nd2 = nd2reader.Nd2(nd2_filename)
             # gets the first in-focus image from the first timpoint in the stack
-            image = nd2.get_image(0, self._field_of_view, "", "0")
-            offset = self._determine_rotation_offset(image)
-            self._rotation_model.offset = offset
-            self._writer.write_text()
+            # TODO: Update nd2reader to figure out which one is in focus or to be able to set it
+            image = nd2.get_image(0, rotation_model.field_of_view, "", 1)
+            offset = self._determine_rotation_offset(image.data)
+            rotation_model.offset = offset
+            writer.write_text()
+        if not did_work:
+            log.debug("All rotation corrections have been calculated.")
 
     @staticmethod
     def _determine_rotation_offset(image):
