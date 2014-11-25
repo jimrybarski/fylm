@@ -16,7 +16,7 @@ class ExperimentTests(unittest.TestCase):
 
     def test_start_date_getter(self):
         self.ex._start_date = StartDate("140914")
-        self.assertEqual(self.ex.start_date, "140914")
+        self.assertEqual(self.ex.start_date.clean_date, "140914")
 
     def test_base_dir_setter(self):
         self.ex.base_dir = "/home/lulz"

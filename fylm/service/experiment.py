@@ -1,8 +1,9 @@
-from fylm.model.experiment import Experiment as ExperimentModel, StartDate
+from fylm.model.experiment import Experiment as ExperimentModel
 from fylm.service.errors import terminal_error
 import logging
 import os
 import re
+import nd2reader
 
 log = logging.getLogger("fylm")
 
@@ -15,11 +16,10 @@ class Experiment(object):
         experiment = ExperimentModel()
 
         # set start date
-        start_date = StartDate(experiment_start_date)
-        if not start_date.is_valid:
+        experiment.start_date = experiment_start_date
+        if not experiment.start_date.is_valid:
             terminal_error("Invalid start date: %s (use the format: YYMMDD)" % experiment_start_date)
-        experiment.start_date = start_date
-        log.debug("Experiment start date: %s" % experiment.start_date)
+        log.debug("Experiment start date: %s" % experiment.start_date.clean_date)
 
         # set the base directory
         if not self._os.path.isdir(base_dir):
@@ -30,6 +30,8 @@ class Experiment(object):
         # set the timepoints
         self._find_timepoints(experiment)
         self._build_directories(experiment)
+        self._get_nd2_attributes(experiment)
+        return experiment
 
     def _build_directories(self, experiment):
         """
@@ -52,7 +54,7 @@ class Experiment(object):
         Finds the timepoints of all available ND2 files associated with the experiment.
 
         """
-        regex = re.compile(r"""FYLM-%s-0(?P<index>\d+)\.nd2""" % experiment.start_date)
+        regex = re.compile(r"""FYLM-%s-0(?P<index>\d+)\.nd2""" % experiment.start_date.clean_date)
         found = False
         for filename in self._os.listdir(experiment.base_dir):
             match = regex.match(filename)
@@ -63,3 +65,14 @@ class Experiment(object):
                 experiment.add_timepoint(index)
         if not found:
             log.warn("No ND2s available for this experiment!")
+
+    def _get_nd2_attributes(self, experiment):
+        # grab the first nd2 file available
+        try:
+            nd2_filename = sorted([n for n in experiment.nd2s])[0]
+            nd2 = nd2reader.Nd2(nd2_filename)
+            experiment.field_of_view_count = nd2.field_of_view_count
+        except Exception as e:
+            terminal_error("Could not find field of view count: %s" % e)
+        else:
+            return True

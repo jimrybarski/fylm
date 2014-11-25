@@ -2,6 +2,7 @@ from skimage import transform
 from fylm.service.utilities import ImageUtilities, FileInteractor
 from skimage.morphology import skeletonize
 from fylm.model.constants import Constants
+import nd2reader
 import numpy as np
 import math
 import logging
@@ -15,7 +16,7 @@ class RotationSet(object):
         self._os = os
 
     def find_current_rotations(self, rotation_set):
-        for filename in self._os.listdir(rotation_set.base_dir + "/rotation"):
+        for filename in self._os.listdir(rotation_set.data_dir + "/rotation"):
             rotation_set.add_current_rotation(filename)
 
 
@@ -36,21 +37,18 @@ class RotationCorrector(object):
         """
         for rotation_model in rotation_set.remaining_rotations:
             writer = FileInteractor(rotation_model)
-            # TODO: I think this overwrite check is redundant since the rotationset already knows what exists
-            if writer.file_already_exists:
-                log.debug("Skipping rotation file %s: already exists" % rotation_model.filename)
-            else:
-                log.debug("Creating rotation file %s" % rotation_model.filename)
-                # This is a pretty naive loop - the same file will get opened 8-12 times
-                # There are obvious ways to optimize this but that can be done later if it matters
-                # It probably doesn't matter though and I like simple things
-                nd2 = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
-                # gets the first in-focus image from the first timpoint in the stack
-                # TODO: Update nd2reader to figure out which one is in focus or to be able to set it
-                image = nd2.get_image(0, rotation_model.field_of_view, "", 1)
-                offset = self._determine_rotation_offset(image)
-                rotation_model.offset = offset
-                writer.write_text()
+            log.debug("Creating rotation file %s" % rotation_model.filename)
+            # This is a pretty naive loop - the same file will get opened 8-12 times
+            # There are obvious ways to optimize this but that can be done later if it matters
+            # It probably doesn't matter though and I like simple things
+            nd2_filename = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
+            nd2 = nd2reader.Nd2(nd2_filename)
+            # gets the first in-focus image from the first timpoint in the stack
+            # TODO: Update nd2reader to figure out which one is in focus or to be able to set it
+            image = nd2.get_image(0, rotation_model.field_of_view, "", 1)
+            offset = self._determine_rotation_offset(image.data)
+            rotation_model.offset = offset
+            writer.write_text()
 
     @staticmethod
     def _determine_rotation_offset(image):
@@ -58,6 +56,7 @@ class RotationCorrector(object):
         Finds rotational skew so that the sides of the central trench are (nearly) perfectly vertical.
 
         """
+        log.debug(image.shape)
         segmentation = ImageUtilities.create_vertical_segments(image)
         # Draw a line that follows the center of the segments at each point, which should be roughly vertical
         # We should expect this to give us four approximately-vertical lines, possibly with many gaps in each line

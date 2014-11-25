@@ -8,9 +8,9 @@ class RotationSet(object):
 
     """
     def __init__(self, experiment):
-        self._fields_of_view = [fov for fov in experiment.fields_of_view]
+        self._fields_of_view = [fov for fov in range(experiment.field_of_view_count)]
         self._timepoints = [timepoint for timepoint in experiment.timepoints]
-        self._base_path = experiment.base_path
+        self._base_path = experiment.data_dir
         self._current_rotation_filenames = []
         self._regex = re.compile(r"""tp\d+-fov\d+-rotation.txt""")
 

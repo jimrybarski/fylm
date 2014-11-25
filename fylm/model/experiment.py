@@ -43,7 +43,7 @@ class Experiment(object):
 
     @property
     def start_date(self):
-        return self._start_date.clean_date
+        return self._start_date
 
     @start_date.setter
     def start_date(self, value):
@@ -69,11 +69,11 @@ class Experiment(object):
 
     @property
     def data_dir(self):
-        return self.base_dir + "/" + self.start_date
+        return self.base_dir + "/" + self.start_date.clean_date
 
     @property
     def _nd2_base_filename(self):
-        return self.base_dir + "/" + "FYLM-%s-00" % self.start_date
+        return self.base_dir + "/" + "FYLM-%s-00" % self.start_date.clean_date
 
     @property
     def nd2s(self):
@@ -84,7 +84,10 @@ class Experiment(object):
 
         """
         for timepoint in self.timepoints:
-            yield self._nd2_base_filename + "%s.nd2" % timepoint
+            yield self.get_nd2_from_timepoint(timepoint)
+
+    def get_nd2_from_timepoint(self, timepoint):
+        return self._nd2_base_filename + "%s.nd2" % timepoint
 
     def add_timepoint(self, number):
         """
