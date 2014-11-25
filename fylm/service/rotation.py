@@ -16,7 +16,7 @@ class RotationSet(object):
         self._os = os
 
     def find_current_rotations(self, rotation_set):
-        for filename in self._os.listdir(rotation_set.data_dir + "/rotation"):
+        for filename in self._os.listdir(rotation_set.base_path + "/rotation"):
             rotation_set.add_current_rotation(filename)
 
 
@@ -35,7 +35,9 @@ class RotationCorrector(object):
         :type rotation_set:   fylm.model.RotationSet()
 
         """
+        did_work = False
         for rotation_model in rotation_set.remaining_rotations:
+            did_work = True
             writer = FileInteractor(rotation_model)
             log.debug("Creating rotation file %s" % rotation_model.filename)
             # This is a pretty naive loop - the same file will get opened 8-12 times
@@ -49,6 +51,8 @@ class RotationCorrector(object):
             offset = self._determine_rotation_offset(image.data)
             rotation_model.offset = offset
             writer.write_text()
+        if not did_work:
+            log.debug("All rotation corrections have been calculated.")
 
     @staticmethod
     def _determine_rotation_offset(image):
@@ -56,7 +60,6 @@ class RotationCorrector(object):
         Finds rotational skew so that the sides of the central trench are (nearly) perfectly vertical.
 
         """
-        log.debug(image.shape)
         segmentation = ImageUtilities.create_vertical_segments(image)
         # Draw a line that follows the center of the segments at each point, which should be roughly vertical
         # We should expect this to give us four approximately-vertical lines, possibly with many gaps in each line
