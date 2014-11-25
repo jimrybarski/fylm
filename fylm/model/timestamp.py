@@ -1,10 +1,12 @@
-from fylm.model.base import BaseFile
+from fylm.model.base import BaseFile, BaseSet
 import re
 
 
-class TimestampSet(object):
+class TimestampSet(BaseSet):
     def __init__(self, experiment):
-        self.base_path = experiment.data_dir + "/timestamps"
+        super(TimestampSet, self).__init__(experiment, "timestamps")
+
+    def _expected(self):
 
 
 class Timestamp(BaseFile):
@@ -22,10 +24,6 @@ class Timestamp(BaseFile):
     def lines(self):
         for timestamp in self._timestamps:
             yield str(timestamp)
-
-    @property
-    def filename(self):
-        return "tp%s-fov%s-timestamps.txt" % (self.timepoint, self.field_of_view)
 
     @property
     def path(self):

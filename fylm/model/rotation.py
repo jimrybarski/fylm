@@ -1,5 +1,4 @@
 from fylm.model.base import BaseFile, BaseSet
-import re
 
 
 class RotationSet(BaseSet):
@@ -9,9 +8,6 @@ class RotationSet(BaseSet):
     """
     def __init__(self, experiment):
         super(RotationSet, self).__init__(experiment, "rotation")
-        self._fields_of_view = [fov for fov in range(experiment.field_of_view_count)]
-        self._timepoints = [timepoint for timepoint in experiment.timepoints]
-        self._regex = re.compile(r"""tp\d+-fov\d+-rotation.txt""")
 
     @property
     def _expected(self):
@@ -36,8 +32,6 @@ class Rotation(BaseFile):
     """
     def __init__(self):
         super(Rotation, self).__init__()
-        self.timepoint = None
-        self.field_of_view = None
         self._offset = None
 
     def load(self, data):
@@ -58,11 +52,3 @@ class Rotation(BaseFile):
     @property
     def lines(self):
         yield str(self._offset)
-
-    @property
-    def filename(self):
-        return "tp%s-fov%s-rotation.txt" % (self.timepoint, self.field_of_view)
-
-    @property
-    def path(self):
-        return "%s/%s" % (self.base_path, self.filename)
