@@ -1,12 +1,16 @@
 from fylm.model.base import BaseFile, BaseSet
-import re
 
 
 class TimestampSet(BaseSet):
+    """
+    Models all the timestamps for every set of images.
+
+    """
     def __init__(self, experiment):
         super(TimestampSet, self).__init__(experiment, "timestamps")
 
     def _expected(self):
+
 
 
 class Timestamp(BaseFile):

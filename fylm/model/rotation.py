@@ -8,21 +8,7 @@ class RotationSet(BaseSet):
     """
     def __init__(self, experiment):
         super(RotationSet, self).__init__(experiment, "rotation")
-
-    @property
-    def _expected(self):
-        """
-        Yields all the rotation offset models that represent all the calculations we could do for the
-        available images.
-
-        """
-        for field_of_view in self._fields_of_view:
-            for timepoint in self._timepoints:
-                rotation = Rotation()
-                rotation.timepoint = timepoint
-                rotation.field_of_view = field_of_view
-                rotation.base_path = self.base_path
-                yield rotation
+        self._model = Rotation
 
 
 class Rotation(BaseFile):

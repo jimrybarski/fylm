@@ -47,10 +47,23 @@ class BaseSet(object):
         self._fields_of_view = [fov + 1 for fov in range(experiment.field_of_view_count)]
         # Timepoints are already 1-based since they come from the ND2 filenames
         self._timepoints = [timepoint for timepoint in experiment.timepoints]
+        # The BaseFile model that this set contains
+        self._model = None
 
-    @abstractproperty
+    @property
     def _expected(self):
-        raise NotImplemented
+        """
+        Yields instantiated children of BaseFile that represent the work we expect to have done.
+
+        """
+        assert self._model is not None
+        for field_of_view in self._fields_of_view:
+            for timepoint in self._timepoints:
+                rotation = self._model()
+                rotation.timepoint = timepoint
+                rotation.field_of_view = field_of_view
+                rotation.base_path = self.base_path
+                yield rotation
 
     @property
     def remaining(self):
@@ -63,5 +76,12 @@ class BaseSet(object):
                 yield model
 
     def add_current(self, filename):
+        """
+        Informs the model of a unit of work that has already been done.
+
+        :param filename:    path to a file that contains completed work
+        :type filename:     str
+
+        """
         if self._regex.match(filename):
             self._current_filenames.append(filename)
