@@ -3,10 +3,11 @@ import re
 
 
 class BaseFile(object):
-    def __init__(self):
+    def __init__(self, top_level_dir):
         self.base_path = None
         self.timepoint = None
         self.field_of_view = None
+        self.top_level_dir = top_level_dir
 
     @abstractproperty
     def lines(self):
@@ -18,7 +19,7 @@ class BaseFile(object):
 
     @property
     def path(self):
-        return "%s/%s" % (self.base_path, self.filename)
+        return "%s/%s/%s" % (self.base_path, self.top_level_dir, self.filename)
 
     @property
     def filename(self):
@@ -38,8 +39,8 @@ class BaseFile(object):
 
 
 class BaseSet(object):
-    def __init__(self, experiment, top_level_directory):
-        self.base_path = experiment.data_dir + "/%s" % top_level_directory
+    def __init__(self, experiment):
+        self.base_path = experiment.data_dir
         self._current_filenames = []
         # The default regex assumes the only distinguishing features are timepoints and fields of view.
         self._regex = re.compile(r"""tp\d+-fov\d+.txt""")
