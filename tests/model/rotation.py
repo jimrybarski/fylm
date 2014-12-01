@@ -8,6 +8,7 @@ class MockExperiment(object):
         self.fields_of_view = None
         self.timepoints = None
         self.base_path = None
+        self.field_of_view_count = None
         
 
 class RotationSetTests(unittest.TestCase):
@@ -15,6 +16,7 @@ class RotationSetTests(unittest.TestCase):
         experiment = MockExperiment()
         experiment.base_path = "/home/lulz/"
         experiment.fields_of_view = [1, 2, 3, 4, 5, 6, 7, 8]
+        experiment.field_of_view_count = 8
         experiment.timepoints = [1, 2, 3]
         self.rset = RotationSet(experiment)
 
