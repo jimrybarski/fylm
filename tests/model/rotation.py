@@ -14,7 +14,7 @@ class MockExperiment(object):
 class RotationSetTests(unittest.TestCase):
     def setUp(self):
         experiment = MockExperiment()
-        experiment.base_path = "/home/lulz/"
+        experiment.data_dir = "/home/lulz/"
         experiment.fields_of_view = [1, 2, 3, 4, 5, 6, 7, 8]
         experiment.field_of_view_count = 8
         experiment.timepoints = [1, 2, 3]
@@ -45,7 +45,7 @@ class RotationTests(unittest.TestCase):
         experiment = MockExperiment()
         experiment.data_dir = "/home/lulz/141117"
         self.rotation = Rotation()
-        self.rotation.base_path = experiment.data_dir
+        self.rotation.base_path = experiment.data_dir + "/rotation"
         self.rotation.timepoint = 2
         self.rotation.field_of_view = 3
 

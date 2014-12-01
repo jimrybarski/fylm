@@ -7,7 +7,7 @@ class RotationSet(BaseSet):
 
     """
     def __init__(self, experiment):
-        super(RotationSet, self).__init__(experiment)
+        super(RotationSet, self).__init__(experiment, "rotation")
         self._model = Rotation
 
 
@@ -17,7 +17,7 @@ class Rotation(BaseFile):
 
     """
     def __init__(self):
-        super(Rotation, self).__init__("rotation")
+        super(Rotation, self).__init__()
         self._offset = None
 
     def load(self, data):

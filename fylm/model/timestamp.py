@@ -11,12 +11,12 @@ class TimestampSet(BaseSet):
 
     """
     def __init__(self, experiment):
-        super(TimestampSet, self).__init__(experiment)
+        super(TimestampSet, self).__init__(experiment, "timestamp")
 
 
 class Timestamps(BaseFile):
     def __init__(self):
-        super(Timestamps, self).__init__("timestamps")
+        super(Timestamps, self).__init__()
         self.timepoint = None
         self.field_of_view = None
         self._timestamps = {}
