@@ -1,63 +1,53 @@
 from skimage import transform
-from fylm.service.utilities import ImageUtilities, FileInteractor
+from fylm.service.utilities import ImageUtilities
+from fylm.service.base import BaseSetService
 from skimage.morphology import skeletonize
 from fylm.model.constants import Constants
 import nd2reader
 import numpy as np
 import math
 import logging
-import os
+
 
 log = logging.getLogger("fylm")
 
 
-class RotationSet(object):
-    def __init__(self):
-        self._os = os
-
-    def find_current_rotations(self, rotation_set):
-        for filename in self._os.listdir(rotation_set.base_path + "/rotation"):
-            rotation_set.add_current_rotation(filename)
-
-
-class RotationCorrector(object):
+class RotationCorrector(BaseSetService):
     """
     Determines the rotational skew of an image.
 
     """
     def __init__(self, experiment):
+        super(RotationCorrector, self).__init__()
         self._experiment = experiment
+        self._name = "rotation corrections"
 
-    def save(self, rotation_set):
+    def save_action(self, rotation_model):
         """
-        Creates rotation offset files for every field of view and image stack available.
+        Calculates the rotation offset for a single field of view and timepoint.
 
-        :type rotation_set:   fylm.model.RotationSet()
+        :type rotation_model:   fylm.model.rotation.Rotation()
 
         """
-        did_work = False
-        for rotation_model in rotation_set.remaining_rotations:
-            did_work = True
-            writer = FileInteractor(rotation_model)
-            log.debug("Creating rotation file %s" % rotation_model.filename)
-            # This is a pretty naive loop - the same file will get opened 8-12 times
-            # There are obvious ways to optimize this but that can be done later if it matters
-            # It probably doesn't matter though and I like simple things
-            nd2_filename = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
-            nd2 = nd2reader.Nd2(nd2_filename)
-            # gets the first in-focus image from the first timpoint in the stack
-            # TODO: Update nd2reader to figure out which one is in focus or to be able to set it
-            image = nd2.get_image(0, rotation_model.field_of_view, "", 1)
-            offset = self._determine_rotation_offset(image.data)
-            rotation_model.offset = offset
-            writer.write_text()
-        if not did_work:
-            log.debug("All rotation corrections have been calculated.")
+        log.debug("Creating rotation file %s" % rotation_model.filename)
+        # This is a pretty naive loop - the same file will get opened 8-12 times
+        # There are obvious ways to optimize this but that can be done later if it matters
+        # It probably doesn't matter though and I like simple things
+        nd2_filename = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
+        nd2 = nd2reader.Nd2(nd2_filename)
+        # gets the first in-focus image from the first timpoint in the stack
+        # TODO: Update nd2reader to figure out which one is in focus or to be able to set it
+        image = nd2.get_image(0, rotation_model.field_of_view, "", 1)
+        offset = self._determine_rotation_offset(image.data)
+        rotation_model.offset = offset
 
     @staticmethod
     def _determine_rotation_offset(image):
         """
         Finds rotational skew so that the sides of the central trench are (nearly) perfectly vertical.
+
+        :param image:   raw image data in a 2D (i.e. grayscale) numpy array
+        :type image:    np.array()
 
         """
         segmentation = ImageUtilities.create_vertical_segments(image)
