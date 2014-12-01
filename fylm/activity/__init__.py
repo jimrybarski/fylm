@@ -1,5 +1,3 @@
-from fylm.service.base import SingleDirectoryService
-
 from fylm.service.rotation import RotationCorrector
 from fylm.model.rotation import RotationSet
 # from fylm.service.timestamp import TimestampExtractor
@@ -12,12 +10,12 @@ class Activity(object):
 
     def calculate_rotation_offset(self):
         rotation_set = RotationSet(self._experiment)
-        SingleDirectoryService().find_current(rotation_set)
         corrector = RotationCorrector(self._experiment)
+        corrector.find_current(rotation_set)
         corrector.save(rotation_set)
-    #
+
     # def extract_timestamps(self):
     #     timestamp_set = TimestampSet(self._experiment)
     #     SingleDirectoryService().find_current(timestamp_set)
     #     extractor = TimestampExtractor(self._experiment)
-        # extractor.save(timestamp_set)
+    # extractor.save(timestamp_set)
