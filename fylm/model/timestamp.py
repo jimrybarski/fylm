@@ -41,7 +41,7 @@ class Timestamps(BaseFile):
             yield "%s %s" % (index, timestamp)
 
     def add(self, timestamp):
-        index = max(self._timestamps.keys())
+        index = 1 if not self._timestamps.keys() else max(self._timestamps.keys()) + 1
         self._timestamps[index] = float(timestamp)
 
     @property
@@ -50,4 +50,10 @@ class Timestamps(BaseFile):
         Finds the last timestamp for this file.
 
         """
-        return max(self._timestamps)
+        try:
+            last = max(self._timestamps.keys())
+        except ValueError:
+            log.warn("Tried to get last timestamp, but there are none.")
+            return None
+        else:
+            return last, self._timestamps[last]
