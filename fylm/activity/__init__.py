@@ -1,7 +1,7 @@
 from fylm.service.rotation import RotationCorrector
 from fylm.model.rotation import RotationSet
-# from fylm.service.timestamp import TimestampExtractor
-# from fylm.model.timestamp import TimestampSet
+from fylm.service.timestamp import TimestampExtractor
+from fylm.model.timestamp import TimestampSet
 
 
 class Activity(object):
@@ -14,8 +14,8 @@ class Activity(object):
         corrector.find_current(rotation_set)
         corrector.save(rotation_set)
 
-    # def extract_timestamps(self):
-    #     timestamp_set = TimestampSet(self._experiment)
-    #     SingleDirectoryService().find_current(timestamp_set)
-    #     extractor = TimestampExtractor(self._experiment)
-    # extractor.save(timestamp_set)
+    def extract_timestamps(self):
+        timestamp_set = TimestampSet(self._experiment)
+        extractor = TimestampExtractor(self._experiment)
+        extractor.find_current(timestamp_set)
+        extractor.save(timestamp_set)

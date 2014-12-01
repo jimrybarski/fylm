@@ -60,11 +60,11 @@ class BaseSet(object):
         assert self._model is not None
         for field_of_view in self._fields_of_view:
             for timepoint in self._timepoints:
-                rotation = self._model()
-                rotation.timepoint = timepoint
-                rotation.field_of_view = field_of_view
-                rotation.base_path = self.base_path
-                yield rotation
+                model = self._model()
+                model.timepoint = timepoint
+                model.field_of_view = field_of_view
+                model.base_path = self.base_path
+                yield model
 
     @property
     def remaining(self):

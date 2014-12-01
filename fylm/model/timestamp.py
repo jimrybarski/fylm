@@ -12,6 +12,7 @@ class TimestampSet(BaseSet):
     """
     def __init__(self, experiment):
         super(TimestampSet, self).__init__(experiment, "timestamp")
+        self._model = Timestamps
 
 
 class Timestamps(BaseFile):
