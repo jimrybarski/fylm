@@ -5,4 +5,5 @@ experiment = ExperimentService().get_experiment("141111", "/home/jim/Desktop/exp
 
 act = Activity(experiment)
 # act.calculate_rotation_offset()
-act.extract_timestamps()
+# act.extract_timestamps()
+act.calculate_registration()

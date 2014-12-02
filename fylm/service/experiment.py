@@ -42,7 +42,7 @@ class Experiment(object):
 
         """
         # first make all the top-level directories
-        subdirs = ["rotation", "timestamp"]
+        subdirs = ["rotation", "timestamp", "registration"]
         for subdir in subdirs:
             try:
                 self._os.makedirs(experiment.data_dir + "/" + subdir)
@@ -56,7 +56,7 @@ class Experiment(object):
         """
         regex = re.compile(r"""FYLM-%s-0(?P<index>\d+)\.nd2""" % experiment.start_date.clean_date)
         found = False
-        for filename in self._os.listdir(experiment.base_dir):
+        for filename in sorted(self._os.listdir(experiment.base_dir)):
             match = regex.match(filename)
             if match:
                 found = True
