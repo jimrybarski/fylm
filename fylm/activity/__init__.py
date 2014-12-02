@@ -2,20 +2,25 @@ from fylm.service.rotation import RotationCorrector
 from fylm.model.rotation import RotationSet
 from fylm.service.timestamp import TimestampExtractor
 from fylm.model.timestamp import TimestampSet
+from fylm.service.registration import RegistrationCorrector
+from fylm.model.registration import RegistrationSet
 
 
 class Activity(object):
     def __init__(self, experiment):
         self._experiment = experiment
 
+    def _calculate_and_save(self, SetModel, Service):
+        set_model = SetModel(self._experiment)
+        service = Service(self._experiment)
+        service.find_current(set_model)
+        service.save(set_model)
+
     def calculate_rotation_offset(self):
-        rotation_set = RotationSet(self._experiment)
-        corrector = RotationCorrector(self._experiment)
-        corrector.find_current(rotation_set)
-        corrector.save(rotation_set)
+        self._calculate_and_save(RotationSet, RotationCorrector)
 
     def extract_timestamps(self):
-        timestamp_set = TimestampSet(self._experiment)
-        extractor = TimestampExtractor(self._experiment)
-        extractor.find_current(timestamp_set)
-        extractor.save(timestamp_set)
+        self._calculate_and_save(TimestampSet, TimestampExtractor)
+
+    def calculate_registration(self):
+        self._calculate_and_save(RegistrationSet, RegistrationCorrector)

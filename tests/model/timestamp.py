@@ -39,7 +39,7 @@ class TimestampsTests(unittest.TestCase):
 
     def test_lines(self):
         self.t._timestamps = {3: 8.888, 1: 2.222, 2: 4.444}
-        lines = list(self.t.lines)
+        lines = sorted(list(self.t.lines))
         self.assertListEqual(["1 2.222", "2 4.444", "3 8.888"], lines)
 
     def test_add(self):
