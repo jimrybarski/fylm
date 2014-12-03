@@ -41,8 +41,18 @@ class Registration(BaseFile):
         return int(match.group("index")), float(match.group("dx")), float(match.group("dy"))
 
     @property
-    def lines(self):
+    def _ordered_data(self):
         for index, (dx, dy) in sorted(self._offsets.items()):
+            yield index, dx, dy
+
+    @property
+    def data(self):
+        for index, dx, dy in self._ordered_data:
+            yield dx, dy
+
+    @property
+    def lines(self):
+        for index, dx, dy in self._ordered_data:
             yield "%s %s %s" % (index, dx, dy)
 
     def add(self, dx, dy):

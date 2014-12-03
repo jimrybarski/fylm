@@ -24,8 +24,12 @@ class Rotation(BaseFile):
         self.offset = float(data.strip("\n "))
 
     @property
+    def data(self):
+        return self.offset
+
+    @property
     def lines(self):
-        yield str(self._offset)
+        yield str(self.offset)
 
     @property
     def offset(self):

@@ -37,8 +37,18 @@ class Timestamps(BaseFile):
         return int(match.group("index")), float(match.group("timestamp"))
 
     @property
-    def lines(self):
+    def _ordered_data(self):
         for index, timestamp in sorted(self._timestamps.items()):
+            yield index, timestamp
+
+    @property
+    def data(self):
+        for index, timestamp in self._ordered_data:
+            yield timestamp
+
+    @property
+    def lines(self):
+        for index, timestamp in self._ordered_data:
             yield "%s %s" % (index, timestamp)
 
     def add(self, timestamp):
