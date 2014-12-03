@@ -22,8 +22,8 @@ class TimestampExtractor(BaseSetService):
         :type timestamps_model: fylm.model.Timestamps()
 
         """
-        log.debug("Creating timestamps for Timepoint %s Field of View %s" % (timestamps_model.field_of_view,
-                                                                             timestamps_model.timepoint))
+        log.debug("Creating timestamps for Timepoint:%s, Field of View:%s" % (timestamps_model.timepoint,
+                                                                              timestamps_model.field_of_view))
         nd2_filename = self._experiment.get_nd2_from_timepoint(timestamps_model.timepoint)
         nd2 = nd2reader.Nd2(nd2_filename)
         # subtract 1 from the field of view since nd2reader uses 0-based indexing, but we
