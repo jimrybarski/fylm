@@ -28,7 +28,8 @@ class BaseModelService(BaseService):
         """
         try:
             with open(model.path) as f:
-                data = f.read(-1).split("\n")
+                # strip raw data to remove trailing newlines, so splitting on newline can't produce an empty value
+                data = f.read(-1).strip().split("\n")
                 model.load(data)
         except Exception as e:
             terminal_error("Could not read file: %s because: %s" % (model.path, str(e)))

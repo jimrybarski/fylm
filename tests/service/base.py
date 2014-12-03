@@ -20,7 +20,7 @@ class BaseModelServiceTests(unittest.TestCase):
 
     @patch('__builtin__.open')
     def test_read(self, mo):
-        mo.return_value = BytesIO("13.4236\n43.999")
+        mo.return_value = BytesIO("13.4236\n43.999\n")
         model = MockModel()
         self.bms.read(model)
         self.assertListEqual(model.data, ["13.4236", "43.999"])
