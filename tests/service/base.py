@@ -24,3 +24,10 @@ class BaseModelServiceTests(unittest.TestCase):
         model = MockModel()
         self.bms.read(model)
         self.assertListEqual(model.data, ["13.4236", "43.999"])
+
+    @patch('__builtin__.open')
+    def test_read_bad_data(self, mo):
+        mo.return_value = None
+        model = MockModel()
+        with self.assertRaises(SystemExit):
+            self.bms.read(model)
