@@ -2,6 +2,7 @@ from fylm.service.errors import terminal_error
 
 
 class ReaderService(object):
+    # TODO: Rename to Reader
 
     @staticmethod
     def read(model):
