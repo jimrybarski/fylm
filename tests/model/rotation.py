@@ -26,16 +26,16 @@ class RotationSetTests(unittest.TestCase):
 
     def test_add_current_rotation(self):
         # two valid names
-        self.rset.add_current("tp1-fov1.txt")
-        self.rset.add_current("tp1-fov5.txt")
+        self.rset.add_existing_data_file("tp1-fov1.txt")
+        self.rset.add_existing_data_file("tp1-fov5.txt")
         # two invalid names
-        self.rset.add_current("rotation.txt")
-        self.rset.add_current("tp-fov-rotation.txt")
+        self.rset.add_existing_data_file("rotation.txt")
+        self.rset.add_existing_data_file("tp-fov-rotation.txt")
         self.assertEqual(len(self.rset._current_filenames), 2)
 
     def test_remaining_rotations(self):
-        self.rset.add_current("tp1-fov1.txt")
-        self.rset.add_current("tp1-fov5.txt")
+        self.rset.add_existing_data_file("tp1-fov1.txt")
+        self.rset.add_existing_data_file("tp1-fov5.txt")
         rotations = [r for r in self.rset.remaining]
         self.assertEqual(len(rotations), 22)
 

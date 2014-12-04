@@ -60,4 +60,4 @@ class BaseSetService(BaseService):
 
         """
         for filename in self._os.listdir(model_set.base_path):
-            model_set.add_current(filename)
+            model_set.add_existing_data_file(filename)

@@ -85,7 +85,7 @@ class BaseSet(object):
             if model.filename not in self._current_filenames:
                 yield model
 
-    def add_current(self, filename):
+    def add_existing_data_file(self, filename):
         """
         Informs the model of a unit of work that has already been done.
 
