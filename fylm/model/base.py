@@ -37,6 +37,15 @@ class BaseFile(object):
         """
         raise NotImplemented
 
+    @abstractproperty
+    def data(self):
+        """
+        Yields or returns the data that was written to disk, with the types converted appropriately from strings.
+        Data is returned in the order it was obtained in the experiment.
+
+        """
+        raise NotImplemented
+
 
 class BaseSet(object):
     def __init__(self, experiment, top_level_dir):
