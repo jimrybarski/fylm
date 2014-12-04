@@ -85,6 +85,34 @@ class BaseSet(object):
             if model.filename not in self._current_filenames:
                 yield model
 
+    @property
+    def existing(self):
+        """
+        Yields a child of BaseFile that represents work already done.
+
+        """
+        for model in self._expected:
+            if model.filename in self._current_filenames:
+                yield model
+
+    def _get_current(self, field_of_view):
+        """
+        Yields models in order of acquisition for a given field of view.
+
+        """
+        for model in sorted(self.existing, key=lambda x: x.timepoint):
+            if model.field_of_view == field_of_view:
+                yield model
+
+    def get_data(self, field_of_view):
+        """
+        Yields model data in order of acquisition across all timepoints.
+
+        """
+        for model in self._get_current(field_of_view):
+            for data in model.data:
+                yield data
+
     def add_existing_data_file(self, filename):
         """
         Informs the model of a unit of work that has already been done.
