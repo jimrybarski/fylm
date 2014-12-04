@@ -10,7 +10,8 @@ class ImageReader(object):
     The registration and rotation can be optionally deactivated in case they misbehave, and the start point can also be set.
 
     """
-    def __init__(self, register_images=True, rotate_images=True, start=1):
+    def __init__(self, field_of_view, register_images=True, rotate_images=True, start=1):
+        self._field_of_view = field_of_view
         self._register_images = register_images
         self._rotate_images = rotate_images
         self._start = start
