@@ -8,7 +8,6 @@ class BaseFile(object):
         self.timepoint = None
         self.field_of_view = None
 
-
     @abstractproperty
     def lines(self):
         """
