@@ -62,5 +62,5 @@ class RotationTests(unittest.TestCase):
 
     def test_load(self):
         self.assertIsNone(self.rotation.offset)
-        self.rotation.load("\n3.4215\n")
+        self.rotation.load(["\n3.4215\n"])
         self.assertAlmostEqual(self.rotation.offset, 3.4215)

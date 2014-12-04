@@ -21,7 +21,12 @@ class Rotation(BaseFile):
         self._offset = None
 
     def load(self, data):
-        self.offset = float(data.strip("\n "))
+        """
+        :param data:    a list with a single string in it that represents a float value
+        :type data:     list
+
+        """
+        self.offset = float(data[0].strip("\n "))
 
     @property
     def data(self):
