@@ -8,13 +8,13 @@ from skimage.feature.phase_correlate import phase_correlate
 log = logging.getLogger("fylm")
 
 
-class RegistrationCorrector(BaseSetService):
+class RegistrationSet(BaseSetService):
     """
     Determines the rotational skew of an image.
 
     """
     def __init__(self, experiment):
-        super(RegistrationCorrector, self).__init__()
+        super(RegistrationSet, self).__init__()
         self._experiment = experiment
         self._name = "registration offsets"
 

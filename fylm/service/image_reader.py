@@ -16,3 +16,5 @@ class ImageReader(object):
         self._rotate_images = rotate_images
         self._start = start
 
+    def set_models(self, timestamp_set, rotation_set, registration_set):
+        pass

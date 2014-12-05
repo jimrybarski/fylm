@@ -1,8 +1,7 @@
 from fylm.service.errors import terminal_error
 
 
-class ReaderService(object):
-    # TODO: Rename to Reader
+class Reader(object):
 
     @staticmethod
     def read(model):

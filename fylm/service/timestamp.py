@@ -5,13 +5,13 @@ import nd2reader
 log = logging.getLogger("fylm")
 
 
-class TimestampExtractor(BaseSetService):
+class TimestampSet(BaseSetService):
     """
     Reads timestamps from ND2 files and writes them to disk.
 
     """
     def __init__(self, experiment):
-        super(TimestampExtractor, self).__init__()
+        super(TimestampSet, self).__init__()
         self._experiment = experiment
         self._name = "timestamps"
 
