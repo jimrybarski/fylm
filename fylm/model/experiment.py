@@ -73,7 +73,7 @@ class Experiment(object):
 
     @property
     def _nd2_base_filename(self):
-        return self.base_dir + "/" + "FYLM-%s-00" % self.start_date.clean_date
+        return self.base_dir + "/" + "FYLM-%s-" % self.start_date.clean_date
 
     @property
     def nd2s(self):
@@ -87,7 +87,8 @@ class Experiment(object):
             yield self.get_nd2_from_timepoint(timepoint)
 
     def get_nd2_from_timepoint(self, timepoint):
-        return self._nd2_base_filename + "%s.nd2" % timepoint
+        # pads timepoint with leading zeros to create 3-digit number
+        return self._nd2_base_filename + "%03d.nd2" % timepoint
 
     def add_timepoint(self, number):
         """
@@ -102,7 +103,7 @@ class Experiment(object):
 
     @property
     def timepoints(self):
-        for timepoint in self._timepoints:
+        for timepoint in sorted(self._timepoints):
             yield timepoint
 
     @property

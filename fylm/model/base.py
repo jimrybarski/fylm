@@ -50,6 +50,7 @@ class BaseSet(object):
     def __init__(self, experiment, top_level_dir):
         self.base_path = experiment.data_dir + "/" + top_level_dir
         self._current_filenames = []
+        self._existing = []
         # The default regex assumes the only distinguishing features are timepoints and fields of view.
         self._regex = re.compile(r"""tp\d+-fov\d+.txt""")
         # We use 1-based indexing for fields of view
@@ -90,9 +91,11 @@ class BaseSet(object):
         Yields a child of BaseFile that represents work already done.
 
         """
-        for model in self._expected:
-            if model.filename in self._current_filenames:
-                yield model
+        if not self._existing:
+            for model in self._expected:
+                if model.filename in self._current_filenames:
+                    self._existing.append(model)
+        return self._existing
 
     def _get_current(self, field_of_view):
         """
