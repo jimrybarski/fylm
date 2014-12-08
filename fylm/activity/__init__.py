@@ -1,9 +1,10 @@
-from fylm.service.rotation import RotationCorrector
+from fylm.service.rotation import RotationSet as RotationSetService
 from fylm.model.rotation import RotationSet
-from fylm.service.timestamp import TimestampExtractor
+from fylm.service.timestamp import TimestampSet as TimestampSetService
 from fylm.model.timestamp import TimestampSet
-from fylm.service.registration import RegistrationCorrector
+from fylm.service.registration import RegistrationSet as RegistrationSetService
 from fylm.model.registration import RegistrationSet
+from fylm.service.image_reader import ImageReader
 
 
 class Activity(object):
@@ -17,10 +18,13 @@ class Activity(object):
         service.save(set_model)
 
     def calculate_rotation_offset(self):
-        self._calculate_and_save(RotationSet, RotationCorrector)
+        self._calculate_and_save(RotationSet, RotationSetService)
 
     def extract_timestamps(self):
-        self._calculate_and_save(TimestampSet, TimestampExtractor)
+        self._calculate_and_save(TimestampSet, TimestampSetService)
 
     def calculate_registration(self):
-        self._calculate_and_save(RegistrationSet, RegistrationCorrector)
+        self._calculate_and_save(RegistrationSet, RegistrationSetService)
+
+    def get_image_reader(self):
+        return ImageReader(self._experiment)

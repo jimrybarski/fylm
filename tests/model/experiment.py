@@ -29,7 +29,7 @@ class ExperimentTests(unittest.TestCase):
     def test_nd2_base_filename(self):
         self.ex.start_date = "140914"
         self.ex.base_dir = "/home/lulz"
-        self.assertEqual(self.ex._nd2_base_filename, "/home/lulz/FYLM-140914-00")
+        self.assertEqual(self.ex._nd2_base_filename, "/home/lulz/FYLM-140914-")
 
     def test_add_nd2(self):
         for i in range(1, 6):

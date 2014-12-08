@@ -30,7 +30,7 @@ class Rotation(BaseFile):
 
     @property
     def data(self):
-        return self.offset
+        yield self.offset
 
     @property
     def lines(self):

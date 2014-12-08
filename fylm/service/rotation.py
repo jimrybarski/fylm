@@ -12,13 +12,13 @@ import logging
 log = logging.getLogger("fylm")
 
 
-class RotationCorrector(BaseSetService):
+class RotationSet(BaseSetService):
     """
     Determines the rotational skew of an image.
 
     """
     def __init__(self, experiment):
-        super(RotationCorrector, self).__init__()
+        super(RotationSet, self).__init__()
         self._experiment = experiment
         self._name = "rotation corrections"
 

@@ -1,5 +1,5 @@
 import unittest
-from fylm.service.reader import ReaderService
+from fylm.service.reader import Reader
 from fylm.model.registration import Registration
 from fylm.model.rotation import Rotation
 from fylm.model.timestamp import Timestamps
@@ -19,7 +19,7 @@ class MockModel(object):
 
 class BaseModelServiceTests(unittest.TestCase):
     def setUp(self):
-        self.reader = ReaderService()
+        self.reader = Reader()
 
     @patch('__builtin__.open')
     def test_read(self, mo):
