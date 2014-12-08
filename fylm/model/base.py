@@ -1,6 +1,5 @@
 from abc import abstractproperty, abstractmethod
 import re
-import hashlib
 
 
 class BaseFile(object):
