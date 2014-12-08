@@ -1,6 +1,5 @@
 import unittest
 from fylm.model.timestamp import Timestamps
-from fylm.model.timestamp import TimestampSet
 
 
 class MockExperiment(object):
@@ -64,7 +63,7 @@ class TimestampsTests(unittest.TestCase):
 
     def test_last(self):
         self.t._timestamps = {3: 8.888, 1: 2.222, 2: 4.444}
-        self.assertEqual(self.t.last, (3, 8.888))
+        self.assertEqual(self.t.last, 8.888)
 
     def test_last_none(self):
         self.t._timestamps = {}
