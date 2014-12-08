@@ -1,6 +1,3 @@
-from collections import namedtuple
-
-
 class Coordinates(object):
     def __init__(self, x, y):
         self._x = x
