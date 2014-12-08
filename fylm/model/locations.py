@@ -74,11 +74,35 @@ class Location(BaseFile):
 
     @property
     def data(self):
-        pass
+        yield self._top_left, self._bottom_right
+        for channel, (notch, tube) in sorted(self._channels.items()):
+            yield channel, notch, tube
 
     @property
     def lines(self):
-        yield self._top_left
+        data = iter(self.data)
+        top_left, bottom_right = next(data)
+        yield "%s %s %s %s" % (top_left.x, top_left.y, bottom_right.x, bottom_right.y)
+        for channel, notch, tube in data:
+            yield "%s %s %s %s %s" % (channel, notch.x, notch.y, tube.x, tube.y)
 
-    def add(self, dx, dy):
-        pass
+    def set_header(self, top_left_x, top_left_y, bottom_right_x, bottom_right_y):
+        """
+        Saves the *approximate* coordinates of the notches of the top left and bottomr right catch channels.
+
+        """
+        self._top_left = Coordinates(x=top_left_x, y=top_left_y)
+        self._bottom_right = Coordinates(x=bottom_right_x, y=bottom_right_y)
+
+    def set_channel_location(self, channel_number, notch_x, notch_y, tube_x, tube_y):
+        """
+        Saves the coordinates of a single catch channel.
+
+        :param channel_number: identifier of the channel, an integer from 1 to 28
+        :param notch_x: number of pixels from the left where the notch of the catch channel is located
+        :param notch_y: number of pixels from the top where the notch of the catch channel is located
+        :param tube_x: number of pixels from the left where the end of the catch channel is located
+        :param tube_y: number of pixels from the top where the end of the catch channel is located
+
+        """
+        self._channels[channel_number] = (Coordinates(x=notch_x, y=notch_y), Coordinates(x=tube_x, y=tube_y))
