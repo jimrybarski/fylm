@@ -5,8 +5,8 @@ from fylm.model.image import ImageSet as FylmImageSet
 from itertools import izip
 import logging
 from nd2reader import Nd2
-from service.reader import Reader
-from service.base import BaseSetService
+from fylm.service.reader import Reader
+from fylm.service.base import BaseSetService
 
 log = logging.getLogger("fylm")
 
