@@ -1,5 +1,5 @@
 import unittest
-from model.base import BaseSet
+from fylm.model.base import BaseSet
 
 
 class MockModel(object):
