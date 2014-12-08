@@ -13,7 +13,7 @@ class LocationSet(BaseSet):
 
     """
     def __init__(self, experiment):
-        super(LocationSet, self).__init__(experiment, "registration")
+        super(LocationSet, self).__init__(experiment, "channel locations")
         self._model = Location
 
 
@@ -44,19 +44,22 @@ class Location(BaseFile):
                                            (?P<notch_y>\d+\.\d+)\s
                                            (?P<tube_x>\d+\.\d+)\s
                                            (?P<tube_y>\d+\.\d+)""", re.VERBOSE)
+        self._skipped_regex = re.compile(r"""^(?P<channel_number>\d+) skipped""")
 
     def load(self, data):
         try:
             header = next(data)
             self._top_left, self._bottom_right = self._parse_header(header)
             for line in data:
-                channel_number, notch, tube = self._parse_line(line)
-                self._channels[channel_number] = notch, tube
+                channel_number, locations = self._parse_line(line)
+                self._channels[channel_number] = locations
         except Exception as e:
             terminal_error("Could not parse line for Channel Locator because of: %s" % e)
 
     def _parse_header(self, line):
         match = self._header_regex.match(line)
+        if not match:
+            raise Exception("Invalid channel location line: %s" % line)
         top_left = Coordinates(x=match.group("top_left_x"),
                                y=match.group("top_left_y"))
         bottom_right = Coordinates(x=match.group("bottom_right_x"),
@@ -65,30 +68,48 @@ class Location(BaseFile):
 
     def _parse_line(self, line):
         match = self._line_regex.match(line)
-        channel_number = float(match.group("channel_number"))
-        notch = Coordinates(x=match.group("notch_x"),
-                            y=match.group("notch_y"))
-        tube = Coordinates(x=match.group("tube_x"),
-                           y=match.group("tube_y"))
-        return channel_number, notch, tube
+        if match:
+            channel_number = int(match.group("channel_number"))
+            notch = Coordinates(x=match.group("notch_x"),
+                                y=match.group("notch_y"))
+            tube = Coordinates(x=match.group("tube_x"),
+                               y=match.group("tube_y"))
+            return channel_number, (notch, tube)
+        match = self._skipped_regex.match(line)
+        if match:
+            return int(match.group("channel_number")), "skipped"
+        raise Exception("Invalid channel location line: %s" % line)
+
+    @property
+    def _ordered_channels(self):
+        for channel_number, locations in sorted(self._channels.items()):
+            yield channel_number, locations
 
     @property
     def data(self):
         yield self._top_left, self._bottom_right
-        for channel, (notch, tube) in sorted(self._channels.items()):
-            yield channel, notch, tube
+        for channel_number, locations in self._ordered_channels:
+            if not locations == "skipped":
+                yield channel_number, locations
 
     @property
     def lines(self):
+        if len(self._channels) != 28:
+            log.warn("Invalid number of channels: %s" % len(self._channels))
         data = iter(self.data)
         top_left, bottom_right = next(data)
         yield "%s %s %s %s" % (top_left.x, top_left.y, bottom_right.x, bottom_right.y)
-        for channel, notch, tube in data:
-            yield "%s %s %s %s %s" % (channel, notch.x, notch.y, tube.x, tube.y)
+        for channel_number, locations in self._ordered_channels:
+            try:
+                notch, tube = locations
+                yield "%s %s %s %s %s" % (channel_number, notch.x, notch.y, tube.x, tube.y)
+            except ValueError:
+                # the human declared this channel invalid
+                yield "%s skipped" % channel_number
 
     def set_header(self, top_left_x, top_left_y, bottom_right_x, bottom_right_y):
         """
-        Saves the *approximate* coordinates of the notches of the top left and bottomr right catch channels.
+        Saves the *approximate* coordinates of the notches of the top left and bottom right catch channels.
 
         """
         self._top_left = Coordinates(x=top_left_x, y=top_left_y)
@@ -105,4 +126,8 @@ class Location(BaseFile):
         :param tube_y: number of pixels from the top where the end of the catch channel is located
 
         """
-        self._channels[channel_number] = (Coordinates(x=notch_x, y=notch_y), Coordinates(x=tube_x, y=tube_y))
+        self._channels[channel_number] = (Coordinates(x=notch_x, y=notch_y),
+                                          Coordinates(x=tube_x, y=tube_y))
+
+    def skip_channel(self, channel_number):
+        self._channels[channel_number] = "skipped"

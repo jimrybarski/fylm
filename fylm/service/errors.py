@@ -14,6 +14,6 @@ def terminal_error(message):
 
     """
     log.error("")
-    log.error(message)
+    log.exception(message)
     log.error("")
     sys.exit(1)
