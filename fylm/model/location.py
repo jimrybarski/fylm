@@ -13,7 +13,7 @@ class LocationSet(BaseSet):
 
     """
     def __init__(self, experiment):
-        super(LocationSet, self).__init__(experiment, "channel locations")
+        super(LocationSet, self).__init__(experiment, "location")
         self._model = Location
 
 

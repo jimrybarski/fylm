@@ -1,4 +1,4 @@
-from fylm.model.locations import Location
+from fylm.model.location import Location
 from fylm.model.coordinates import Coordinates
 import unittest
 
