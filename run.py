@@ -11,4 +11,4 @@ act.calculate_registration()
 image_reader = act.get_image_reader()
 image_reader.field_of_view = 1
 for i in image_reader:
-    print(i)
+    print(i.timestamp)

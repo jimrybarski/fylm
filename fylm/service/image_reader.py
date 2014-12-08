@@ -1,10 +1,14 @@
-from nd2reader import Nd2
-from service.reader import Reader
-from service.base import BaseSetService
 from fylm.model.registration import RegistrationSet
 from fylm.model.rotation import RotationSet
 from fylm.model.timestamp import TimestampSet
 from fylm.model.image import ImageSet as FylmImageSet
+from itertools import izip
+import logging
+from nd2reader import Nd2
+from service.reader import Reader
+from service.base import BaseSetService
+
+log = logging.getLogger("fylm")
 
 
 class ImageReader(object):
@@ -40,13 +44,22 @@ class ImageReader(object):
         self._field_of_view = int(value)
 
     def __iter__(self):
+        """
+        Provides image sets for all available data in order.
+
+        :return:
+        """
         for timepoint, rotation_offset in zip(self._experiment.timepoints, self._rotation_set.existing):
             filename = self._experiment.get_nd2_from_timepoint(timepoint)
-            nd2 = Nd2(filename)
-            a = self._registration_set.get_data(self.field_of_view)
-            b = self._timestamp_set.get_data(self.field_of_view)
-            for nd2_image_set in nd2.image_sets(self.field_of_view):
-                registration_offset = next(a)
-                timestamp = next(b)
-                j_image_set = FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset)
-                yield j_image_set
+            try:
+                nd2 = Nd2(filename)
+            except Exception as e:
+                log.warn("Skipping missing ND2: %s" % filename)
+                continue
+            registration_data = self._registration_set.get_data(self.field_of_view)
+            timestamp_data = self._timestamp_set.get_data(self.field_of_view)
+            for nd2_image_set, registration_offset, timestamp in izip(nd2.image_sets(self.field_of_view - 1),
+                                                                      registration_data,
+                                                                      timestamp_data):
+                image_set = FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset, timestamp)
+                yield image_set
