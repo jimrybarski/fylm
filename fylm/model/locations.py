@@ -1,4 +1,5 @@
 from fylm.model.base import BaseFile, BaseSet
+from fylm.model.coordinates import Coordinates
 from fylm.service.errors import terminal_error
 import logging
 import re
@@ -56,18 +57,20 @@ class Location(BaseFile):
 
     def _parse_header(self, line):
         match = self._header_regex.match(line)
-        return (
-            (float(match.group("top_left_x")), float(match.group("top_left_y"))),
-            (float(match.group("bottom_right_x")), float(match.group("bottom_right_y")))
-        )
+        top_left = Coordinates(x=match.group("top_left_x"),
+                               y=match.group("top_left_y"))
+        bottom_right = Coordinates(x=match.group("bottom_right_x"),
+                                   y=match.group("bottom_right_y"))
+        return top_left, bottom_right
 
     def _parse_line(self, line):
         match = self._line_regex.match(line)
-        return (
-            float(match.group("channel_number")),
-            (float(match.group("notch_x")), float(match.group("notch_y"))),
-            (float(match.group("tube_x")), float(match.group("tube_y")))
-        )
+        channel_number = float(match.group("channel_number"))
+        notch = Coordinates(x=match.group("notch_x"),
+                            y=match.group("notch_y"))
+        tube = Coordinates(x=match.group("tube_x"),
+                           y=match.group("tube_y"))
+        return channel_number, notch, tube
 
     @property
     def data(self):
@@ -75,7 +78,7 @@ class Location(BaseFile):
 
     @property
     def lines(self):
-        pass
+        yield self._top_left
 
     def add(self, dx, dy):
         pass
