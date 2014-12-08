@@ -1,5 +1,15 @@
 import unittest
 from fylm.model.timestamp import Timestamps
+from fylm.model.timestamp import TimestampSet
+
+
+class MockExperiment(object):
+    def __init__(self):
+        self.data_dir = "/tmp/"
+        self.fields_of_view = [1, 2]
+        self.timepoints = [1, 2]
+        self.base_path = None
+        self.field_of_view_count = 2
 
 
 class TimestampsTests(unittest.TestCase):
@@ -58,4 +68,5 @@ class TimestampsTests(unittest.TestCase):
 
     def test_last_none(self):
         self.t._timestamps = {}
-        self.assertIsNone(self.t.last)
+        with self.assertRaises(ValueError):
+            last = self.t.last

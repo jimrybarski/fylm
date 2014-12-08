@@ -63,8 +63,8 @@ class Timestamps(BaseFile):
         """
         try:
             last = max(self._timestamps.keys())
-        except ValueError:
-            log.warn("Tried to get last timestamp, but there are none.")
-            return None
+        except ValueError as e:
+            log.error("Tried to get last timestamp, but there are none.")
+            raise e
         else:
-            return last, self._timestamps[last]
+            return self._timestamps[last]
