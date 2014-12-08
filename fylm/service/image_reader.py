@@ -47,7 +47,6 @@ class ImageReader(object):
         """
         Provides image sets for all available data in order.
 
-        :return:
         """
         for timepoint, rotation_offset in zip(self._experiment.timepoints, self._rotation_set.existing):
             filename = self._experiment.get_nd2_from_timepoint(timepoint)
