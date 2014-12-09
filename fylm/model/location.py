@@ -15,6 +15,20 @@ class LocationSet(BaseSet):
     def __init__(self, experiment):
         super(LocationSet, self).__init__(experiment, "location")
         self._model = Location
+        self._regex = re.compile(r"""fov\d+.txt""")
+
+    @property
+    def _expected(self):
+        """
+        Yields instantiated children of BaseFile that represent the work we expect to have done.
+
+        """
+        assert self._model is not None
+        for field_of_view in self._fields_of_view:
+            model = self._model()
+            model.field_of_view = field_of_view
+            model.base_path = self.base_path
+            yield model
 
 
 class Location(BaseFile):
@@ -45,6 +59,14 @@ class Location(BaseFile):
                                            (?P<tube_x>\d+\.\d+)\s
                                            (?P<tube_y>\d+\.\d+)""", re.VERBOSE)
         self._skipped_regex = re.compile(r"""^(?P<channel_number>\d+) skipped""")
+
+    @property
+    def top_left(self):
+        return self._top_left
+
+    @property
+    def bottom_right(self):
+        return self._bottom_right
 
     def load(self, data):
         try:
