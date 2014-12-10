@@ -32,18 +32,21 @@ class ExactChannelFinder(HumanInteractor):
         self._done = False
         while not self._done:
             self._start()
+            self._reset()
+
 
     def _get_image_slice(self):
+        row = (self._current_channel_number - self._current_channel_number % 2) / 2
         if self._current_channel_number % 2 == 1:
             # left catch channel
             image_slice = ImageSlice(max(0, self._top_left.x - self._width_margin),
-                                     max(0, self._top_left.y + self._likely_distance * self._current_channel_number - self._height_margin * 2),
+                                     max(0, self._top_left.y + self._likely_distance * row - self._height_margin * 2),
                                      self._expected_channel_width + self._width_margin * 2,
                                      self._expected_channel_height + self._height_margin * 3)
         else:
             # right catch channel
             image_slice = ImageSlice(max(0, self._bottom_right.x - self._expected_channel_width - self._width_margin),
-                                     max(0, self._top_left.y + self._likely_distance * self._current_channel_number - self._height_margin * 2),
+                                     max(0, self._top_left.y + self._likely_distance * row - self._height_margin * 2),
                                      self._expected_channel_width + self._width_margin * 2,
                                      self._expected_channel_height + self._height_margin * 3)
         image_slice.set_image(self._image)
@@ -59,30 +62,41 @@ class ExactChannelFinder(HumanInteractor):
         if human_input.key == 'q':
             self._done = True
             self._clear()
-        if human_input.key == 'enter' and len(self._coordinates) == 2:
+        elif human_input.key == 'enter' and len(self._coordinates) == 2:
             self._handle_results()
+            self._increment_channel()
+            self._clear()
         elif human_input.key == 'escape':
+            self._increment_channel()
             self._clear()
         elif human_input.key == 'left':
-            if self._current_channel_number == 1:
-                self._current_channel_number = Constants.NUM_CATCH_CHANNELS
-            else:
-                self._current_channel_number -= 1
+            self._clear()
+            self._decrement_channel()
         elif human_input.key == 'right':
-            if self._current_channel_number == Constants.NUM_CATCH_CHANNELS:
-                self._current_channel_number = 1
-            else:
-                self._current_channel_number += 1
+            self._clear()
+            self._increment_channel()
+
+    def _decrement_channel(self):
+        if self._current_channel_number == 1:
+            self._current_channel_number = Constants.NUM_CATCH_CHANNELS
+        else:
+            self._current_channel_number -= 1
+
+    def _increment_channel(self):
+        if self._current_channel_number == Constants.NUM_CATCH_CHANNELS:
+            self._current_channel_number = 1
+        else:
+            self._current_channel_number += 1
 
     def _clear(self):
-        self._erase_all_points()
         self._close()
+        self._erase_all_points()
+
 
     def _handle_results(self):
         notch = self._current_image_slice.get_parent_coordinates(self._coordinates[0])
         tube = self._current_image_slice.get_parent_coordinates(self._coordinates[1])
         self._location_set_model.set_channel_location(self._current_channel_number, notch.x, notch.y, tube.x, tube.y)
-        self._clear()
 
     def _start(self):
         self._current_image_slice = self._get_image_slice()

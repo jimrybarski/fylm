@@ -44,8 +44,6 @@ class Location(BaseFile):
     """
     def __init__(self):
         super(Location, self).__init__()
-        self.timepoint = None
-        self.field_of_view = None
         self._top_left = None
         self._bottom_right = None
         self._channels = {}
