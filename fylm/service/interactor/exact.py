@@ -32,7 +32,8 @@ class ExactChannelFinder(HumanInteractor):
         self._done = False
         while not self._done:
             self._start()
-            self._reset()
+            if not self._done:
+                self._reset()
 
     def _get_image_slice(self):
         # we need a row number from 0 to 13 to calculate the offset from the first row
@@ -117,7 +118,10 @@ class ExactChannelFinder(HumanInteractor):
 
     def _draw_existing_data(self):
         coordinates = self._location_set_model.get_channel_location(self._current_channel_number)
-        if coordinates:
+        if coordinates == "skipped":
+            # draw an X
+            pass
+        elif coordinates:
             notch = self._current_image_slice.get_child_coordinates(coordinates[0])
             tube = self._current_image_slice.get_child_coordinates(coordinates[1])
             self._add_point(notch.x, notch.y)
