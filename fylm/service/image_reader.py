@@ -1,7 +1,7 @@
 from fylm.model.registration import RegistrationSet
 from fylm.model.rotation import RotationSet
 from fylm.model.timestamp import TimestampSet
-from fylm.model.image import ImageSet as FylmImageSet
+from fylm.model.image import ImageSet as FylmImageSet, Image
 from itertools import izip
 import logging
 from nd2reader import Nd2
@@ -34,6 +34,17 @@ class ImageReader(object):
             set_service.find_current(model_set)
             for model in model_set.existing:
                 reader.read(model)
+
+    def get_image(self, index, timepoint, channel="", z_level=1):
+        # TODO: We should look up timepoint based on index
+        filename = self._experiment.get_nd2_from_timepoint(timepoint)
+        nd2 = Nd2(filename)
+        rotation_offset = self._rotation_set.existing[index].offset
+        dx, dy = next(self._registration_set.get_data(self.field_of_view))
+        timestamp = next(self._timestamp_set.get_data(self.field_of_view))
+        raw_image = nd2.get_image(index, self.field_of_view, channel, z_level)
+        image = Image(raw_image.data, rotation_offset, dx, dy, timestamp)
+        return image
 
     @property
     def field_of_view(self):

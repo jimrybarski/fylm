@@ -18,7 +18,7 @@ class ApproximateChannelFinder(HumanInteractor):
 
     def _on_mouse_click(self, human_input):
         if human_input.left_click and len(self._coordinates) < 2:
-            self._add_point(*human_input.coordinates)
+            self._add_point(human_input.coordinates.x, human_input.coordinates.y)
         if human_input.right_click:
             self._remove_last_point()
 
@@ -39,4 +39,4 @@ class ApproximateChannelFinder(HumanInteractor):
 
     @property
     def results(self):
-        return self._results
+        return self._results[0].x, self._results[0].y, self._results[1].x, self._results[1].y

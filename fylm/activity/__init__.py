@@ -4,7 +4,6 @@ from fylm.service.timestamp import TimestampSet as TimestampSetService
 from fylm.model.timestamp import TimestampSet
 from fylm.service.registration import RegistrationSet as RegistrationSetService
 from fylm.model.registration import RegistrationSet
-from fylm.service.image_reader import ImageReader
 from fylm.service.location import LocationSet as LocationSetService
 from fylm.model.location import LocationSet
 
@@ -27,9 +26,6 @@ class Activity(object):
 
     def calculate_registration(self):
         self._calculate_and_save(RegistrationSet, RegistrationSetService)
-
-    def get_image_reader(self):
-        return ImageReader(self._experiment)
 
     def input_channel_locations(self):
         self._calculate_and_save(LocationSet, LocationSetService)
