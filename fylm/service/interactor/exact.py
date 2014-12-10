@@ -70,6 +70,7 @@ class ExactChannelFinder(HumanInteractor):
             self._clear()
 
         elif human_input.key == 'escape':
+            self._handle_results()
             self._clear()
             self._increment_channel()
 
@@ -80,7 +81,6 @@ class ExactChannelFinder(HumanInteractor):
         elif human_input.key == 'right':
             self._clear()
             self._increment_channel()
-
 
     def _decrement_channel(self):
         if self._current_channel_number == 1:
@@ -99,9 +99,12 @@ class ExactChannelFinder(HumanInteractor):
         self._close()
 
     def _handle_results(self):
-        notch = self._current_image_slice.get_parent_coordinates(self._coordinates[0])
-        tube = self._current_image_slice.get_parent_coordinates(self._coordinates[1])
-        self._location_set_model.set_channel_location(self._current_channel_number, notch.x, notch.y, tube.x, tube.y)
+        if self._coordinates:
+            notch = self._current_image_slice.get_parent_coordinates(self._coordinates[0])
+            tube = self._current_image_slice.get_parent_coordinates(self._coordinates[1])
+            self._location_set_model.set_channel_location(self._current_channel_number, notch.x, notch.y, tube.x, tube.y)
+        else:
+            self._location_set_model.skip_channel(self._current_channel_number)
         self._clear()
 
     def _start(self):
@@ -113,4 +116,9 @@ class ExactChannelFinder(HumanInteractor):
         plt.show()
 
     def _draw_existing_data(self):
-        pass
+        coordinates = self._location_set_model.get_channel_location(self._current_channel_number)
+        if coordinates:
+            notch = self._current_image_slice.get_child_coordinates(coordinates[0])
+            tube = self._current_image_slice.get_child_coordinates(coordinates[1])
+            self._add_point(notch.x, notch.y)
+            self._add_point(tube.x, tube.y)

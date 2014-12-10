@@ -152,5 +152,11 @@ class Location(BaseFile):
         self._channels[channel_number] = (Coordinates(x=notch_x, y=notch_y),
                                           Coordinates(x=tube_x, y=tube_y))
 
+    def get_channel_location(self, channel_number):
+        try:
+            return self._channels[channel_number]
+        except KeyError:
+            return None
+
     def skip_channel(self, channel_number):
         self._channels[channel_number] = "skipped"

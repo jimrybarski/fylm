@@ -57,6 +57,14 @@ class ImageSlice(object):
         return Coordinates(x=local_coordinates.x + self._top_left.x,
                            y=local_coordinates.y + self._top_left.y - self._y_margin)
 
+    def get_child_coordinates(self, parent_coordinates):
+        """
+        Take coordinates from a superset of this image and figure out where they belong on the image slice image.
+
+        """
+        return Coordinates(x=parent_coordinates.x - self._top_left.x,
+                           y=parent_coordinates.y - self._top_left.y + self._y_margin)
+
     @property
     def average_around_center(self):
         """
