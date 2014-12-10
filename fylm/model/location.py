@@ -27,6 +27,9 @@ class LocationSet(BaseSet):
         for field_of_view in self._fields_of_view:
             model = self._model()
             model.field_of_view = field_of_view
+            # Since we get catch channel coordinates from the very first frame of each field of view,
+            # we only use time point 1
+            model.timepoint = 1
             model.base_path = self.base_path
             yield model
 

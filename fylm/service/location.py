@@ -18,4 +18,4 @@ class LocationSet(BaseSetService):
         acf = ApproximateChannelFinder(image.data)
         top_left_x, top_left_y, bottom_right_x, bottom_right_y = acf.results
         model.set_header(top_left_x, top_left_y, bottom_right_x, bottom_right_y)
-        exact = ExactChannelFinder(model, image.data)
+        ExactChannelFinder(model, image.data)

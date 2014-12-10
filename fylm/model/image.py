@@ -1,5 +1,6 @@
 from skimage import transform
-from skimage import img_as_uint, img_as_ubyte
+from skimage import img_as_uint
+
 
 class ImageSet(object):
     def __init__(self, nd2_image_set, rotation_offset, (dx, dy), timestamp):
