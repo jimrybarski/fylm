@@ -6,6 +6,8 @@ from fylm.service.registration import RegistrationSet as RegistrationSetService
 from fylm.model.registration import RegistrationSet
 from fylm.service.location import LocationSet as LocationSetService
 from fylm.model.location import LocationSet
+from fylm.service.kymograph import KymographSet as KymographSetService
+from fylm.model.kymograph import KymographSet
 
 
 class Activity(object):
@@ -36,4 +38,6 @@ class Activity(object):
         over the entire image stack for each channel.
 
         """
-        pass
+        kymograph_service = KymographSetService(self._experiment)
+        kymograph_set = KymographSet(self._experiment)
+        kymograph_service.save(kymograph_set)

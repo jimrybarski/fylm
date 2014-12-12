@@ -5,7 +5,6 @@ from fylm.model.image import ImageSet as FylmImageSet, Image
 from itertools import izip
 import logging
 from nd2reader import Nd2
-from fylm.service.reader import Reader
 from fylm.service.base import BaseSetService
 
 log = logging.getLogger("fylm")
@@ -28,12 +27,10 @@ class ImageReader(object):
         self._registration_set = RegistrationSet(experiment)
         self._rotation_set = RotationSet(experiment)
         self._timestamp_set = TimestampSet(experiment)
-        reader = Reader()
+
         set_service = BaseSetService()
         for model_set in (self._registration_set, self._rotation_set, self._timestamp_set):
-            set_service.find_current(model_set)
-            for model in model_set.existing:
-                reader.read(model)
+            set_service.load_existing_models(model_set)
 
     def get_image(self, index, timepoint, channel="", z_level=1):
         # TODO: We should look up timepoint based on index

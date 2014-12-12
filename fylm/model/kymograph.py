@@ -23,6 +23,7 @@ class Kymograph(BaseTextFile):
         super(Kymograph, self).__init__()
         self._channel = None
         self._image_data = None
+        self._image_slice = None
 
     def allocate_memory(self, frame_count, channel_width):
         """
@@ -42,6 +43,9 @@ class Kymograph(BaseTextFile):
         """
         width = image_slice.image_data.shape[1]
         self._image_data[time_index, 0: width + 1] = image_slice.average_around_center
+
+    def set_location(self, location):
+        self._image_slice =
 
     def load(self, data):
         pass
