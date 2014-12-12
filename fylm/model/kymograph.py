@@ -1,5 +1,6 @@
 from fylm.model.base import BaseImage, BaseSet
 from fylm.model.image_slice import ImageSlice
+from fylm.model.constants import Constants
 import logging
 import numpy as np
 import re
@@ -16,6 +17,23 @@ class KymographSet(BaseSet):
         super(KymographSet, self).__init__(experiment, "kymograph")
         self._model = Kymograph
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
+
+    @property
+    def _expected(self):
+        """
+        Yields instantiated children of BaseFile that represent the work we expect to have done.
+
+        """
+        assert self._model is not None
+        for field_of_view in self._fields_of_view:
+            for timepoint in self._timepoints:
+                for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+                    model = self._model()
+                    model.timepoint = timepoint
+                    model.field_of_view = field_of_view
+                    model.channel_number = channel_number + 1  # we want 1-28 instead of 0-27
+                    model.base_path = self.base_path
+                    yield model
 
 
 class Kymograph(BaseImage):
@@ -34,6 +52,9 @@ class Kymograph(BaseImage):
 
         """
         self._image_data = np.zeros((frame_count, self.width))
+
+    def set_image(self, image):
+        self._image_slice.set_image(image)
 
     @property
     def width(self):
@@ -75,14 +96,14 @@ class Kymograph(BaseImage):
         return self._image_data
 
     @property
-    def channel(self):
+    def channel_number(self):
         return self._channel
 
-    @channel.setter
-    def channel(self, value):
+    @channel_number.setter
+    def channel_number(self, value):
         self._channel = int(value)
 
     @property
     def filename(self):
         # This is just the default filename and it won't always be valid.
-        return "tp%s-fov%s-channel%s.txt" % (self.timepoint, self.field_of_view, self.channel)
+        return "tp%s-fov%s-channel%s.txt" % (self.timepoint, self.field_of_view, self.channel_number)

@@ -35,7 +35,8 @@ class KymographSet(BaseSetService):
             log.debug("Making kymographs for field of view %s" % location_model.field_of_view)
             image_reader.field_of_view = location_model.field_of_view
             # Each location model contains data for 28 channels in one field of view
-            for kymograph_model in kymograph_model_set.existing:
+            for kymograph_model in kymograph_model_set.remaining:
+                log.debug("Existing kymo FOV: %s" % kymograph_model.field_of_view)
                 # Each kymograph contains data for one channel in one field of view
                 if kymograph_model.field_of_view != location_model.field_of_view:
                     continue
@@ -47,14 +48,16 @@ class KymographSet(BaseSetService):
                 else:
                     kymograph_model.set_location(notch, tube)
                     available_kymographs.append(kymograph_model)
-
             for timepoint in self._experiment.timepoints:
                 log.debug("Making kymographs for timepoint %s" % timepoint)
                 image_reader.timepoint = timepoint
                 # Now that we known the width and height of the kymographs, we can allocate memory for the images
+                log.debug("Number of kymographs to make: %s" % len(available_kymographs))
                 for kymograph_model in available_kymographs:
+                    log.debug("Field of view: %s" % kymograph_model.field_of_view)
                     did_work = True
                     # create a numpy array with as many rows as images (and as wide as the individual channel)
+                    log.debug("Allocating %s rows" % len(image_reader))
                     kymograph_model.allocate_memory(len(image_reader))
                 for time_index, image_set in enumerate(image_reader):
                     log.debug("Adding lines for kymographs from time index %s" % time_index)

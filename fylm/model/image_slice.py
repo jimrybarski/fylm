@@ -100,4 +100,4 @@ class ImageSlice(object):
 
     @property
     def width(self):
-        return self._width
+        return abs(self._width)
