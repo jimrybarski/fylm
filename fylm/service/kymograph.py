@@ -30,7 +30,10 @@ class KymographSet(BaseSetService):
         # to be generated, then see if there is any location data available for them. If not, we just skip them for now.
         available_kymographs = []
         # Find the location model that corresponds to the field of view we're interested in
+        did_work = False
         for location_model in location_set.existing:
+            log.debug("Making kymographs for field of view %s" % location_model.field_of_view)
+            image_reader.field_of_view = location_model.field_of_view
             # Each location model contains data for 28 channels in one field of view
             for kymograph_model in kymograph_model_set.existing:
                 # Each kymograph contains data for one channel in one field of view
@@ -46,22 +49,23 @@ class KymographSet(BaseSetService):
                     available_kymographs.append(kymograph_model)
 
             for timepoint in self._experiment.timepoints:
-                image = image_reader.get_image()
-
+                log.debug("Making kymographs for timepoint %s" % timepoint)
+                image_reader.timepoint = timepoint
                 # Now that we known the width and height of the kymographs, we can allocate memory for the images
                 for kymograph_model in available_kymographs:
-                    kymograph_model.allocate_memory(nd2.timepoint_count)
-
-                for index in range(nd2.timepoint_count):
-                    image = nd2.get_image(index, location_model.field_of_view, "", 0)
+                    did_work = True
+                    # create a numpy array with as many rows as images (and as wide as the individual channel)
+                    kymograph_model.allocate_memory(len(image_reader))
+                for time_index, image_set in enumerate(image_reader):
+                    log.debug("Adding lines for kymographs from time index %s" % time_index)
+                    image = image_set.get_image(channel="", z_level=0)
                     for kymograph_model in available_kymographs:
-                        # create kymograph numpy arrays
-                        # save images to disk
-                        kymograph_model.set_image
+                        kymograph_model.set_image(image)
+                        kymograph_model.add_line(time_index)
 
-        did_work = False
-        for kymograph in available_kymographs:
-            did_work = True
+                for kymograph_model in available_kymographs:
+                    log.debug("Saving kymograph %s" % kymograph_model.channel_number)
+                    skimage.io.imsave(kymograph_model.path, kymograph_model.data)
 
         if not did_work:
             log.debug("All %s have been created." % self._name)

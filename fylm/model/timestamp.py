@@ -44,7 +44,7 @@ class Timestamps(BaseTextFile):
     @property
     def data(self):
         for index, timestamp in self._ordered_data:
-            yield timestamp
+            yield index, timestamp
 
     @property
     def lines(self):

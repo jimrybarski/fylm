@@ -1,6 +1,5 @@
-from fylm.model.base import BaseTextFile, BaseSet
+from fylm.model.base import BaseImage, BaseSet
 from fylm.model.image_slice import ImageSlice
-from fylm.service.errors import terminal_error
 import logging
 import numpy as np
 import re
@@ -19,7 +18,7 @@ class KymographSet(BaseSet):
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
 
 
-class Kymograph(BaseTextFile):
+class Kymograph(BaseImage):
     def __init__(self):
         super(Kymograph, self).__init__()
         self._channel = None
@@ -71,16 +70,9 @@ class Kymograph(BaseTextFile):
             top_left_x = tube.x
         self._image_slice = ImageSlice(top_left_x, top_left_y, width, height, fliplr)
 
-    def load(self, data):
-        pass
-
     @property
     def data(self):
-        return None
-
-    @property
-    def lines(self):
-        return None
+        return self._image_data
 
     @property
     def channel(self):

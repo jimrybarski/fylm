@@ -34,6 +34,9 @@ class ImageReader(object):
         for model_set in (self._registration_set, self._rotation_set, self._timestamp_set):
             set_service.load_existing_models(model_set)
 
+    def __len__(self):
+        return self.nd2.timepoint_count
+
     @property
     def timepoint(self):
         return self._timepoint
@@ -75,8 +78,7 @@ class ImageReader(object):
         for rotation_offset in self._rotation_set.existing:
             registration_data = self._registration_set.get_data(self.field_of_view)
             timestamp_data = self._timestamp_set.get_data(self.field_of_view)
-            for nd2_image_set, registration_offset, timestamp in izip(self.nd2.image_sets(self.field_of_view - 1),
-                                                                      registration_data,
-                                                                      timestamp_data):
-                image_set = FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset, timestamp)
-                yield image_set
+            for nd2_image_set, registration_offset, (time_index, timestamp) in izip(self.nd2.image_sets(self.field_of_view - 1),
+                                                                                    registration_data,
+                                                                                    timestamp_data):
+                yield FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset, time_index, timestamp)
