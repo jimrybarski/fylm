@@ -118,6 +118,9 @@ class Location(BaseTextFile):
             if not locations == "skipped":
                 yield channel_number, locations
 
+    def get_channel_data(self, channel_number):
+        return self._channels[channel_number]
+
     @property
     def lines(self):
         if len(self._channels) != Constants.NUM_CATCH_CHANNELS:

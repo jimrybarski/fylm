@@ -97,3 +97,7 @@ class ImageSlice(object):
     @property
     def fliplr(self):
         return self._fliplr
+
+    @property
+    def width(self):
+        return self._width

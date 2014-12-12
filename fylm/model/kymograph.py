@@ -1,4 +1,5 @@
 from fylm.model.base import BaseTextFile, BaseSet
+from fylm.model.image_slice import ImageSlice
 from fylm.service.errors import terminal_error
 import logging
 import numpy as np
@@ -25,27 +26,50 @@ class Kymograph(BaseTextFile):
         self._image_data = None
         self._image_slice = None
 
-    def allocate_memory(self, frame_count, channel_width):
+    def allocate_memory(self, frame_count):
         """
         Creates an empty matrix - this is faster and easier than appending rows to an existing matrix every time more
         data comes in.
 
         :param frame_count:         the number of images in the image stack (corresponds to kymograph height)
-        :param channel_width:       the size of the channel (corresponds to kymograph width)
 
         """
-        self._image_data = np.zeros((frame_count, channel_width))
+        self._image_data = np.zeros((frame_count, self.width))
 
-    def add_line(self, image_slice, time_index):
+    @property
+    def width(self):
+        """
+        The width of the kymograph image in pixels. Should be the length of the channel from the notch to the end of the catch channel.
+
+        """
+        return self._image_slice.width
+
+    def add_line(self, time_index):
         """
         Takes an image slice, extracts several lines from it, averages them, and appends them to the growing kymograph.
 
         """
-        width = image_slice.image_data.shape[1]
-        self._image_data[time_index, 0: width + 1] = image_slice.average_around_center
+        width = self._image_slice.image_data.shape[1]
+        self._image_data[time_index, 0: width + 1] = self._image_slice.average_around_center
 
-    def set_location(self, location):
-        self._image_slice =
+    def set_location(self, notch, tube):
+        """
+        Takes the human-provided locations of the notch and tube of a catch channel and instantiates an ImageSlice object,
+        which will allow us to capture images of the channel in each frame of the image data.
+
+        :param notch:   fylm.model.coordinates.Coordinates()
+        :param tube:    fylm.model.coordinates.Coordinates()
+
+        """
+        width = tube.x - notch.x
+        height = notch.y - tube.y
+        fliplr = width < 0
+        top_left_y = tube.y
+        if not fliplr:
+            top_left_x = notch.x
+        else:
+            top_left_x = tube.x
+        self._image_slice = ImageSlice(top_left_x, top_left_y, width, height, fliplr)
 
     def load(self, data):
         pass

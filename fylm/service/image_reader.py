@@ -27,19 +27,35 @@ class ImageReader(object):
         self._registration_set = RegistrationSet(experiment)
         self._rotation_set = RotationSet(experiment)
         self._timestamp_set = TimestampSet(experiment)
+        self._timepoint = None
+        self._nd2 = None
 
         set_service = BaseSetService()
         for model_set in (self._registration_set, self._rotation_set, self._timestamp_set):
             set_service.load_existing_models(model_set)
 
+    @property
+    def timepoint(self):
+        return self._timepoint
+
+    @timepoint.setter
+    def timepoint(self, value):
+        self._timepoint = int(value)
+        self._nd2 = None
+
+    @property
+    def nd2(self):
+        if self._nd2 is None:
+            filename = self._experiment.get_nd2_from_timepoint(self._timepoint)
+            self._nd2 = Nd2(filename)
+        return self._nd2
+
     def get_image(self, index, timepoint, channel="", z_level=1):
-        # TODO: We should look up timepoint based on index
-        filename = self._experiment.get_nd2_from_timepoint(timepoint)
-        nd2 = Nd2(filename)
+        self._timepoint = timepoint
         rotation_offset = self._rotation_set.existing[index].offset
         dx, dy = next(self._registration_set.get_data(self.field_of_view))
         timestamp = next(self._timestamp_set.get_data(self.field_of_view))
-        raw_image = nd2.get_image(index, self.field_of_view, channel, z_level)
+        raw_image = self.nd2.get_image(index, self.field_of_view, channel, z_level)
         image = Image(raw_image.data, rotation_offset, dx, dy, timestamp)
         return image
 
@@ -53,19 +69,13 @@ class ImageReader(object):
 
     def __iter__(self):
         """
-        Provides image sets for all available data in order.
+        Provides image sets for a single timepoint.
 
         """
-        for timepoint, rotation_offset in zip(self._experiment.timepoints, self._rotation_set.existing):
-            filename = self._experiment.get_nd2_from_timepoint(timepoint)
-            try:
-                nd2 = Nd2(filename)
-            except Exception as e:
-                log.warn("Skipping missing ND2: %s" % filename)
-                continue
+        for rotation_offset in self._rotation_set.existing:
             registration_data = self._registration_set.get_data(self.field_of_view)
             timestamp_data = self._timestamp_set.get_data(self.field_of_view)
-            for nd2_image_set, registration_offset, timestamp in izip(nd2.image_sets(self.field_of_view - 1),
+            for nd2_image_set, registration_offset, timestamp in izip(self.nd2.image_sets(self.field_of_view - 1),
                                                                       registration_data,
                                                                       timestamp_data):
                 image_set = FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset, timestamp)
