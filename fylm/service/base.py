@@ -36,7 +36,7 @@ class BaseSetService(BaseService):
         """
         raise NotImplemented
 
-    def save(self, model_set):
+    def save_text(self, model_set):
         """
         Takes a model set, calculates any values that need to be calculated, and writes them to disk.
 

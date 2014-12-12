@@ -12,20 +12,28 @@ class Activity(object):
     def __init__(self, experiment):
         self._experiment = experiment
 
-    def _calculate_and_save(self, SetModel, Service):
+    def _calculate_and_save_text(self, SetModel, Service):
         set_model = SetModel(self._experiment)
         service = Service(self._experiment)
         service.find_current(set_model)
-        service.save(set_model)
+        service.save_text(set_model)
 
     def calculate_rotation_offset(self):
-        self._calculate_and_save(RotationSet, RotationSetService)
+        self._calculate_and_save_text(RotationSet, RotationSetService)
 
     def extract_timestamps(self):
-        self._calculate_and_save(TimestampSet, TimestampSetService)
+        self._calculate_and_save_text(TimestampSet, TimestampSetService)
 
     def calculate_registration(self):
-        self._calculate_and_save(RegistrationSet, RegistrationSetService)
+        self._calculate_and_save_text(RegistrationSet, RegistrationSetService)
 
     def input_channel_locations(self):
-        self._calculate_and_save(LocationSet, LocationSetService)
+        self._calculate_and_save_text(LocationSet, LocationSetService)
+
+    def create_kymographs(self):
+        """
+        We can't use _calulate_and_save() because it would be inefficient to iterate
+        over the entire image stack for each channel.
+
+        """
+        pass
