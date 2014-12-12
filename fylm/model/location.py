@@ -1,5 +1,6 @@
 from fylm.model.base import BaseFile, BaseSet
 from fylm.model.coordinates import Coordinates
+from fylm.model.constants import Constants
 from fylm.service.errors import terminal_error
 import logging
 import re
@@ -27,9 +28,6 @@ class LocationSet(BaseSet):
         for field_of_view in self._fields_of_view:
             model = self._model()
             model.field_of_view = field_of_view
-            # Since we get catch channel coordinates from the very first frame of each field of view,
-            # we only use time point 1
-            model.timepoint = 1
             model.base_path = self.base_path
             yield model
 
@@ -60,6 +58,11 @@ class Location(BaseFile):
                                            (?P<tube_x>\d+\.\d+)\s
                                            (?P<tube_y>\d+\.\d+)""", re.VERBOSE)
         self._skipped_regex = re.compile(r"""^(?P<channel_number>\d+) skipped""")
+
+    @property
+    def filename(self):
+        # This is just the default filename and it won't always be valid.
+        return "fov%s.txt" % self.field_of_view
 
     @property
     def top_left(self):
@@ -117,7 +120,7 @@ class Location(BaseFile):
 
     @property
     def lines(self):
-        if len(self._channels) != 28:
+        if len(self._channels) != Constants.NUM_CATCH_CHANNELS:
             log.warn("Invalid number of channels: %s" % len(self._channels))
         data = iter(self.data)
         top_left, bottom_right = next(data)
