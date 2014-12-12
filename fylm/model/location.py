@@ -59,6 +59,12 @@ class Location(BaseTextFile):
                                            (?P<tube_y>\d+\.\d+)""", re.VERBOSE)
         self._skipped_regex = re.compile(r"""^(?P<channel_number>\d+) skipped""")
 
+    def skip_remaining(self):
+        # offset by one to give channel numbers 1-28 instead of 0-27
+        for channel_number in range(1, Constants.NUM_CATCH_CHANNELS + 1):
+            if channel_number not in self._channels.keys():
+                self.skip_channel(channel_number)
+
     @property
     def filename(self):
         # This is just the default filename and it won't always be valid.

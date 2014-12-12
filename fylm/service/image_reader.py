@@ -21,7 +21,7 @@ class ImageReader(object):
     """
     def __init__(self, experiment, register_images=True, rotate_images=True):
         self._experiment = experiment
-        self._field_of_view = 1
+        self._field_of_view = None
         self._register_images = register_images
         self._rotate_images = rotate_images
         self._registration_set = RegistrationSet(experiment)

@@ -27,7 +27,7 @@ class ExactChannelFinder(HumanInteractor):
         self._height_margin = 30
         self._image = image
         # dynamic variables
-        self._location_set_model = location_model
+        self._location_model = location_model
         self._current_channel_number = 1
         self._done = False
         while not self._done:
@@ -62,26 +62,26 @@ class ExactChannelFinder(HumanInteractor):
             self._remove_last_point()
 
     def _on_key_press(self, human_input):
-        if human_input.key == 'q':
+        if human_input.key == 'w':
+            self._location_model.skip_remaining()
             self._done = True
             self._clear()
         elif human_input.key == 'enter' and len(self._coordinates) == 2:
             self._handle_results()
             self._increment_channel()
             self._clear()
-
         elif human_input.key == 'escape':
             self._handle_results()
             self._clear()
             self._increment_channel()
-
         elif human_input.key == 'left':
-            self._clear()
-            self._decrement_channel()
-
+            if not self._coordinates:
+                self._clear()
+                self._decrement_channel()
         elif human_input.key == 'right':
-            self._clear()
-            self._increment_channel()
+            if not self._coordinates:
+                self._clear()
+                self._increment_channel()
 
     def _decrement_channel(self):
         if self._current_channel_number == 1:
@@ -103,9 +103,9 @@ class ExactChannelFinder(HumanInteractor):
         if self._coordinates:
             notch = self._current_image_slice.get_parent_coordinates(self._coordinates[0])
             tube = self._current_image_slice.get_parent_coordinates(self._coordinates[1])
-            self._location_set_model.set_channel_location(self._current_channel_number, notch.x, notch.y, tube.x, tube.y)
+            self._location_model.set_channel_location(self._current_channel_number, notch.x, notch.y, tube.x, tube.y)
         else:
-            self._location_set_model.skip_channel(self._current_channel_number)
+            self._location_model.skip_channel(self._current_channel_number)
         self._clear()
 
     def _start(self):
@@ -117,7 +117,7 @@ class ExactChannelFinder(HumanInteractor):
         plt.show()
 
     def _draw_existing_data(self):
-        coordinates = self._location_set_model.get_channel_location(self._current_channel_number)
+        coordinates = self._location_model.get_channel_location(self._current_channel_number)
         if coordinates == "skipped":
             # draw an X
             pass
