@@ -1,4 +1,4 @@
-from fylm.model.base import BaseFile, BaseSet
+from fylm.model.base import BaseTextFile, BaseSet
 from fylm.model.coordinates import Coordinates
 from fylm.model.constants import Constants
 from fylm.service.errors import terminal_error
@@ -32,7 +32,7 @@ class LocationSet(BaseSet):
             yield model
 
 
-class Location(BaseFile):
+class Location(BaseTextFile):
     """
     Models the output file that contains the translational adjustments needed for all images in a stack.
 

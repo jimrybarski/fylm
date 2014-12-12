@@ -1,4 +1,4 @@
-from fylm.model.base import BaseFile, BaseSet
+from fylm.model.base import BaseTextFile, BaseSet
 
 
 class RotationSet(BaseSet):
@@ -11,7 +11,7 @@ class RotationSet(BaseSet):
         self._model = Rotation
 
 
-class Rotation(BaseFile):
+class Rotation(BaseTextFile):
     """
     Models the output file that contains the rotational adjustment required for all images in a stack.
 

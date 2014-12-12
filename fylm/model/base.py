@@ -1,20 +1,17 @@
 from abc import abstractproperty, abstractmethod
+import skimage.io
 import re
 
 
-class BaseFile(object):
+class BaseResult(object):
+    """
+    Models a file we use to store intermediate and final analyses.
+
+    """
     def __init__(self):
         self.base_path = None
         self.timepoint = None
         self.field_of_view = None
-
-    @abstractproperty
-    def lines(self):
-        """
-        Yields lines of text that should be written to the file.
-
-        """
-        raise NotImplemented
 
     @property
     def path(self):
@@ -26,7 +23,7 @@ class BaseFile(object):
         return "tp%s-fov%s.txt" % (self.timepoint, self.field_of_view)
 
     @abstractmethod
-    def load(self, data):
+    def load(self):
         """
         Populates some or all of the model's attributes from a text stream.
 
@@ -43,6 +40,41 @@ class BaseFile(object):
         Data is returned in the order it was obtained in the experiment.
 
         """
+        raise NotImplemented
+
+
+class BaseTextFile(BaseResult):
+    """
+    Models a text file that stores results.
+
+    """
+    @abstractproperty
+    def lines(self):
+        """
+        Yields lines of text that should be written to the file.
+
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def load(self, *args):
+        raise NotImplemented
+
+    @abstractproperty
+    def data(self):
+        raise NotImplemented
+
+
+class BaseImage(BaseResult):
+    def load(self):
+        """
+        Reads the image from disk and loads it as a 2D numpy array.
+
+        """
+        return skimage.io.imread(self.path)
+
+    @abstractproperty
+    def data(self):
         raise NotImplemented
 
 
