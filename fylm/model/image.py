@@ -50,4 +50,5 @@ class Image(object):
 
         """
         image_data = transform.rotate(self._raw_image_data, self._rotation_offset)
-        return img_as_uint(transform.warp(image_data, self._corrective_transform))
+        image = transform.warp(image_data, self._corrective_transform)
+        return image

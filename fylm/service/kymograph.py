@@ -21,7 +21,7 @@ class KymographSet(BaseSetService):
         self._name = "kymographs"
 
     def save(self, kymograph_model_set):
-        image_reader = ImageReader(self._experiment)
+
         # Get the channel locations so we can create ImageSlice objects to help extract lines for kymographs.
         location_set = LocationSet(self._experiment)
         location_service = LocationSetService(self._experiment)
@@ -33,19 +33,20 @@ class KymographSet(BaseSetService):
         did_work = False
         for location_model in location_set.existing:
             log.debug("Making kymographs for field of view %s" % location_model.field_of_view)
-            image_reader.field_of_view = location_model.field_of_view
+
             # Each location model contains data for 28 channels in one field of view
             available_kymographs = [kymo for kymo in self.set_kymograph_locations(location_model, kymograph_model_set)]
 
             for timepoint in self._experiment.timepoints:
-                log.debug("Making kymographs for timepoint %s" % timepoint)
+                log.info("Making kymographs for timepoint %s" % timepoint)
+                image_reader = ImageReader(self._experiment)
+                image_reader.field_of_view = location_model.field_of_view
                 image_reader.timepoint = timepoint
                 # Now that we known the width and height of the kymographs, we can allocate memory for the images
-                log.debug("Number of kymographs to make: %s" % len(available_kymographs))
                 did_work = self.allocate_kymographs(available_kymographs, image_reader)
 
                 for time_index, image_set in enumerate(image_reader):
-                    log.debug("Adding lines for kymographs from time index %s" % time_index)
+                    log.info("Adding lines for kymographs from time index %s" % time_index)
                     image = image_set.get_image(channel="", z_level=0)
 
                     for kymograph_model in available_kymographs:

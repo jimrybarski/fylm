@@ -4,6 +4,7 @@ from fylm.model.constants import Constants
 import logging
 import numpy as np
 import re
+import skimage.io
 
 log = logging.getLogger("fylm")
 
@@ -69,6 +70,7 @@ class Kymograph(BaseImage):
         Takes an image slice, extracts several lines from it, averages them, and appends them to the growing kymograph.
 
         """
+        log.debug("Adding line to kymograph for time index %s" % time_index)
         width = self._image_slice.image_data.shape[1]
         self._image_data[time_index, 0: width + 1] = self._image_slice.average_around_center
 
