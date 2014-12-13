@@ -82,6 +82,7 @@ class Location(BaseTextFile):
         try:
             header = data[0]
             self._top_left, self._bottom_right = self._parse_header(header)
+
             for line in data[1:]:
                 channel_number, locations = self._parse_line(line)
                 self._channels[channel_number] = locations

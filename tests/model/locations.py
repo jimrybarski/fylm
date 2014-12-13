@@ -8,7 +8,7 @@ class LocationModelTests(unittest.TestCase):
         self.location = Location()
 
     def test_load(self):
-        data = iter(["3.444 7.888 9.888 24.222", "1 skipped", "2 4.444 4.444 8.888 12.222", "3 skipped", "4 skipped"])
+        data = ["3.444 7.888 9.888 24.222", "1 skipped", "2 4.444 4.444 8.888 12.222", "3 skipped", "4 skipped"]
         self.location.load(data)
         expected = {1: "skipped",
                     2: (Coordinates(4.444, 4.444), Coordinates(8.888, 12.222)),
