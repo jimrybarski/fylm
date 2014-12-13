@@ -73,6 +73,7 @@ class Kymograph(BaseImage):
         width = self._image_slice.image_data.shape[1]
         self._image_data[time_index, 0: width + 1] = self._image_slice.average_around_center
 
+
     def set_location(self, notch, tube):
         """
         Takes the human-provided locations of the notch and tube of a catch channel and instantiates an ImageSlice object,
