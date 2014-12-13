@@ -51,17 +51,12 @@ class KymographSet(BaseSetService):
 
                     for kymograph_model in available_kymographs:
                         if kymograph_model.timepoint == timepoint:
-                            log.debug("%s %s %s" % (kymograph_model.channel_number,
-                                                    kymograph_model.field_of_view,
-                                                    kymograph_model.timepoint))
                             kymograph_model.set_image(image)
                             kymograph_model.add_line(time_index)
 
                 for kymograph_model in available_kymographs:
                     if kymograph_model.timepoint == timepoint:
                         log.debug("Saving kymograph %s" % kymograph_model.channel_number)
-                        skimage.io.imshow(kymograph_model.data)
-                        skimage.io.show()
                         skimage.io.imsave(kymograph_model.path, kymograph_model.data)
 
         if not did_work:
