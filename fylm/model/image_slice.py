@@ -75,8 +75,7 @@ class ImageSlice(object):
 
         """
         top_row, bottom_row = self._central_rows
-        middle_section = self._image_data[top_row:bottom_row, :]
-        return np.mean(middle_section, axis=0)
+        return self._image_data[top_row:bottom_row, :]
 
     @property
     def _central_rows(self):

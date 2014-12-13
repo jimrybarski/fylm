@@ -17,7 +17,7 @@ class KymographSet(BaseSet):
     def __init__(self, experiment):
         super(KymographSet, self).__init__(experiment, "kymograph")
         self._model = Kymograph
-        self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
+        self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.png""")
 
     @property
     def _expected(self):
