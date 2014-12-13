@@ -75,10 +75,16 @@ class ImageReader(object):
         Provides image sets for a single timepoint.
 
         """
-        for rotation_offset in self._rotation_set.existing:
-            registration_data = self._registration_set.get_data(self.field_of_view)
-            timestamp_data = self._timestamp_set.get_data(self.field_of_view)
-            for nd2_image_set, registration_offset, (time_index, timestamp) in izip(self.nd2.image_sets(self.field_of_view - 1),
-                                                                                    registration_data,
-                                                                                    timestamp_data):
-                yield FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset, time_index, timestamp)
+        for ro in self._rotation_set.existing:
+            if ro.field_of_view == self.field_of_view:
+                rotation_offset = ro
+                break
+        log.debug("Rotation offset: %s" % rotation_offset.offset)
+        registration_data = self._registration_set.get_data(self.field_of_view)
+        timestamp_data = self._timestamp_set.get_data(self.field_of_view)
+        log.debug("Field of view: %s" % self.field_of_view)
+        for nd2_image_set, registration_offset, (time_index, timestamp) in izip(self.nd2.image_sets(self.field_of_view),
+                                                                                registration_data,
+                                                                                timestamp_data):
+            log.debug("ImageReader time index, timestamp: %s, %s" % (time_index, timestamp))
+            yield FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset, time_index - 1, timestamp)

@@ -43,7 +43,7 @@ class ImageSlice(object):
 
         y_slice_coords = max(self._top_left.y - y_margin, 0), min(self._top_left.y + self._height + y_margin, parent_height)
         x_slice_coords = max(self._top_left.x, 0), min(self._top_left.x + self._width, parent_width)
-        image_data_slice = image_data[y_slice_coords[0]:y_slice_coords[1], x_slice_coords[0]:x_slice_coords[1]]
+        image_data_slice = image_data[y_slice_coords[0]:y_slice_coords[1], min(x_slice_coords):max(x_slice_coords)]
         if self._fliplr:
             self._image_data = np.fliplr(image_data_slice)
         else:
