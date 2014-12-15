@@ -85,9 +85,9 @@ class BaseSet(object):
         self._existing = []
         # The default regex assumes the only distinguishing features are timepoints and fields of view.
         self._regex = re.compile(r"""tp\d+-fov\d+.txt""")
-        # We use 1-based indexing for fields of view
-        self._fields_of_view = [fov + 1 for fov in range(experiment.field_of_view_count)]
-        # Timepoints are already 1-based since they come from the ND2 filenames
+        # We use 0-based indexing for fields of view
+        self._fields_of_view = [fov for fov in range(experiment.field_of_view_count)]
+        # Timepoints are 1-based since they come from the ND2 filenames
         self._timepoints = [timepoint for timepoint in experiment.timepoints]
         # The BaseFile model that this set contains
         self._model = None

@@ -3,7 +3,7 @@ from fylm.service.base import BaseSetService
 import nd2reader
 import logging
 from skimage.feature.phase_correlate import phase_correlate
-
+import skimage.io
 
 log = logging.getLogger("fylm")
 
@@ -32,10 +32,10 @@ class RegistrationSet(BaseSetService):
         nd2_filename = self._experiment.get_nd2_from_timepoint(registration_model.timepoint)
         nd2 = nd2reader.Nd2(nd2_filename)
         # gets the first in-focus image from the first timepoint in the stack
-        base_image = nd2.get_image(0, registration_model.field_of_view, "", 1)
-        for image_set in nd2.image_sets(field_of_view=registration_model.field_of_view - 1,
+        base_image = nd2.get_image(0, registration_model.field_of_view, "", 0)
+        for image_set in nd2.image_sets(field_of_view=registration_model.field_of_view,
                                         channels=[""],
-                                        z_levels=[1]):
+                                        z_levels=[0]):
             image = [i for i in image_set][0]
             dx, dy = self._determine_registration_offset(base_image.data, image.data)
             registration_model.add(dx, dy)

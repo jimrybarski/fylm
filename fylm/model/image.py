@@ -53,7 +53,7 @@ class Image(object):
 
         """
         log.debug("Rotating")
-        image_data = transform.rotate(self._raw_image_data, self._rotation_offset)
+        image = transform.warp(self._raw_image_data, self._corrective_transform)
+        image_data = transform.rotate(image, self._rotation_offset)
         log.debug("Registering")
-        image = transform.warp(image_data, self._corrective_transform)
-        return image
+        return image_data
