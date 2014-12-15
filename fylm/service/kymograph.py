@@ -45,27 +45,37 @@ class KymographSet(BaseSetService):
                 # Now that we known the width and height of the kymographs, we can allocate memory for the images
                 did_work = self.allocate_kymographs(available_kymographs, image_reader)
 
+                # only iterate over this timepoint's images if there is at least one channel it
+                for kymograph_model in available_kymographs:
+                    if kymograph_model.timepoint == timepoint:
+                        # at least one catch channel has data
+                        break
+                else:
+                    # skip this timepoint
+                    continue
+
                 for time_index, image_set in enumerate(image_reader):
-                    # log.info("Adding lines for kymographs from time index %s" % time_index)
+                    log.info("Adding lines for kymographs from time index %s" % time_index)
                     image = image_set.get_image(channel="", z_level=0)
 
                     for kymograph_model in available_kymographs:
                         if kymograph_model.timepoint == timepoint:
                             kymograph_model.set_image(image)
                             kymograph_model.add_line(time_index)
-
+                log.debug("Should be saving kymograph")
+                log.debug("Available: %s" % available_kymographs)
                 for kymograph_model in available_kymographs:
+                    log.debug("Kymo tp, tp: %s %s" % (kymograph_model.timepoint, timepoint))
                     if kymograph_model.timepoint == timepoint:
                         log.debug("Saving kymograph %s" % kymograph_model.channel_number)
                         skimage.io.imsave(kymograph_model.path, kymograph_model.data)
-
+                        kymograph_model.free_memory()
         if not did_work:
             log.debug("All %s have been created." % self._name)
 
     @staticmethod
     def set_kymograph_locations(location_model, kymograph_model_set):
         for kymograph_model in kymograph_model_set.remaining:
-                log.debug("Existing kymo FOV: %s" % kymograph_model.field_of_view)
                 # Each kymograph contains data for one channel in one field of view
                 if kymograph_model.field_of_view != location_model.field_of_view:
                     continue
@@ -82,9 +92,7 @@ class KymographSet(BaseSetService):
     def allocate_kymographs(available_kymographs, image_reader):
         did_work = False
         for kymograph_model in available_kymographs:
-            log.debug("Field of view: %s" % kymograph_model.field_of_view)
             did_work = True
             # create a numpy array with as many rows as images (and as wide as the individual channel)
-            log.debug("Allocating %s rows" % len(image_reader))
             kymograph_model.allocate_memory(len(image_reader))
         return did_work

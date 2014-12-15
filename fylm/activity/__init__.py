@@ -8,6 +8,7 @@ from fylm.service.location import LocationSet as LocationSetService
 from fylm.model.location import LocationSet
 from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.model.kymograph import KymographSet
+import itertools
 
 
 class Activity(object):
@@ -41,3 +42,20 @@ class Activity(object):
         kymograph_service = KymographSetService(self._experiment)
         kymograph_set = KymographSet(self._experiment)
         kymograph_service.save(kymograph_set)
+
+    def fov_movie(self):
+        from fylm.service.image_reader import ImageReader
+        from skimage import io
+        reader = ImageReader(self._experiment)
+        reader.field_of_view = 1
+        reader.timepoint = 1
+        i = 0
+        for image_set in reader:
+            image = image_set.get_image()
+            print(image.shape)
+            name = "/home/jim/Desktop/experiments/141111/%s.png" % i
+            print(name)
+            io.imsave(name, image)
+            i += 1
+            if i > 100:
+                break

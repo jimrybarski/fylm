@@ -4,7 +4,6 @@ from fylm.model.constants import Constants
 import logging
 import numpy as np
 import re
-import skimage.io
 
 log = logging.getLogger("fylm")
 
@@ -53,6 +52,14 @@ class Kymograph(BaseImage):
 
         """
         self._image_data = np.zeros((frame_count, self.width))
+
+    def free_memory(self):
+        """
+        These models get quite large and we can lower our memory profile by deleting the image
+        after it has been saved to disk.
+
+        """
+        self._image_data = None
 
     def set_image(self, image):
         self._image_slice.set_image(image)

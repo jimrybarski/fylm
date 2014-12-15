@@ -1,6 +1,5 @@
 from fylm.model.coordinates import Coordinates
 import numpy as np
-import skimage.io
 
 
 class ImageSlice(object):

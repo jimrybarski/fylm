@@ -1,5 +1,7 @@
 from skimage import transform
-from skimage import img_as_uint
+import logging
+
+log = logging.getLogger("fylm")
 
 
 class ImageSet(object):
@@ -39,8 +41,9 @@ class ImageSet(object):
 class Image(object):
     def __init__(self, raw_image_data, rotation_offset, dx, dy, timestamp):
         self._raw_image_data = raw_image_data
-        self._rotation_offset = rotation_offset
+        self._rotation_offset = -rotation_offset
         self._corrective_transform = transform.AffineTransform(translation=(dx, dy))
+        log.debug("Rotation: %s, Registration: %s %s" % (rotation_offset, dx, dy))
         self._timestamp = timestamp
 
     @property
@@ -49,6 +52,8 @@ class Image(object):
         Returns rotation- and registration-corrected image.
 
         """
+        log.debug("Rotating")
         image_data = transform.rotate(self._raw_image_data, self._rotation_offset)
+        log.debug("Registering")
         image = transform.warp(image_data, self._corrective_transform)
         return image

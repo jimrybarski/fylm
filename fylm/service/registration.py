@@ -31,7 +31,7 @@ class RegistrationSet(BaseSetService):
         # It probably doesn't matter though and I like simple things
         nd2_filename = self._experiment.get_nd2_from_timepoint(registration_model.timepoint)
         nd2 = nd2reader.Nd2(nd2_filename)
-        # gets the first in-focus image from the first timpoint in the stack
+        # gets the first in-focus image from the first timepoint in the stack
         base_image = nd2.get_image(0, registration_model.field_of_view, "", 1)
         for image_set in nd2.image_sets(field_of_view=registration_model.field_of_view - 1,
                                         channels=[""],
