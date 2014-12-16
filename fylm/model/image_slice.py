@@ -85,7 +85,7 @@ class ImageSlice(object):
         row_count = self._image_data.shape[0]
         odd_adjustment = row_count % 2  # we only want integers so we make odd numbers even temporarily
         center_row = (row_count - odd_adjustment) / 2
-        return center_row, center_row + 1
+        return center_row - 2, center_row + 3
 
     @property
     def image_data(self):

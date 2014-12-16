@@ -113,5 +113,4 @@ class Kymograph(BaseImage):
 
     @property
     def filename(self):
-        # This is just the default filename and it won't always be valid.
         return "tp%s-fov%s-channel%s.png" % (self.timepoint, self.field_of_view, self.channel_number)

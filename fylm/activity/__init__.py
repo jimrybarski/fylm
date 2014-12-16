@@ -47,7 +47,7 @@ class Activity(object):
         from fylm.service.image_reader import ImageReader
         from skimage import io
         reader = ImageReader(self._experiment)
-        reader.field_of_view = 1
+        reader.field_of_view = 0
         reader.timepoint = 2
         i = 0
         for image_set in reader:
@@ -56,5 +56,3 @@ class Activity(object):
             print(name)
             io.imsave(name, image)
             i += 1
-            if i > 20:
-                break

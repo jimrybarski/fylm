@@ -35,7 +35,7 @@ class ImageReader(object):
             set_service.load_existing_models(model_set)
 
     def __len__(self):
-        return self.nd2.timepoint_count
+        return self.nd2.time_index_count
 
     @property
     def timepoint(self):
