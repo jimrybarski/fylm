@@ -48,14 +48,13 @@ class Activity(object):
         from skimage import io
         reader = ImageReader(self._experiment)
         reader.field_of_view = 1
-        reader.timepoint = 1
+        reader.timepoint = 2
         i = 0
         for image_set in reader:
-            image = image_set.get_image()
-            print(image.shape)
+            image = image_set.get_image(channel="", z_level=0)
             name = "/home/jim/Desktop/experiments/141111/%s.png" % i
             print(name)
             io.imsave(name, image)
             i += 1
-            if i > 100:
+            if i > 20:
                 break

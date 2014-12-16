@@ -42,8 +42,7 @@ class Image(object):
     def __init__(self, raw_image_data, rotation_offset, dx, dy, timestamp):
         self._raw_image_data = raw_image_data
         self._rotation_offset = -rotation_offset
-        self._corrective_transform = transform.AffineTransform(translation=(dx, dy))
-        log.debug("Rotation: %s, Registration: %s %s" % (rotation_offset, dx, dy))
+        self._corrective_transform = transform.AffineTransform(translation=(-dx, -dy))
         self._timestamp = timestamp
 
     @property
@@ -52,8 +51,6 @@ class Image(object):
         Returns rotation- and registration-corrected image.
 
         """
-        log.debug("Rotating")
         image = transform.warp(self._raw_image_data, self._corrective_transform)
         image_data = transform.rotate(image, self._rotation_offset)
-        log.debug("Registering")
         return image_data

@@ -3,7 +3,6 @@ from fylm.model.location import LocationSet
 from fylm.service.location import LocationSet as LocationSetService
 from fylm.service.image_reader import ImageReader
 import skimage.io
-import nd2reader
 import logging
 
 
@@ -56,16 +55,13 @@ class KymographSet(BaseSetService):
 
                 for time_index, image_set in enumerate(image_reader):
                     log.info("Adding lines for kymographs from time index %s" % time_index)
-                    image = image_set.get_image(channel="", z_level=0)
+                    image = image_set.get_image(channel="", z_level=1)
 
                     for kymograph_model in available_kymographs:
                         if kymograph_model.timepoint == timepoint:
                             kymograph_model.set_image(image)
                             kymograph_model.add_line(time_index)
-                log.debug("Should be saving kymograph")
-                log.debug("Available: %s" % available_kymographs)
                 for kymograph_model in available_kymographs:
-                    log.debug("Kymo tp, tp: %s %s" % (kymograph_model.timepoint, timepoint))
                     if kymograph_model.timepoint == timepoint:
                         log.debug("Saving kymograph %s" % kymograph_model.channel_number)
                         skimage.io.imsave(kymograph_model.path, kymograph_model.data)

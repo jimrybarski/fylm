@@ -53,14 +53,13 @@ class ImageReader(object):
             self._nd2 = Nd2(filename)
         return self._nd2
 
-    def get_image(self, index, timepoint, channel="", z_level=1):
-        self._timepoint = timepoint
+    def get_image(self, index, channel="", z_level=1):
         rotation_offset = self._rotation_set.existing[index].offset
         dx, dy = next(self._registration_set.get_data(self.field_of_view))
         timestamp = next(self._timestamp_set.get_data(self.field_of_view))
         raw_image = self.nd2.get_image(index, self.field_of_view, channel, z_level)
-        image = Image(raw_image.data, rotation_offset, dx, dy, timestamp)
-        return image
+        return Image(raw_image.data, rotation_offset, dx, dy, timestamp)
+
 
     @property
     def field_of_view(self):
