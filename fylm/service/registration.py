@@ -72,5 +72,5 @@ class RegistrationSet(BaseSetService):
         #
         # # return the average of the left and right phase correlation corrections
         # return (left_dx + right_dx) / 2.0, (left_dy + right_dy) / 2.0
-        dy, dx = phase_correlate(base_image, uncorrected_image, upsample_factor=20)[:2]
+        dy, dx = phase_correlate(base_image[100:, :], uncorrected_image[100:, :], upsample_factor=20)[:2]
         return dy, dx

@@ -58,6 +58,10 @@ class KymographAnnotationSet(BaseSet):
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
 
     def get_annotation_group(self, channel_number):
+        """
+        Gets the annotations for a field of view for each timepoint.
+
+        """
         group = []
         for model in self.existing:
             if model.channel_number == channel_number:
@@ -96,6 +100,12 @@ class KymographAnnotation(BaseTextFile):
         self._lines = {}
         self._state = None
 
+    @property
+    def lines(self):
+        yield self.state
+        for index, coordinates in sorted(self._lines.items()):
+            yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in coordinates])
+                
     def load(self, data):
         try:
             self._state = data[0]
@@ -103,7 +113,7 @@ class KymographAnnotation(BaseTextFile):
                 # We have some annotations already
                 for line in data[1:]:
                     self._parse_line(line)
-        except Exception:
+        except Exception as e:
             terminal_error("Could not parse line for Channel Locator because of: %s" % e)
 
     def _parse_line(self, line):
@@ -140,6 +150,26 @@ class KymographAnnotation(BaseTextFile):
     @channel_number.setter
     def channel_number(self, value):
         self._channel_number = int(value)
+
+    @property
+    def state(self):
+        return self._state if self._state is not None else "active"
+
+    @state.setter
+    def state(self, value):
+        """
+        active:     the data in this kymograph is all valid and the next kymograph
+                    should be analyzed
+        dying:      the cell becomes invalid at some point in this kymograph (either
+                    it dies or is ejected)
+        inactive:   the cell is known to not be valid in this kymograph (it died or
+                    was ejected in a previous kymograph, or the catch channel was
+                    empty or the cell was dead from the very beginning)
+
+        :type value:    str
+        """
+        assert value in ("active", "dying", "inactive")
+        self._state = value
 
     @property
     def filename(self):
