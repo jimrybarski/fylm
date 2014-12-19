@@ -23,12 +23,17 @@ class KymographAnnotationTests(unittest.TestCase):
         self.ka = KymographAnnotation()
 
     def test_lines(self):
-        self.ka._lines = {0: [Coordinates(x=1.2, y=3.4), Coordinates(x=1.4, y=3.5), Coordinates(6.7, 5.5)],
-                          1: [Coordinates(x=1.0, y=9.9), Coordinates(x=1.2, y=7.5), Coordinates(1.3, 4.5)]}
+        self.ka._annotations = {0: [Coordinates(x=1.2, y=3.4), Coordinates(x=1.4, y=3.5), Coordinates(6.7, 5.5)],
+                                1: [Coordinates(x=1.0, y=9.9), Coordinates(x=1.2, y=7.5), Coordinates(1.3, 4.5)]}
         lines = list(self.ka.lines)
         self.assertEqual(lines[0], "active")
         self.assertEqual(lines[1], "0 1.2,3.4 1.4,3.5 6.7,5.5")
         self.assertEqual(lines[2], "1 1.0,9.9 1.2,7.5 1.3,4.5")
 
-    def test_sanity_check(self):
-        # Convert data to lines, then convert back to data and compare
+    def test_load(self):
+        data = ["dying", "0 1.2,3.4 1.4,3.5 6.7,5.5", "1 1.0,9.9 1.2,7.5 1.3,4.5"]
+        self.ka.load(data)
+        self.assertEqual(self.ka.state, "dying")
+        self.assertListEqual(self.ka._annotations[0], [Coordinates(1.2, 3.4),
+                                                       Coordinates(1.4, 3.5),
+                                                       Coordinates(6.7, 5.5)])

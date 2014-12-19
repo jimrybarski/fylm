@@ -57,19 +57,6 @@ class KymographAnnotationSet(BaseSet):
         self._model = KymographAnnotation
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
 
-    def get_annotation_group(self, channel_number):
-        """
-        Gets the annotations for a field of view for each timepoint.
-
-        """
-        group = []
-        for model in self.existing:
-            if model.channel_number == channel_number:
-                group.append(model)
-        if not group:
-            log.warn("Empty kymograph annotation group!")
-        return group
-
     @property
     def _expected(self):
         """
@@ -96,25 +83,43 @@ class KymographAnnotation(BaseTextFile):
     def __init__(self):
         super(KymographAnnotation, self).__init__()
         self._channel_number = None
-        self._image_data = None
-        self._lines = {}
-        self._state = None
+        self._image_data = {}
+        self._annotations = {}  # index == timepoint
+        self._state = "active"
+        self._state_timepoint = 0
+
+    @property
+    def state(self):
+        return "%s %s" % (self._state, self._state_timepoint)
+
+    @state.setter
+    def state(self, value):
+        assert value[0] in ("active", "dies")
+        assert isinstance(value[1], int)
+        self._state = value[0]
+        self._state_timepoint = value[1]
 
     @property
     def lines(self):
         yield self.state
-        for index, coordinates in sorted(self._lines.items()):
-            yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in coordinates])
-                
+        for index, annotation in sorted(self._annotations.items()):
+            for coodinates in annotation.coordinates:
+                yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in coordinates])
+
     def load(self, data):
         try:
-            self._state = data[0]
+            self._state = self._parse_state(data[0])
             if len(data) > 1:
                 # We have some annotations already
                 for line in data[1:]:
                     self._parse_line(line)
         except Exception as e:
             terminal_error("Could not parse line for Channel Locator because of: %s" % e)
+
+    def _parse_state(self, line):
+        try:
+            state, state_timepoint = line.strip().split(" ")
+
 
     def _parse_line(self, line):
         try:
@@ -123,7 +128,7 @@ class KymographAnnotation(BaseTextFile):
         except:
             log.warn("Skipping invalid line: %s" % str(line))
         else:
-            self._lines[annotation.index] = annotation.coordinates
+            self._annotations[annotation.index] = annotation.coordinates
 
     def add_line(self, coordinates):
         """
@@ -133,11 +138,11 @@ class KymographAnnotation(BaseTextFile):
         :type coordinates:      list of fylm.model.coordinates.Coordinates()
 
         """
-        if not self._lines:
+        if not self._annotations:
             index = 0
         else:
-            index = max(self._lines.keys()) + 1
-        self._lines[index] = coordinates
+            index = max(self._annotations.keys()) + 1
+        self._annotations[index] = coordinates
 
     @property
     def data(self):
@@ -152,25 +157,5 @@ class KymographAnnotation(BaseTextFile):
         self._channel_number = int(value)
 
     @property
-    def state(self):
-        return self._state if self._state is not None else "active"
-
-    @state.setter
-    def state(self, value):
-        """
-        active:     the data in this kymograph is all valid and the next kymograph
-                    should be analyzed
-        dying:      the cell becomes invalid at some point in this kymograph (either
-                    it dies or is ejected)
-        inactive:   the cell is known to not be valid in this kymograph (it died or
-                    was ejected in a previous kymograph, or the catch channel was
-                    empty or the cell was dead from the very beginning)
-
-        :type value:    str
-        """
-        assert value in ("active", "dying", "inactive")
-        self._state = value
-
-    @property
     def filename(self):
-        return "tp%s-fov%s-channel%s.png" % (self.timepoint, self.field_of_view, self.channel_number)
+        return "fov%s-channel%s.png" % (self.field_of_view, self.channel_number)

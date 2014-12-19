@@ -1,9 +1,7 @@
-from fylm.model.constants import Constants
 from fylm.service.base import BaseSetService
 import nd2reader
 import logging
 from skimage.feature.phase_correlate import phase_correlate
-import skimage.io
 
 log = logging.getLogger("fylm")
 

@@ -25,7 +25,8 @@ class KymographSet(BaseSetService):
         location_set = LocationSet(self._experiment)
         location_service = LocationSetService(self._experiment)
         location_service.load_existing_models(location_set)
-        # Not all of the locations will necessarily be done at this point. So we take the set of kymographs that still need
+        # Not all of the locations will necessarily be done at this point.
+        # So we take the set of kymographs that still need
         # to be generated, then see if there is any location data available for them. If not, we just skip them for now.
 
         # Find the location model that corresponds to the field of view we're interested in

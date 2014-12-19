@@ -15,8 +15,10 @@ class KymographAnnotator(HumanInteractor):
     corner of the catch tube and the central trench). The location of the bottom right corner is inferred from this data.
 
     """
-    def __init__(self, location_model, image):
+    def __init__(self, annotation_model, image):
         super(KymographAnnotator, self).__init__()
+        self._annotation_model = annotation_model
+        self._image = image
         self._done = False
         while not self._done:
             self._start()
@@ -24,34 +26,53 @@ class KymographAnnotator(HumanInteractor):
                 self._reset()
 
     def _on_mouse_click(self, human_input):
-        if human_input.left_click and len(self._coordinates) < 2:
+        if human_input.left_click:
             self._add_point(human_input.coordinates.x, human_input.coordinates.y)
         if human_input.right_click:
             self._remove_last_point()
 
     def _on_key_press(self, human_input):
-        if human_input.key == 'w':
-            self._location_model.skip_remaining()
-            self._done = True
-            self._clear()
-        elif human_input.key == 'enter' and len(self._coordinates) == 2:
-            self._handle_results()
-            self._increment_channel()
-            self._clear()
-        elif human_input.key == 'escape':
-            self._handle_results()
-            self._clear()
-            self._increment_channel()
-        elif human_input.key == 'left':
-            if not self._coordinates:
-                self._clear()
-                self._decrement_channel()
-        elif human_input.key == 'right':
-            if not self._coordinates:
-                self._clear()
-                self._increment_channel()
+        actions = {"d": self._delete_last_line,
+                   "w": self._save_line,
+                   "enter": self._save_kymograph,
+                   "escape": self._clear,
+                   "left": self._previous_channel,
+                   "right": self._next_channel,
+                   "up": self._next_timepoint,
+                   "down": self._previous_timepoint
+                   }
+
+    def _delete_last_line(self):
+        raise NotImplemented
+
+    def _save_line(self):
+        self._annotation_model.skip_remaining()
+        self._done = True
+        self._clear()
+
+    def _save_kymograph(self):
+        self._handle_results()
+        self._increment_channel()
+        self._clear()
+
+    def _previous_channel(self):
+        self._clear()
+        self._decrement_channel()
+
+    def _next_channel(self):
+        self._clear()
+        self._increment_channel()
+
+    def _previous_timepoint(self):
+        self._clear()
+        self._decrement_timepoint()
+
+    def _next_timepoint(self):
+        self._clear()
+        self._increment_timepoint()
 
     def _decrement_channel(self):
+        # TODO: Add support for fields of view as well
         if self._current_channel_number == 1:
             self._current_channel_number = Constants.NUM_CATCH_CHANNELS
         else:
@@ -63,21 +84,24 @@ class KymographAnnotator(HumanInteractor):
         else:
             self._current_channel_number += 1
 
+    def _decrement_timepoint(self):
+        pass
+
+    def _increment_timepoint(self):
+        pass
+
     def _clear(self):
         self._erase_all_points()
         self._close()
 
     def _handle_results(self):
         if self._coordinates:
-            notch = self._current_image_slice.get_parent_coordinates(self._coordinates[0])
-            tube = self._current_image_slice.get_parent_coordinates(self._coordinates[1])
-            self._location_model.set_channel_location(self._current_channel_number, notch.x, notch.y, tube.x, tube.y)
-        else:
-            self._location_model.skip_channel(self._current_channel_number)
+            # do stuff
+            pass
         self._clear()
 
     def _start(self):
-        self._current_image_slice = self._get_image_slice()
+        self._current_kymograph = self._get_image_slice()
         self._fig.suptitle("Channel: " + str(self._current_channel_number), fontsize=20)
         self._ax.imshow(self._current_image_slice.image_data, cmap='gray')
         self._ax.autoscale(False)
