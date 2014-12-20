@@ -16,9 +16,10 @@ class KymographAnnotator(HumanInteractor):
     corner of the catch tube and the central trench). The location of the bottom right corner is inferred from this data.
 
     """
-    def __init__(self, annotation_model_set):
+    def __init__(self, annotation_model_set, kymograph_set):
         super(KymographAnnotator, self).__init__()
         self._annotation_model_set = annotation_model_set
+        self._kymograph_set = kymograph_set
         self._done = False
         while not self._done:
             self._start()
