@@ -1,4 +1,5 @@
 from fylm.service.base import BaseSetService
+import numpy as np
 import nd2reader
 import logging
 from skimage.feature.phase_correlate import phase_correlate
@@ -58,17 +59,17 @@ class RegistrationSet(BaseSetService):
         # a large amount of debris/yeast/bacteria/whatever shows up in the central trench, the registration
         # algorithm goes bonkers if it's considering that portion of the image.
         # Thus we separately find the registration for the left side and right side, and average them.
-        # left_base_section = base_image[:, base_width * 0.1: base_width * 0.3] * Constants.BRIGHTNESS_CORRECTION_FACTOR
-        # left_uncorrected = uncorrected_image[:, uncorrected_width * 0.1: uncorrected_width * 0.3]
-        # right_base_section = base_image[:, base_width * 0.7: base_width * 0.9] * Constants.BRIGHTNESS_CORRECTION_FACTOR
-        # right_uncorrected = uncorrected_image[:, uncorrected_width * 0.7: uncorrected_width * 0.9]
+        left_base_section = base_image[:, base_width * 0.1: base_width * 0.3]
+        left_uncorrected = uncorrected_image[:, uncorrected_width * 0.1: uncorrected_width * 0.3]
+        right_base_section = base_image[:, base_width * 0.7: base_width * 0.9]
+        right_uncorrected = uncorrected_image[:, uncorrected_width * 0.7: uncorrected_width * 0.9]
 
         # phase_correlate returns y, x instead of x, y, which is not the convention in scikit-image, so we reverse them
         # it also returns some error bars and other stuff we don't need, so we just take the first two items
-        # left_dy, left_dx = phase_correlate(left_base_section, left_uncorrected, upsample_factor=20)[:2]
-        # right_dy, right_dx = phase_correlate(right_base_section, right_uncorrected, upsample_factor=20)[:2]
+        left_dy, left_dx = phase_correlate(left_base_section, left_uncorrected, upsample_factor=20)[:2]
+        right_dy, right_dx = phase_correlate(right_base_section, right_uncorrected, upsample_factor=20)[:2]
         #
         # # return the average of the left and right phase correlation corrections
-        # return (left_dx + right_dx) / 2.0, (left_dy + right_dy) / 2.0
-        dy, dx = phase_correlate(base_image[100:, :], uncorrected_image[100:, :], upsample_factor=20)[:2]
-        return dy, dx
+        return (left_dx + right_dx) / 2.0, (left_dy + right_dy) / 2.0
+        # dy, dx = phase_correlate(base_image[100:, :], uncorrected_image[100:, :], upsample_factor=20)[:2]
+        # return dy, dx

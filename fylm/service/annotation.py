@@ -1,5 +1,5 @@
 from fylm.service.base import BaseSetService
-import nd2reader
+from fylm.service.interactor.annotation import KymographAnnotator
 import logging
 
 log = logging.getLogger("fylm")
@@ -16,4 +16,8 @@ class AnnotationSet(BaseSetService):
         self._name = "kymograph annotations"
 
     def save(self, annotation_model_set):
-        pass
+        annotation_model_set.load_existing_models()
+        if annotation_model_set.remaining:
+            KymographAnnotator(annotation_model_set)
+        if not annotation_model_set.did_work:
+            log.debug("All %s have been calculated." % self._name)

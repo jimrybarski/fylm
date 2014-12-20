@@ -5,6 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from skimage.color import gray2rgb
 from skimage.draw import line
+from fylm.service.image_reader import ImageReader
 
 log = logging.getLogger("fylm")
 
@@ -15,10 +16,9 @@ class KymographAnnotator(HumanInteractor):
     corner of the catch tube and the central trench). The location of the bottom right corner is inferred from this data.
 
     """
-    def __init__(self, annotation_model, image):
+    def __init__(self, annotation_model_set):
         super(KymographAnnotator, self).__init__()
-        self._annotation_model = annotation_model
-        self._image = image
+        self._annotation_model_set = annotation_model_set
         self._done = False
         while not self._done:
             self._start()
@@ -85,10 +85,10 @@ class KymographAnnotator(HumanInteractor):
             self._current_channel_number += 1
 
     def _decrement_timepoint(self):
-        pass
+        self._annotation_model_set.decrement_timepoint()
 
     def _increment_timepoint(self):
-        pass
+        self._annotation_model_set.increment_timepoint()
 
     def _clear(self):
         self._erase_all_points()
@@ -101,9 +101,8 @@ class KymographAnnotator(HumanInteractor):
         self._clear()
 
     def _start(self):
-        self._current_kymograph = self._get_image_slice()
         self._fig.suptitle("Channel: " + str(self._current_channel_number), fontsize=20)
-        self._ax.imshow(self._current_image_slice.image_data, cmap='gray')
+        self._ax.imshow(image.image_data, cmap='gray')
         self._ax.autoscale(False)
         self._draw_existing_data()
         plt.show()

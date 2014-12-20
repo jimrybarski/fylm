@@ -60,7 +60,6 @@ class ImageReader(object):
         raw_image = self.nd2.get_image(index, self.field_of_view, channel, z_level)
         return Image(raw_image.data, rotation_offset, dx, dy, timestamp)
 
-
     @property
     def field_of_view(self):
         return self._field_of_view

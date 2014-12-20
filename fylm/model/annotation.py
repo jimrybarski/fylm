@@ -8,7 +8,7 @@ import re
 log = logging.getLogger("fylm")
 
 
-class Annotation(object):
+class AnnotationLine(object):
     """
     Models a single line added by a human (or machine-learning algorithm) that shows
     where a cell is at a given point in a kymograph.
@@ -22,9 +22,9 @@ class Annotation(object):
         self._coodinates = []
 
     def load_from_text(self, line):
-        index = Annotation.index_regex.match(line)
+        index = AnnotationLine.index_regex.match(line)
         self._index = int(index.group("index"))
-        raw_coodinates = Annotation.coordinate_regex.findall(line)
+        raw_coodinates = AnnotationLine.coordinate_regex.findall(line)
         # raw_coordinates is a list of tuples like ('1.123', '4.536')
         for pair in raw_coodinates:
             self._coodinates.append(Coordinates(x=float(pair[0]), y=float(pair[1])))
@@ -55,29 +55,32 @@ class KymographAnnotationSet(BaseSet):
     def __init__(self, experiment):
         super(KymographAnnotationSet, self).__init__(experiment, "annotation")
         self._model = KymographAnnotation
-        self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
+        self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
+        self._timepoint = 1
+        self._max_timepoint = experiment.timepoint_count
 
     @property
     def _expected(self):
-        """
-        Yields instantiated children of BaseFile that represent the work we expect to have done.
-
-        """
         assert self._model is not None
         for field_of_view in self._fields_of_view:
-            for timepoint in self._timepoints:
-                for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+            for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
                     model = self._model()
-                    model.timepoint = timepoint
                     model.field_of_view = field_of_view
                     model.channel_number = channel_number
                     model.base_path = self.base_path
                     yield model
 
+    def increment_timepoint(self):
+        self._timepoint += 1 if self._timepoint < self._max_timepoint else 1
+
+    def decrement_timepoint(self):
+        self._timepoint -= 1 if self._timepoint > 1 else self._max_timepoint
+
 
 class KymographAnnotation(BaseTextFile):
     """
-    Models all of the lines of an annotation of a kymograph.
+    Models all of the lines of an annotation of any number of kymographs for a single field of view and channel.
+    That is, over several timepoints.
 
     """
     def __init__(self):
@@ -87,6 +90,7 @@ class KymographAnnotation(BaseTextFile):
         self._annotations = {}  # index == timepoint
         self._state = "active"
         self._state_timepoint = 0
+        self._current_timepoint = 0
 
     @property
     def state(self):
@@ -103,7 +107,7 @@ class KymographAnnotation(BaseTextFile):
     def lines(self):
         yield self.state
         for index, annotation in sorted(self._annotations.items()):
-            for coodinates in annotation.coordinates:
+            for coordinates in annotation.coordinates:
                 yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in coordinates])
 
     def load(self, data):
@@ -119,30 +123,37 @@ class KymographAnnotation(BaseTextFile):
     def _parse_state(self, line):
         try:
             state, state_timepoint = line.strip().split(" ")
-
+        except Exception:
+            log.exception("Could not parse state of kymograph annotation")
+        else:
+            return state, state_timepoint
 
     def _parse_line(self, line):
         try:
-            annotation = Annotation()
+            annotation = AnnotationLine()
             annotation.load_from_text(line)
         except:
             log.warn("Skipping invalid line: %s" % str(line))
         else:
-            self._annotations[annotation.index] = annotation.coordinates
+            self._annotations[self._current_timepoint][annotation.index] = annotation.coordinates
 
     def add_line(self, coordinates):
         """
         Saves a line to the model when the user feels it's complete.
+        Even though it is not currently implemented, we have indices on the data so that in the future we'll have the option
+        of deleting lines based on which one the user has clicked on.
 
         :param coordinates:     the points of an annotation line
         :type coordinates:      list of fylm.model.coordinates.Coordinates()
 
         """
-        if not self._annotations:
+        if not self._annotations[self._current_timepoint]:
+            # first time to add data for this timepoint
             index = 0
         else:
-            index = max(self._annotations.keys()) + 1
-        self._annotations[index] = coordinates
+            # we already have data for this timepoint, so use the next available index
+            index = max(self._annotations[self._current_timepoint].keys()) + 1
+        self._annotations[self._current_timepoint][index] = coordinates
 
     @property
     def data(self):
@@ -158,4 +169,4 @@ class KymographAnnotation(BaseTextFile):
 
     @property
     def filename(self):
-        return "fov%s-channel%s.png" % (self.field_of_view, self.channel_number)
+        return "fov%s-channel%s.txt" % (self.field_of_view, self.channel_number)
