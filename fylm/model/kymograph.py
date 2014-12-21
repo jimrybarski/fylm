@@ -40,7 +40,6 @@ class Kymograph(BaseImage):
     def __init__(self):
         super(Kymograph, self).__init__()
         self._channel = None
-        self._image_data = None
         self._image_slice = None
 
     def allocate_memory(self, frame_count):

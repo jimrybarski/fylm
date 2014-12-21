@@ -1,5 +1,5 @@
 from abc import abstractproperty, abstractmethod
-import skimage.io
+import numpy as np
 import re
 
 
@@ -23,7 +23,7 @@ class BaseResult(object):
         return "tp%s-fov%s.txt" % (self.timepoint, self.field_of_view)
 
     @abstractmethod
-    def load(self):
+    def load(self, *args):
         """
         Populates some or all of the model's attributes from a text stream.
 
@@ -48,6 +48,8 @@ class BaseTextFile(BaseResult):
     Models a text file that stores results.
 
     """
+    kind = "text"
+
     @abstractproperty
     def lines(self):
         """
@@ -66,12 +68,20 @@ class BaseTextFile(BaseResult):
 
 
 class BaseImage(BaseResult):
-    def load(self):
+    kind = "image"
+
+    def __init__(self):
+        super(BaseImage).__init__()
+        self._image_data = None
+
+    def load(self, image):
         """
-        Reads the image from disk and loads it as a 2D numpy array.
+        :param image:   a 2D numpy array representing an image
+        :type image:    np.ndarray
 
         """
-        return skimage.io.imread(self.path)
+        assert isinstance(image, np.ndarray)
+        self._image_data = image
 
     @abstractproperty
     def data(self):
