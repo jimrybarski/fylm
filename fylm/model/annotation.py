@@ -70,6 +70,9 @@ class KymographAnnotationSet(BaseSet):
                     model.base_path = self.base_path
                     yield model
 
+    def get_first_unfinished_model(self):
+        # find the model that has no data and doesn't have a preceding dying kymograph
+
     def increment_timepoint(self):
         self._timepoint += 1 if self._timepoint < self._max_timepoint else 1
 

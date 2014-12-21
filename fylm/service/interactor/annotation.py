@@ -19,6 +19,7 @@ class KymographAnnotator(HumanInteractor):
     def __init__(self, annotation_model_set, kymograph_set):
         super(KymographAnnotator, self).__init__()
         self._annotation_model_set = annotation_model_set
+        self._annotation_model = annotation_model_set.get_first_unfinished_model()
         self._kymograph_set = kymograph_set
         self._done = False
         while not self._done:
@@ -47,7 +48,7 @@ class KymographAnnotator(HumanInteractor):
         raise NotImplemented
 
     def _save_line(self):
-        self._annotation_model.skip_remaining()
+
         self._done = True
         self._clear()
 
