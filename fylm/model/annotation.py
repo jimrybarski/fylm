@@ -95,7 +95,7 @@ class KymographAnnotation(BaseTextFile):
     def __init__(self):
         super(KymographAnnotation, self).__init__()
         self._channel_number = None
-        self._image_data = {}
+        self._images = {}
         self._annotations = defaultdict(dict)  # index == timepoint
         self._last_state = "active"
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
@@ -119,6 +119,10 @@ class KymographAnnotation(BaseTextFile):
 
     def decrement_timepoint(self):
         self._current_timepoint -= 1 if self._current_timepoint > 1 else self._max_timepoint
+
+    @property
+    def current_image(self):
+        return self._images[self._current_timepoint]
 
     @property
     def state(self):
