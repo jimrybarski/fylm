@@ -1,3 +1,4 @@
+from collections import defaultdict
 from fylm.model.base import BaseTextFile, BaseSet
 from fylm.model.constants import Constants
 from fylm.model.coordinates import Coordinates
@@ -14,16 +15,18 @@ class AnnotationLine(object):
     where a cell is at a given point in a kymograph.
 
     """
-    index_regex = re.compile(r"""^(?P<index>\d+)\s.*""")
+    index_regex = re.compile(r"""^(?P<timepoint>\d+) (?P<index>\d+) .*""")
     coordinate_regex = re.compile(r"""(?P<x>\d+\.\d+),(?P<y>\d+\.\d+)""")
 
     def __init__(self):
         self._index = None
+        self._timepoint = None
         self._coodinates = []
 
     def load_from_text(self, line):
         index = AnnotationLine.index_regex.match(line)
-        self._index = int(index.group("index"))
+        self.index = index.group("index")
+        self.timepoint = index.group("timepoint")
         raw_coodinates = AnnotationLine.coordinate_regex.findall(line)
         # raw_coordinates is a list of tuples like ('1.123', '4.536')
         for pair in raw_coodinates:
@@ -41,6 +44,14 @@ class AnnotationLine(object):
         if self._index is not None:
             raise Exception("Attempted to set the kymograph annotation index when it already existed")
         self._index = int(value)
+
+    @property
+    def timepoint(self):
+        return self._timepoint
+
+    @timepoint.setter
+    def timepoint(self, value):
+        self._timepoint = int(value)
 
     @property
     def coordinates(self):
@@ -72,50 +83,63 @@ class KymographAnnotationSet(BaseSet):
 
     def get_first_unfinished_model(self):
         # find the model that has no data and doesn't have a preceding dying kymograph
-
-    def increment_timepoint(self):
-        self._timepoint += 1 if self._timepoint < self._max_timepoint else 1
-
-    def decrement_timepoint(self):
-        self._timepoint -= 1 if self._timepoint > 1 else self._max_timepoint
+        pass
 
 
 class KymographAnnotation(BaseTextFile):
     """
     Models all of the lines of an annotation of any number of kymographs for a single field of view and channel.
-    That is, over several timepoints.
+    That is, all the kymographs over several timepoints.
 
     """
     def __init__(self):
         super(KymographAnnotation, self).__init__()
         self._channel_number = None
         self._image_data = {}
-        self._annotations = {}  # index == timepoint
-        self._state = "active"
-        self._state_timepoint = 0
-        self._current_timepoint = 0
+        self._annotations = defaultdict(dict)  # index == timepoint
+        self._last_state = "active"
+        self._last_state_timepoint = 1  # the last timepoint to be saved by a human
+        self._current_timepoint = 1
+
+    @property
+    def _max_timepoint(self):
+        return max(self._annotations.keys())
+
+    @property
+    def timepoint(self):
+        return self._current_timepoint
+
+    @timepoint.setter
+    def timepoint(self, value):
+        if value is not None:
+            self._current_timepoint = int(value)
+
+    def increment_timepoint(self):
+        self._current_timepoint += 1 if self._current_timepoint < self._max_timepoint else 1
+
+    def decrement_timepoint(self):
+        self._current_timepoint -= 1 if self._current_timepoint > 1 else self._max_timepoint
 
     @property
     def state(self):
-        return "%s %s" % (self._state, self._state_timepoint)
+        return "%s %s" % (self._last_state, self._last_state_timepoint)
 
     @state.setter
     def state(self, value):
         assert value[0] in ("active", "dies")
         assert isinstance(value[1], int)
-        self._state = value[0]
-        self._state_timepoint = value[1]
+        self._last_state = value[0]
+        self._last_state_timepoint = value[1]
 
     @property
     def lines(self):
         yield self.state
         for index, annotation in sorted(self._annotations.items()):
-            for coordinates in annotation.coordinates:
-                yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in coordinates])
+            yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in annotation.coordinates])
 
     def load(self, data):
         try:
-            self._state = self._parse_state(data[0])
+            self._last_state, self._last_state_timepoint = self._parse_state(data[0])
             if len(data) > 1:
                 # We have some annotations already
                 for line in data[1:]:
@@ -129,7 +153,7 @@ class KymographAnnotation(BaseTextFile):
         except Exception:
             log.exception("Could not parse state of kymograph annotation")
         else:
-            return state, state_timepoint
+            return state, int(state_timepoint)
 
     def _parse_line(self, line):
         try:
@@ -138,7 +162,7 @@ class KymographAnnotation(BaseTextFile):
         except:
             log.warn("Skipping invalid line: %s" % str(line))
         else:
-            self._annotations[self._current_timepoint][annotation.index] = annotation.coordinates
+            self._annotations[annotation.timepoint][annotation.index] = annotation.coordinates
 
     def add_line(self, coordinates):
         """

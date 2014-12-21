@@ -42,7 +42,8 @@ class Experiment(object):
 
         """
         # first make all the top-level directories
-        subdirs = ["kymograph",
+        subdirs = ["annotation",
+                   "kymograph",
                    "location",
                    "registration",
                    "rotation",

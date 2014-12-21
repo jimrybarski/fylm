@@ -8,6 +8,8 @@ from mock import patch
 
 
 class MockModel(object):
+    kind = "text"
+
     def __init__(self):
         self.data = []
         self.path = "/tmp/file.txt"
