@@ -11,7 +11,8 @@ know what you're doing.
 First, in a terminal, install the required system packages:
 
     sudo apt-get update
-    sudo apt-get install -y git gcc gfortran build-essential python2.7 python2.7-dev python-pip python-virtualenv tk tk-dev python-tk
+    sudo apt-get install -y git gcc gfortran build-essential python2.7 python2.7-dev \
+    python-pip python-virtualenv tk tk-dev python-tk
 
 Then clone this repo and make a virtual environment:
 
