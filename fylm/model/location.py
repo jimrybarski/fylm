@@ -60,8 +60,7 @@ class Location(BaseTextFile):
         self._skipped_regex = re.compile(r"""^(?P<channel_number>\d+) skipped""")
 
     def skip_remaining(self):
-        # offset by one to give channel numbers 1-28 instead of 0-27
-        for channel_number in range(1, Constants.NUM_CATCH_CHANNELS + 1):
+        for channel_number in range(0, Constants.NUM_CATCH_CHANNELS):
             if channel_number not in self._channels.keys():
                 self.skip_channel(channel_number)
 
