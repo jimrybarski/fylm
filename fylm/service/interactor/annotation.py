@@ -4,7 +4,6 @@ import logging
 import numpy as np
 from matplotlib import pyplot as plt
 from skimage.color import gray2rgb
-from skimage.draw import line
 from fylm.model.annotation import AnnotationLine
 
 log = logging.getLogger("fylm")
@@ -37,7 +36,7 @@ class KymographAnnotator(HumanInteractor):
         Color for lines manually created by user
 
         """
-        return 1.0, 0.55, 0.0  # bright orange
+        return 65536, 36045, 0  # bright orange
 
     @property
     def _label_line_color(self):
@@ -45,7 +44,7 @@ class KymographAnnotator(HumanInteractor):
         Color for lines derived from labels
 
         """
-        return 0.3, 0.6, 1.0  # light blue
+        return 19660, 39321, 65536  # light blue
 
     def _on_mouse_click(self, human_input):
         if human_input.left_click:
@@ -63,6 +62,7 @@ class KymographAnnotator(HumanInteractor):
                    "up": self._next_timepoint,
                    "down": self._previous_timepoint
                    }
+        actions[human_input.key]()
 
     def _delete_last_line(self):
         raise NotImplemented
@@ -72,7 +72,7 @@ class KymographAnnotator(HumanInteractor):
         annotation_line.set_coordinates(self._coordinates)
         self._annotation.add_line(annotation_line)
         self._done = True
-        self._clear()
+        self._redraw()
 
     def _save_kymograph(self):
         self._handle_results()
