@@ -22,5 +22,4 @@ Then clone this repo and make a virtual environment:
 
 Now install the Python dependencies (this could take a while):
 
-    pip -r requirements.txt
-    pip -r external_requirements.txt
+    pip install -r requirements.txt && pip install -r external_requirements.txt
