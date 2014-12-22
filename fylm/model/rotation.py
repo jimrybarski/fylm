@@ -1,4 +1,5 @@
 from fylm.model.base import BaseTextFile, BaseSet
+import re
 
 
 class RotationSet(BaseSet):
@@ -9,6 +10,25 @@ class RotationSet(BaseSet):
     def __init__(self, experiment):
         super(RotationSet, self).__init__(experiment, "rotation")
         self._model = Rotation
+        self._regex = re.compile(r"""fov\d+.txt""")
+        self._timepoints = [0]
+
+    def get_data(self, field_of_view):
+        """
+        Returns the rotation offset for a given field of view.
+
+        """
+        model = self._get_current(field_of_view)
+        return model.data
+
+    def _get_current(self, field_of_view):
+        """
+        Returns the model for a given field of view.
+
+        """
+        for model in sorted(self.existing, key=lambda x: x.timepoint):
+            if model.field_of_view == field_of_view:
+                return model
 
 
 class Rotation(BaseTextFile):
@@ -27,6 +47,11 @@ class Rotation(BaseTextFile):
 
         """
         self.offset = float(data[0].strip("\n "))
+
+    @property
+    def filename(self):
+        # This is just the default filename and it won't always be valid.
+        return "fov%s.txt" % self.field_of_view
 
     @property
     def data(self):

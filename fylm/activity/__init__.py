@@ -58,7 +58,8 @@ class Activity(object):
         i = 0
         for image_set in reader:
             image = image_set.get_image(channel="", z_level=0)
-            name = "/home/jim/Desktop/experiments/141111/%s.png" % i
+
+            name = "/home/jim/Desktop/experiments/141028/%s.png" % i
             print(name)
             io.imsave(name, image)
             i += 1

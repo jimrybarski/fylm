@@ -73,11 +73,7 @@ class ImageReader(object):
         Provides image sets for a single timepoint.
 
         """
-        # TODO: Implement get_data on the rotation set
-        for ro in self._rotation_set.existing:
-            if ro.field_of_view == self.field_of_view:
-                rotation_offset = ro
-                break
+        rotation_offset = self._rotation_set.get_data(self.field_of_view)
         registration_data = self._registration_set.get_data(self.field_of_view)
         timestamp_data = self._timestamp_set.get_data(self.field_of_view)
         for nd2_image_set, registration_offset, (time_index, timestamp) in izip(self.nd2.image_sets(self.field_of_view),

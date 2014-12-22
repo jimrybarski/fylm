@@ -1,8 +1,10 @@
 from fylm.service.base import BaseSetService
+import time
 import numpy as np
 import nd2reader
 import logging
 from skimage.feature.phase_correlate import phase_correlate
+import skimage.io
 
 log = logging.getLogger("fylm")
 
@@ -34,10 +36,8 @@ class RegistrationSet(BaseSetService):
         nd2 = nd2reader.Nd2(nd2_filename)
         # gets the first out-of-focus image from the first timepoint in the stack
         base_image = base_nd2.get_image(0, registration_model.field_of_view, "", 0)
-        for image_set in nd2.image_sets(field_of_view=registration_model.field_of_view,
-                                        channels=[""],
-                                        z_levels=[0]):
-            image = [i for i in image_set][0]
+        for i in range(nd2.time_index_count):
+            image = nd2.get_image(i, registration_model.field_of_view, "", 0)
             dx, dy = self._determine_registration_offset(base_image.data, image.data)
             registration_model.add(dx, dy)
 
