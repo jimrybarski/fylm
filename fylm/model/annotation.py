@@ -73,19 +73,33 @@ class KymographAnnotationSet(BaseSet):
         self.kymograph_set = None
 
     @property
+    def work_remains(self):
+        if len(self._existing) == len(self._fields_of_view) * Constants.NUM_CATCH_CHANNELS:
+            for model in self._existing:
+                if not model.work_complete:
+                    return True
+            return False
+        return True
+
+    @property
     def _expected(self):
         assert self._model is not None
         for field_of_view in self._fields_of_view:
             for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
-                    model = self._model()
-                    model.field_of_view = field_of_view
-                    model.channel_number = channel_number
-                    model.base_path = self.base_path
-                    yield model
+                for model in self._existing:
+                    if model.field_of_view == field_of_view and model.channel_number == channel_number:
+                        yield model
+                        break
+                else:
+                    remaining_model = self._model()
+                    remaining_model.field_of_view = field_of_view
+                    remaining_model.channel_number = channel_number
+                    remaining_model.base_path = self.base_path
+                    yield remaining_model
 
     def get_annotation(self, field_of_view, channel_number):
         kymographs = [kymograph for kymograph in self.kymograph_set.existing if kymograph.field_of_view == field_of_view and kymograph.channel_number == channel_number]
-        for model in self.remaining:
+        for model in self._expected:
             if model.field_of_view == field_of_view and model.channel_number == channel_number:
                 model.add_images(kymographs)
                 return model
@@ -111,10 +125,10 @@ class KymographAnnotation(BaseTextFile):
 
     @property
     def points(self):
-        for annotation in self._annotations:
+        for index, annotation in sorted(self._annotations[self._current_timepoint].items()):
             for n, from_point in enumerate(annotation.coordinates[:-1]):
                 to_point = annotation.coordinates[n + 1]
-                y_list, x_list = line(from_point.y, from_point.x, to_point.y, to_point.x)
+                y_list, x_list = line(int(from_point.y), int(from_point.x), int(to_point.y), int(to_point.x))
                 yield y_list, x_list
 
     def add_images(self, kymographs):
@@ -144,6 +158,10 @@ class KymographAnnotation(BaseTextFile):
 
     def decrement_timepoint(self):
         self._current_timepoint -= 1 if self._current_timepoint > 1 else self.max_timepoint
+
+    @property
+    def work_complete(self):
+        return self._last_state_timepoint == max(self._images.keys())
 
     @property
     def current_image(self):
@@ -191,7 +209,7 @@ class KymographAnnotation(BaseTextFile):
         except:
             log.warn("Skipping invalid line: %s" % str(line))
         else:
-            self._annotations[annotation.timepoint][annotation.index] = annotation.coordinates
+            self._annotations[annotation.timepoint][annotation.index] = annotation
 
     def add_line(self, annotation_line):
         """
