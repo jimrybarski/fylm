@@ -130,14 +130,14 @@ class KymographAnnotator(HumanInteractor):
             result_array[y_list, x_list] = 1
         line_indices = np.where(result_array == 1)
 
-        active_image = np.copy(self._annotation.current_image)
+        active_image = gray2rgb(np.copy(self._annotation.current_image))
         active_image[line_indices] = self._label_line_color
         self._im.set_data(active_image)
         plt.draw()
 
     def _start(self):
-        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (self._annotation_model_set.current_timepoint,
-                                                                    self._annotation_model_set.max_timepoint,
+        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (self._annotation.current_timepoint,
+                                                                    self._annotation.max_timepoint,
                                                                     self._annotation.field_of_view,
                                                                     self._current_channel_number), fontsize=20)
         self._im = self._ax.imshow(self._annotation.current_image, cmap='gray')

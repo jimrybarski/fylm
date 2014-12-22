@@ -8,7 +8,8 @@ from fylm.service.location import LocationSet as LocationSetService
 from fylm.model.location import LocationSet
 from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.model.kymograph import KymographSet
-import itertools
+from fylm.service.annotation import AnnotationSet
+from fylm.model.annotation import KymographAnnotationSet
 
 
 class Activity(object):
@@ -42,6 +43,11 @@ class Activity(object):
         kymograph_service = KymographSetService(self._experiment)
         kymograph_set = KymographSet(self._experiment)
         kymograph_service.save(kymograph_set)
+
+    def annotate_kymographs(self):
+        annotation_service = AnnotationSet(self._experiment)
+        annotation_set = KymographAnnotationSet(self._experiment)
+        annotation_service.save(annotation_set)
 
     def fov_movie(self):
         from fylm.service.image_reader import ImageReader

@@ -71,7 +71,7 @@ class BaseImage(BaseResult):
     kind = "image"
 
     def __init__(self):
-        super(BaseImage).__init__()
+        super(BaseImage, self).__init__()
         self._image_data = None
 
     def load(self, image):

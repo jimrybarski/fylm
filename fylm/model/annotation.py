@@ -85,13 +85,13 @@ class KymographAnnotationSet(BaseSet):
 
     def get_annotation(self, field_of_view, channel_number):
         kymographs = [kymograph for kymograph in self.kymograph_set.existing if kymograph.field_of_view == field_of_view and kymograph.channel_number == channel_number]
-        for model in self.existing:
-            if model.field_of_view == field_of_view and model.channel == channel_number:
+        for model in self.remaining:
+            if model.field_of_view == field_of_view and model.channel_number == channel_number:
                 model.add_images(kymographs)
+                return model
 
     def get_first_unfinished_model(self):
-        # find the model that has no data and doesn't have a preceding dying kymograph
-        pass
+        return self.get_annotation(0, 3)
 
 
 class KymographAnnotation(BaseTextFile):
@@ -131,7 +131,9 @@ class KymographAnnotation(BaseTextFile):
 
     @property
     def max_timepoint(self):
-        return max(self._annotations.keys())
+        if self._annotations:
+            return max(self._annotations.keys())
+        return 1
 
     @property
     def current_timepoint(self):
