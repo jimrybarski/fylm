@@ -41,7 +41,7 @@ class ImageSet(object):
 class Image(object):
     def __init__(self, raw_image_data, rotation_offset, dx, dy, timestamp):
         self._raw_image_data = raw_image_data
-        self._rotation_offset = -rotation_offset
+        self._rotation_offset = rotation_offset
         self._corrective_transform = transform.AffineTransform(translation=(-dx, -dy))
         self._timestamp = timestamp
 
