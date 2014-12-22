@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from skimage.color import gray2rgb
 from skimage.draw import line
-from fylm.service.image_reader import ImageReader
+from fylm.model.annotation import AnnotationLine
 
 log = logging.getLogger("fylm")
 
@@ -19,14 +19,33 @@ class KymographAnnotator(HumanInteractor):
     def __init__(self, annotation_model_set):
         super(KymographAnnotator, self).__init__()
         self._annotation_model_set = annotation_model_set
-        self._current_channel_number = None
-        self._current_field_of_view = None
-
         self._done = False
+        self._annotation = self._annotation_model_set.get_first_unfinished_model()
+        self._current_channel_number = self._annotation.channel_number
+        self._current_field_of_view = self._annotation.field_of_view
+        self._line_indices = None
+        self._im = None
+
         while not self._done:
             self._start()
             if not self._done:
                 self._reset()
+
+    @property
+    def _user_line_color(self):
+        """
+        Color for lines manually created by user
+
+        """
+        return 1.0, 0.55, 0.0  # bright orange
+
+    @property
+    def _label_line_color(self):
+        """
+        Color for lines derived from labels
+
+        """
+        return 0.3, 0.6, 1.0  # light blue
 
     def _on_mouse_click(self, human_input):
         if human_input.left_click:
@@ -49,7 +68,9 @@ class KymographAnnotator(HumanInteractor):
         raise NotImplemented
 
     def _save_line(self):
-
+        annotation_line = AnnotationLine()
+        annotation_line.set_coordinates(self._coordinates)
+        self._annotation.add_line(annotation_line)
         self._done = True
         self._clear()
 
@@ -103,21 +124,23 @@ class KymographAnnotator(HumanInteractor):
             pass
         self._clear()
 
-    def _start(self):
-        annotation = self._annotation_model_set.get_annotation()
-        self._fig.suptitle("Channel: " + str(self._current_channel_number), fontsize=20)
-        self._ax.imshow(image.image_data, cmap='gray')
-        self._ax.autoscale(False)
-        self._draw_existing_data()
-        plt.show()
+    def _redraw(self):
+        result_array = np.zeros(self._annotation.current_image.shape)
+        for y_list, x_list in self._annotation.points:
+            result_array[y_list, x_list] = 1
+        line_indices = np.where(result_array == 1)
 
-    def _draw_existing_data(self):
-        coordinates = self._location_model.get_channel_location(self._current_channel_number)
-        if coordinates == "skipped":
-            # draw an X
-            pass
-        elif coordinates:
-            notch = self._current_image_slice.get_child_coordinates(coordinates[0])
-            tube = self._current_image_slice.get_child_coordinates(coordinates[1])
-            self._add_point(notch.x, notch.y)
-            self._add_point(tube.x, tube.y)
+        active_image = np.copy(self._annotation.current_image)
+        active_image[line_indices] = self._label_line_color
+        self._im.set_data(active_image)
+        plt.draw()
+
+    def _start(self):
+        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (self._annotation_model_set.current_timepoint,
+                                                                    self._annotation_model_set.max_timepoint,
+                                                                    self._annotation.field_of_view,
+                                                                    self._current_channel_number), fontsize=20)
+        self._im = self._ax.imshow(self._annotation.current_image, cmap='gray')
+        self._ax.autoscale(False)
+        self._redraw()
+        plt.show()

@@ -3,6 +3,7 @@ from fylm.model.base import BaseTextFile, BaseSet
 from fylm.model.constants import Constants
 from fylm.model.coordinates import Coordinates
 from fylm.service.errors import terminal_error
+from skimage.draw import line
 import logging
 import re
 
@@ -108,28 +109,39 @@ class KymographAnnotation(BaseTextFile):
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
         self._current_timepoint = 1
 
+    @property
+    def points(self):
+        for annotation in self._annotations:
+            for n, from_point in enumerate(annotation.coordinates[:-1]):
+                to_point = annotation.coordinates[n + 1]
+                y_list, x_list = line(from_point.y, from_point.x, to_point.y, to_point.x)
+                yield y_list, x_list
+
     def add_images(self, kymographs):
         for kymograph in kymographs:
             self._images[kymograph.timepoint] = kymograph.data
 
     @property
-    def _max_timepoint(self):
+    def current_image(self):
+        return self._images[self._current_timepoint]
+
+    @property
+    def current_annotations(self):
+        return self._annotations[self._current_timepoint]
+
+    @property
+    def max_timepoint(self):
         return max(self._annotations.keys())
 
     @property
-    def timepoint(self):
+    def current_timepoint(self):
         return self._current_timepoint
 
-    @timepoint.setter
-    def timepoint(self, value):
-        if value is not None:
-            self._current_timepoint = int(value)
-
     def increment_timepoint(self):
-        self._current_timepoint += 1 if self._current_timepoint < self._max_timepoint else 1
+        self._current_timepoint += 1 if self._current_timepoint < self.max_timepoint else 1
 
     def decrement_timepoint(self):
-        self._current_timepoint -= 1 if self._current_timepoint > 1 else self._max_timepoint
+        self._current_timepoint -= 1 if self._current_timepoint > 1 else self.max_timepoint
 
     @property
     def current_image(self):
@@ -179,7 +191,7 @@ class KymographAnnotation(BaseTextFile):
         else:
             self._annotations[annotation.timepoint][annotation.index] = annotation.coordinates
 
-    def add_line(self, coordinates):
+    def add_line(self, annotation_line):
         """
         Saves a line to the model when the user feels it's complete.
         Even though it is not currently implemented, we have indices on the data so that in the future we'll have the option
@@ -195,7 +207,7 @@ class KymographAnnotation(BaseTextFile):
         else:
             # we already have data for this timepoint, so use the next available index
             index = max(self._annotations[self._current_timepoint].keys()) + 1
-        self._annotations[self._current_timepoint][index] = coordinates
+        self._annotations[self._current_timepoint][index] = annotation_line
 
     @property
     def data(self):
