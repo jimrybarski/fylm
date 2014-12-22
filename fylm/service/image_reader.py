@@ -74,9 +74,10 @@ class ImageReader(object):
 
         """
         rotation_offset = self._rotation_set.get_data(self.field_of_view)
-        registration_data = self._registration_set.get_data(self.field_of_view)
-        timestamp_data = self._timestamp_set.get_data(self.field_of_view)
+        registration_data = self._registration_set.get_data(self.field_of_view, self.timepoint)
+        timestamp_data = self._timestamp_set.get_data(self.field_of_view, self.timepoint)
         for nd2_image_set, registration_offset, (time_index, timestamp) in izip(self.nd2.image_sets(self.field_of_view),
                                                                                 registration_data,
                                                                                 timestamp_data):
-            yield FylmImageSet(nd2_image_set, rotation_offset.offset, registration_offset, time_index - 1, timestamp)
+            print(registration_offset)
+            yield FylmImageSet(nd2_image_set, rotation_offset, registration_offset, time_index - 1, timestamp)

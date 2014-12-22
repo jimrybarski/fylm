@@ -11,7 +11,7 @@ class RotationSet(BaseSet):
         super(RotationSet, self).__init__(experiment, "rotation")
         self._model = Rotation
         self._regex = re.compile(r"""fov\d+.txt""")
-        self._timepoints = [0]
+        self._timepoints = [1]
 
     def get_data(self, field_of_view):
         """
@@ -55,7 +55,7 @@ class Rotation(BaseTextFile):
 
     @property
     def data(self):
-        yield self.offset
+        return self.offset
 
     @property
     def lines(self):
