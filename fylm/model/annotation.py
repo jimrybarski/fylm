@@ -69,6 +69,7 @@ class KymographAnnotationSet(BaseSet):
         self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
         self._timepoint = 1
         self._max_timepoint = experiment.timepoint_count
+        self.kymograph_set = None
 
     @property
     def _expected(self):
@@ -80,6 +81,12 @@ class KymographAnnotationSet(BaseSet):
                     model.channel_number = channel_number
                     model.base_path = self.base_path
                     yield model
+
+    def get_annotation(self, field_of_view, channel_number):
+        kymographs = [kymograph for kymograph in self.kymograph_set.existing if kymograph.field_of_view == field_of_view and kymograph.channel_number == channel_number]
+        for model in self.existing:
+            if model.field_of_view == field_of_view and model.channel == channel_number:
+                model.add_images(kymographs)
 
     def get_first_unfinished_model(self):
         # find the model that has no data and doesn't have a preceding dying kymograph
@@ -100,6 +107,10 @@ class KymographAnnotation(BaseTextFile):
         self._last_state = "active"
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
         self._current_timepoint = 1
+
+    def add_images(self, kymographs):
+        for kymograph in kymographs:
+            self._images[kymograph.timepoint] = kymograph.data
 
     @property
     def _max_timepoint(self):
