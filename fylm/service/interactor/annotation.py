@@ -55,7 +55,7 @@ class KymographAnnotator(HumanInteractor):
     def _on_key_press(self, human_input):
         actions = {"d": self._delete_last_line,
                    "w": self._save_line,
-                   "enter": self._save_kymograph,
+                   "enter": self._save_annotation,
                    "escape": self._clear,
                    "left": self._previous_channel,
                    "right": self._next_channel,
@@ -71,10 +71,10 @@ class KymographAnnotator(HumanInteractor):
         annotation_line = AnnotationLine()
         annotation_line.set_coordinates(self._coordinates)
         self._annotation.add_line(annotation_line)
-        self._done = True
         self._redraw()
+        self._erase_all_points()
 
-    def _save_kymograph(self):
+    def _save_annotation(self):
         self._handle_results()
         self._increment_channel()
         self._clear()

@@ -28,10 +28,12 @@ class RegistrationSet(BaseSetService):
         # This is a pretty naive loop - the same file will get opened 8-12 times
         # There are obvious ways to optimize this but that can be done later if it matters
         # It probably doesn't matter though and I like simple things
+        base_nd2_filename = self._experiment.get_nd2_from_timepoint(1)
         nd2_filename = self._experiment.get_nd2_from_timepoint(registration_model.timepoint)
+        base_nd2 = nd2reader.Nd2(base_nd2_filename)
         nd2 = nd2reader.Nd2(nd2_filename)
         # gets the first out-of-focus image from the first timepoint in the stack
-        base_image = nd2.get_image(0, registration_model.field_of_view, "", 0)
+        base_image = base_nd2.get_image(0, registration_model.field_of_view, "", 0)
         for image_set in nd2.image_sets(field_of_view=registration_model.field_of_view,
                                         channels=[""],
                                         z_levels=[0]):
