@@ -68,9 +68,8 @@ class KymographAnnotationSet(BaseSet):
         super(KymographAnnotationSet, self).__init__(experiment, "annotation")
         self._model = KymographAnnotation
         self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
-        self._timepoint = 1
-        self._max_timepoint = experiment.timepoint_count
         self.kymograph_set = None
+        self.max_timepoint = experiment.timepoint_count
 
     @property
     def work_remains(self):
@@ -123,6 +122,16 @@ class KymographAnnotation(BaseTextFile):
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
         self._current_timepoint = 1
 
+    def decrement_timepoint(self):
+        self._current_timepoint -= 1
+        if self._current_timepoint == 0:
+            self._current_timepoint = self.max_timepoint
+
+    def increment_timepoint(self):
+        self._current_timepoint += 1
+        if self._current_timepoint == self.max_timepoint:
+            self._current_timepoint = 1
+
     @property
     def points(self):
         for index, annotation in sorted(self._annotations[self._current_timepoint].items()):
@@ -152,12 +161,6 @@ class KymographAnnotation(BaseTextFile):
     @property
     def current_timepoint(self):
         return self._current_timepoint
-
-    def increment_timepoint(self):
-        self._current_timepoint += 1 if self._current_timepoint < self.max_timepoint else 1
-
-    def decrement_timepoint(self):
-        self._current_timepoint -= 1 if self._current_timepoint > 1 else self.max_timepoint
 
     @property
     def work_complete(self):
