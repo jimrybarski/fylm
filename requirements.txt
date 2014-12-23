@@ -1,0 +1,6 @@
+six
+Cython
+numpy
+scipy
+matplotlib
+Pillow

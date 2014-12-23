@@ -51,7 +51,7 @@ class BaseSetTests(unittest.TestCase):
     def test_get_data(self):
         # reset model id number
         MockModel.model_id = 1
-        self.bs._current_filenames = ["tp2-fov1.txt", "tp3-fov1.txt", "tp4-fov1.txt", "tp1-fov1.txt"]
+        self.bs._current_filenames = ["tp2-fov0.txt", "tp3-fov0.txt", "tp4-fov0.txt", "tp1-fov0.txt"]
         expected = [0, 1, 2, 3, 4, 0, 2, 4, 6, 8, 0, 3, 6, 9, 12, 0, 4, 8, 12, 16]
-        actual = list(self.bs.get_data(1))
+        actual = list(self.bs.get_data(0))
         self.assertListEqual(expected, actual)

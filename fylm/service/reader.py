@@ -1,13 +1,20 @@
 from fylm.service.errors import terminal_error
+import skimage.io
 
 
 class Reader(object):
 
+    def read(self, model):
+        """
+        Opens the file associated with the model
+
+        """
+        actions = {"text": self.read_text,
+                   "image": self.read_image}
+        return actions[model.kind](model)
+
     @staticmethod
-    def read(model):
-        """
-        Opens the file associated with the model,
-        """
+    def read_text(model):
         try:
             with open(model.path) as f:
                 # strip raw data to remove trailing newlines, so splitting on newline can't produce an empty value
@@ -15,5 +22,15 @@ class Reader(object):
                 model.load(data)
         except Exception as e:
             terminal_error("Could not read file: %s because: %s" % (model.path, str(e)))
+        else:
+            return True
+
+    @staticmethod
+    def read_image(model):
+        try:
+            image = skimage.io.imread(model.path)
+            model.load(image)
+        except Exception as e:
+            terminal_error("Could not load image file: %s because: %s" % (model.path, str(e)))
         else:
             return True

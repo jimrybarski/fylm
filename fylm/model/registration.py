@@ -1,4 +1,4 @@
-from fylm.model.base import BaseFile, BaseSet
+from fylm.model.base import BaseTextFile, BaseSet
 import logging
 import re
 
@@ -15,7 +15,7 @@ class RegistrationSet(BaseSet):
         self._model = Registration
 
 
-class Registration(BaseFile):
+class Registration(BaseTextFile):
     """
     Models the output file that contains the translational adjustments needed for all images in a stack.
 

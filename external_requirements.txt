@@ -1,0 +1,2 @@
+-e git://github.com/jimrybarski/nd2reader.git#egg=nd2reader
+-e git://github.com/jimrybarski/scikit-image.git@PhaseCorrelation#egg=scikit-image

@@ -107,6 +107,10 @@ class Experiment(object):
             yield timepoint
 
     @property
+    def timepoint_count(self):
+        return len(self._timepoints)
+
+    @property
     def fields_of_view(self):
         for i in range(self.field_of_view_count):
             yield i

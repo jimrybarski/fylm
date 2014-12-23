@@ -1,5 +1,6 @@
-from fylm.model.base import BaseFile, BaseSet
+from fylm.model.base import BaseTextFile, BaseSet
 from fylm.model.coordinates import Coordinates
+from fylm.model.constants import Constants
 from fylm.service.errors import terminal_error
 import logging
 import re
@@ -13,11 +14,25 @@ class LocationSet(BaseSet):
 
     """
     def __init__(self, experiment):
-        super(LocationSet, self).__init__(experiment, "channel locations")
+        super(LocationSet, self).__init__(experiment, "location")
         self._model = Location
+        self._regex = re.compile(r"""fov\d+.txt""")
+
+    @property
+    def _expected(self):
+        """
+        Yields instantiated children of BaseFile that represent the work we expect to have done.
+
+        """
+        assert self._model is not None
+        for field_of_view in self._fields_of_view:
+            model = self._model()
+            model.field_of_view = field_of_view
+            model.base_path = self.base_path
+            yield model
 
 
-class Location(BaseFile):
+class Location(BaseTextFile):
     """
     Models the output file that contains the translational adjustments needed for all images in a stack.
 
@@ -30,8 +45,6 @@ class Location(BaseFile):
     """
     def __init__(self):
         super(Location, self).__init__()
-        self.timepoint = None
-        self.field_of_view = None
         self._top_left = None
         self._bottom_right = None
         self._channels = {}
@@ -46,11 +59,30 @@ class Location(BaseFile):
                                            (?P<tube_y>\d+\.\d+)""", re.VERBOSE)
         self._skipped_regex = re.compile(r"""^(?P<channel_number>\d+) skipped""")
 
+    def skip_remaining(self):
+        for channel_number in range(0, Constants.NUM_CATCH_CHANNELS):
+            if channel_number not in self._channels.keys():
+                self.skip_channel(channel_number)
+
+    @property
+    def filename(self):
+        # This is just the default filename and it won't always be valid.
+        return "fov%s.txt" % self.field_of_view
+
+    @property
+    def top_left(self):
+        return self._top_left
+
+    @property
+    def bottom_right(self):
+        return self._bottom_right
+
     def load(self, data):
         try:
-            header = next(data)
+            header = data[0]
             self._top_left, self._bottom_right = self._parse_header(header)
-            for line in data:
+
+            for line in data[1:]:
                 channel_number, locations = self._parse_line(line)
                 self._channels[channel_number] = locations
         except Exception as e:
@@ -92,9 +124,12 @@ class Location(BaseFile):
             if not locations == "skipped":
                 yield channel_number, locations
 
+    def get_channel_data(self, channel_number):
+        return self._channels[channel_number]
+
     @property
     def lines(self):
-        if len(self._channels) != 28:
+        if len(self._channels) != Constants.NUM_CATCH_CHANNELS:
             log.warn("Invalid number of channels: %s" % len(self._channels))
         data = iter(self.data)
         top_left, bottom_right = next(data)
@@ -128,6 +163,12 @@ class Location(BaseFile):
         """
         self._channels[channel_number] = (Coordinates(x=notch_x, y=notch_y),
                                           Coordinates(x=tube_x, y=tube_y))
+
+    def get_channel_location(self, channel_number):
+        try:
+            return self._channels[channel_number]
+        except KeyError:
+            return None
 
     def skip_channel(self, channel_number):
         self._channels[channel_number] = "skipped"

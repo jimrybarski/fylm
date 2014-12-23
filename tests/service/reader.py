@@ -8,6 +8,8 @@ from mock import patch
 
 
 class MockModel(object):
+    kind = "text"
+
     def __init__(self):
         self.data = []
         self.path = "/tmp/file.txt"
@@ -54,4 +56,4 @@ class BaseModelServiceTests(unittest.TestCase):
         mo.return_value = BytesIO("1 2.53743594082\n2 123.396288891\n3 244.143293866\n")
         timestamps = Timestamps()
         self.reader.read(timestamps)
-        self.assertListEqual(list(timestamps.data), [2.53743594082, 123.396288891, 244.143293866])
+        self.assertListEqual(list(timestamps.data), [(1, 2.53743594082), (2, 123.396288891), (3, 244.143293866)])

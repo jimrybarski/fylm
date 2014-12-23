@@ -1,20 +1,17 @@
 from abc import abstractproperty, abstractmethod
+import numpy as np
 import re
 
 
-class BaseFile(object):
+class BaseResult(object):
+    """
+    Models a file we use to store intermediate and final analyses.
+
+    """
     def __init__(self):
         self.base_path = None
         self.timepoint = None
         self.field_of_view = None
-
-    @abstractproperty
-    def lines(self):
-        """
-        Yields lines of text that should be written to the file.
-
-        """
-        raise NotImplemented
 
     @property
     def path(self):
@@ -26,7 +23,7 @@ class BaseFile(object):
         return "tp%s-fov%s.txt" % (self.timepoint, self.field_of_view)
 
     @abstractmethod
-    def load(self, data):
+    def load(self, *args):
         """
         Populates some or all of the model's attributes from a text stream.
 
@@ -46,6 +43,51 @@ class BaseFile(object):
         raise NotImplemented
 
 
+class BaseTextFile(BaseResult):
+    """
+    Models a text file that stores results.
+
+    """
+    kind = "text"
+
+    @abstractproperty
+    def lines(self):
+        """
+        Yields lines of text that should be written to the file.
+
+        """
+        raise NotImplemented
+
+    @abstractmethod
+    def load(self, *args):
+        raise NotImplemented
+
+    @abstractproperty
+    def data(self):
+        raise NotImplemented
+
+
+class BaseImage(BaseResult):
+    kind = "image"
+
+    def __init__(self):
+        super(BaseImage, self).__init__()
+        self._image_data = None
+
+    def load(self, image):
+        """
+        :param image:   a 2D numpy array representing an image
+        :type image:    np.ndarray
+
+        """
+        assert isinstance(image, np.ndarray)
+        self._image_data = image
+
+    @abstractproperty
+    def data(self):
+        raise NotImplemented
+
+
 class BaseSet(object):
     def __init__(self, experiment, top_level_dir):
         self.base_path = experiment.data_dir + "/" + top_level_dir
@@ -53,9 +95,9 @@ class BaseSet(object):
         self._existing = []
         # The default regex assumes the only distinguishing features are timepoints and fields of view.
         self._regex = re.compile(r"""tp\d+-fov\d+.txt""")
-        # We use 1-based indexing for fields of view
-        self._fields_of_view = [fov + 1 for fov in range(experiment.field_of_view_count)]
-        # Timepoints are already 1-based since they come from the ND2 filenames
+        # We use 0-based indexing for fields of view
+        self._fields_of_view = [fov for fov in range(experiment.field_of_view_count)]
+        # Timepoints are 1-based since they come from the ND2 filenames
         self._timepoints = [timepoint for timepoint in experiment.timepoints]
         # The BaseFile model that this set contains
         self._model = None
@@ -106,14 +148,15 @@ class BaseSet(object):
             if model.field_of_view == field_of_view:
                 yield model
 
-    def get_data(self, field_of_view):
+    def get_data(self, field_of_view, timepoint):
         """
         Yields model data in order of acquisition across all timepoints.
 
         """
         for model in self._get_current(field_of_view):
             for data in model.data:
-                yield data
+                if model.timepoint == timepoint:
+                    yield data
 
     def add_existing_data_file(self, filename):
         """

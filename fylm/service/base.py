@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from fylm.service.reader import Reader
 from fylm.service.utilities import FileInteractor
 import logging
 import os
@@ -36,7 +37,7 @@ class BaseSetService(BaseService):
         """
         raise NotImplemented
 
-    def save(self, model_set):
+    def save_text(self, model_set):
         """
         Takes a model set, calculates any values that need to be calculated, and writes them to disk.
 
@@ -51,6 +52,16 @@ class BaseSetService(BaseService):
             writer.write_text()
         if not did_work:
             log.debug("All %s have been calculated." % self._name)
+
+    def load_existing_models(self, model_set):
+        """
+        Loads every existing model from disk and puts it into the model set.
+
+        """
+        reader = Reader()
+        self.find_current(model_set)
+        for model in model_set.existing:
+            reader.read(model)
 
     def find_current(self, model_set):
         """

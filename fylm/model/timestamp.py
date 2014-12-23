@@ -1,4 +1,4 @@
-from fylm.model.base import BaseFile, BaseSet
+from fylm.model.base import BaseTextFile, BaseSet
 import logging
 import re
 
@@ -15,7 +15,7 @@ class TimestampSet(BaseSet):
         self._model = Timestamps
 
 
-class Timestamps(BaseFile):
+class Timestamps(BaseTextFile):
     def __init__(self):
         super(Timestamps, self).__init__()
         self.timepoint = None
@@ -44,7 +44,7 @@ class Timestamps(BaseFile):
     @property
     def data(self):
         for index, timestamp in self._ordered_data:
-            yield timestamp
+            yield index, timestamp
 
     @property
     def lines(self):

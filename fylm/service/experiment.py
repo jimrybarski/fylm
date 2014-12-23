@@ -42,7 +42,12 @@ class Experiment(object):
 
         """
         # first make all the top-level directories
-        subdirs = ["rotation", "timestamp", "registration"]
+        subdirs = ["annotation",
+                   "kymograph",
+                   "location",
+                   "registration",
+                   "rotation",
+                   "timestamp"]
         for subdir in subdirs:
             try:
                 self._os.makedirs(experiment.data_dir + "/" + subdir)
