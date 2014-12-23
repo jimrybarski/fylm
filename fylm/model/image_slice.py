@@ -1,6 +1,5 @@
 from fylm.model.coordinates import Coordinates
 import numpy as np
-import skimage.io
 
 
 class ImageSlice(object):
@@ -75,9 +74,8 @@ class ImageSlice(object):
 
         """
         top_row, bottom_row = self._central_rows
-        # middle_section = self._image_data[top_row:bottom_row, :]
-        # return np.mean(middle_section, axis=0)
-        return self._image_data[top_row:bottom_row, :]
+        middle_section = self._image_data[top_row:bottom_row, :]
+        return np.mean(middle_section, axis=0)
 
     @property
     def _central_rows(self):
@@ -88,7 +86,8 @@ class ImageSlice(object):
         row_count = self._image_data.shape[0]
         odd_adjustment = row_count % 2  # we only want integers so we make odd numbers even temporarily
         center_row = (row_count - odd_adjustment) / 2
-        return center_row, center_row + 1
+        # returns three rows - the central one, and two on either side (above and below)
+        return center_row - 1, center_row + 2
 
     @property
     def image_data(self):
