@@ -76,15 +76,14 @@ class KymographAnnotator(HumanInteractor):
 
     def _save_annotation(self):
         self._handle_results()
-        self._increment_channel()
         self._clear()
 
     def _previous_channel(self):
-        self._clear()
+        self._save_annotation()
         self._decrement_channel()
 
     def _next_channel(self):
-        self._clear()
+        self._save_annotation()
         self._increment_channel()
 
     def _previous_timepoint(self):
@@ -96,7 +95,6 @@ class KymographAnnotator(HumanInteractor):
         self._increment_timepoint()
 
     def _decrement_channel(self):
-        # TODO: Add support for fields of view as well
         if self._current_channel_number == 1:
             self._current_channel_number = Constants.NUM_CATCH_CHANNELS
         else:
