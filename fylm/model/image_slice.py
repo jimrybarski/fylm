@@ -1,5 +1,6 @@
 from fylm.model.coordinates import Coordinates
 import numpy as np
+import skimage.io
 
 
 class ImageSlice(object):
@@ -43,13 +44,13 @@ class ImageSlice(object):
 
         y_slice_coords = max(self._top_left.y - y_margin, 0), min(self._top_left.y + self._height + y_margin, parent_height)
         x_slice_coords = max(self._top_left.x, 0), min(self._top_left.x + self.width, parent_width)
-        image_data_slice = image_data[y_slice_coords[0]:y_slice_coords[1], x_slice_coords[0]:x_slice_coords[1]]
+        y_diff = y_slice_coords[1] - y_slice_coords[0]
+        image_data_slice = image_data[y_slice_coords[0]:y_slice_coords[1] + y_diff, x_slice_coords[0]:x_slice_coords[1]]
 
         if self._fliplr:
             self._image_data = np.fliplr(image_data_slice)
         else:
             self._image_data = image_data_slice
-
 
     def get_parent_coordinates(self, local_coordinates):
         """
@@ -74,8 +75,9 @@ class ImageSlice(object):
 
         """
         top_row, bottom_row = self._central_rows
-        middle_section = self._image_data[top_row:bottom_row, :]
-        return np.mean(middle_section, axis=0)
+        # middle_section = self._image_data[top_row:bottom_row, :]
+        # return np.mean(middle_section, axis=0)
+        return self._image_data[top_row:bottom_row, :]
 
     @property
     def _central_rows(self):
@@ -86,7 +88,7 @@ class ImageSlice(object):
         row_count = self._image_data.shape[0]
         odd_adjustment = row_count % 2  # we only want integers so we make odd numbers even temporarily
         center_row = (row_count - odd_adjustment) / 2
-        return center_row - 2, center_row + 3
+        return center_row, center_row + 1
 
     @property
     def image_data(self):
