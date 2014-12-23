@@ -69,7 +69,23 @@ class KymographAnnotationSet(BaseSet):
         self._model = KymographAnnotation
         self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
         self.kymograph_set = None
-        self.max_timepoint = experiment.timepoint_count
+        self._max_timepoint = experiment.timepoint_count
+        self._current_annotation = 0
+        self._annotations = [expected for expected in self._expected]
+
+    def increment_channel(self):
+        self._current_annotation += 1
+        if self._current_annotation == len(self._annotations):
+            self._current_annotation = 0
+    
+    def decrement_channel(self):
+        self._current_annotation -= 1
+        if self._current_annotation == -1:
+            self._current_annotation = len(self._annotations) - 1
+
+    @property
+    def max_timepoint(self):
+        return self._max_timepoint
 
     @property
     def work_remains(self):
@@ -82,6 +98,13 @@ class KymographAnnotationSet(BaseSet):
 
     @property
     def _expected(self):
+        """
+        We have to combine the existing and remaining here because we want to be able
+        to keep working on annotations that are partially done, and there's no good way
+        to designate some as done (or at least it would be annoying to do so and then
+        find out that more changes were needed).
+
+        """
         assert self._model is not None
         for field_of_view in self._fields_of_view:
             for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
@@ -96,10 +119,16 @@ class KymographAnnotationSet(BaseSet):
                     remaining_model.base_path = self.base_path
                     yield remaining_model
 
+    def get_current_annotation(self):
+        return self._annotations[self._current_annotation]
+
     def get_annotation(self, field_of_view, channel_number):
+        # Get all kymographs for this field of view and channel, across every timepoint
         kymographs = [kymograph for kymograph in self.kymograph_set.existing if kymograph.field_of_view == field_of_view and kymograph.channel_number == channel_number]
+        # Find the annotation model for this field of view and channel
         for model in self._expected:
             if model.field_of_view == field_of_view and model.channel_number == channel_number:
+                # Add the kymographs for every timepoint to this annotation model
                 model.add_images(kymographs)
                 return model
 

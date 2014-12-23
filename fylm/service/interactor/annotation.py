@@ -22,6 +22,7 @@ class KymographAnnotator(HumanInteractor):
         self._annotation = self._annotation_model_set.get_first_unfinished_model()
         self._current_channel_number = self._annotation.channel_number
         self._current_field_of_view = self._annotation.field_of_view
+        self._max_field_of_view = self._annotation_model_set.max_field_of_view
         self._line_indices = None
         self._im = None
 
@@ -88,11 +89,11 @@ class KymographAnnotator(HumanInteractor):
 
     def _previous_timepoint(self):
         self._clear()
-        self._decrement_timepoint()
+        self._annotation.decrement_timepoint()
 
     def _next_timepoint(self):
         self._clear()
-        self._increment_timepoint()
+        self._annotation.increment_timepoint()
 
     def _decrement_channel(self):
         if self._current_channel_number == 1:
@@ -105,12 +106,6 @@ class KymographAnnotator(HumanInteractor):
             self._current_channel_number = 1
         else:
             self._current_channel_number += 1
-
-    def _decrement_timepoint(self):
-        self._annotation.decrement_timepoint()
-
-    def _increment_timepoint(self):
-        self._annotation.increment_timepoint()
 
     def _clear(self):
         self._erase_all_points()
