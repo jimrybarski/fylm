@@ -107,10 +107,10 @@ class KymographAnnotator(HumanInteractor):
             self._current_channel_number += 1
 
     def _decrement_timepoint(self):
-        self._annotation_model_set.decrement_timepoint()
+        self._annotation.decrement_timepoint()
 
     def _increment_timepoint(self):
-        self._annotation_model_set.increment_timepoint()
+        self._annotation.increment_timepoint()
 
     def _clear(self):
         self._erase_all_points()
@@ -135,7 +135,7 @@ class KymographAnnotator(HumanInteractor):
 
     def _start(self):
         self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (self._annotation.current_timepoint,
-                                                                    self._annotation.max_timepoint,
+                                                                    self._annotation_model_set.max_timepoint,
                                                                     self._annotation.field_of_view,
                                                                     self._current_channel_number), fontsize=20)
         self._im = self._ax.imshow(self._annotation.current_image, cmap='gray')
