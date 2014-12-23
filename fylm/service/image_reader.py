@@ -55,8 +55,8 @@ class ImageReader(object):
 
     def get_image(self, index, channel="", z_level=1):
         rotation_offset = self._rotation_set.existing[index].offset
-        dx, dy = next(self._registration_set.get_data(self.field_of_view))
-        timestamp = next(self._timestamp_set.get_data(self.field_of_view))
+        dx, dy = next(self._registration_set.get_data(self.field_of_view, self.timepoint))
+        timestamp = next(self._timestamp_set.get_data(self.field_of_view, self.timepoint))
         raw_image = self.nd2.get_image(index, self.field_of_view, channel, z_level)
         return Image(raw_image.data, rotation_offset, dx, dy, timestamp)
 
@@ -79,5 +79,4 @@ class ImageReader(object):
         for nd2_image_set, registration_offset, (time_index, timestamp) in izip(self.nd2.image_sets(self.field_of_view),
                                                                                 registration_data,
                                                                                 timestamp_data):
-            print(registration_offset)
             yield FylmImageSet(nd2_image_set, rotation_offset, registration_offset, time_index - 1, timestamp)

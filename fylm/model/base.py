@@ -148,14 +148,15 @@ class BaseSet(object):
             if model.field_of_view == field_of_view:
                 yield model
 
-    def get_data(self, field_of_view):
+    def get_data(self, field_of_view, timepoint):
         """
         Yields model data in order of acquisition across all timepoints.
 
         """
         for model in self._get_current(field_of_view):
             for data in model.data:
-                yield data
+                if model.timepoint == timepoint:
+                    yield data
 
     def add_existing_data_file(self, filename):
         """
