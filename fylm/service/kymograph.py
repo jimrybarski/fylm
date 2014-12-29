@@ -1,6 +1,7 @@
 from fylm.service.base import BaseSetService
 from fylm.model.location import LocationSet
 from fylm.service.location import LocationSet as LocationSetService
+
 from fylm.service.image_reader import ImageReader
 import skimage.io
 import logging
@@ -20,11 +21,11 @@ class KymographSet(BaseSetService):
         self._name = "kymographs"
 
     def save(self, kymograph_model_set):
-
         # Get the channel locations so we can create ImageSlice objects to help extract lines for kymographs.
         location_set = LocationSet(self._experiment)
         location_service = LocationSetService(self._experiment)
         location_service.load_existing_models(location_set)
+        self.load_existing_models(kymograph_model_set)
         # Not all of the locations will necessarily be done at this point.
         # So we take the set of kymographs that still need
         # to be generated, then see if there is any location data available for them. If not, we just skip them for now.
@@ -42,7 +43,7 @@ class KymographSet(BaseSetService):
                 image_reader = ImageReader(self._experiment)
                 image_reader.field_of_view = location_model.field_of_view
                 image_reader.timepoint = timepoint
-                # Now that we known the width and height of the kymographs, we can allocate memory for the images
+                # Now that we know the width and height of the kymographs, we can allocate memory for the images
                 did_work = self.allocate_kymographs(available_kymographs, image_reader)
 
                 # only iterate over this timepoint's images if there is at least one channel it
