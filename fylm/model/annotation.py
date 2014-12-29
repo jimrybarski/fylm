@@ -25,6 +25,7 @@ class AnnotationLine(object):
         self._coodinates = []
 
     def load_from_text(self, line):
+        log.warn(line)
         index = AnnotationLine.index_regex.match(line)
         self.index = index.group("index")
         self.timepoint = index.group("timepoint")
@@ -129,7 +130,8 @@ class ChannelAnnotationGroup(BaseTextFile):
         try:
             annotation = AnnotationLine()
             annotation.load_from_text(line)
-        except:
+        except Exception as e:
+            log.warn(str(e))
             log.warn("Skipping invalid line: %s" % str(line))
         else:
             self._lines[annotation.timepoint][annotation.index] = annotation
