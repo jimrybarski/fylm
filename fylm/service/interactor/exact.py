@@ -43,15 +43,15 @@ class ExactChannelFinder(HumanInteractor):
             x = max(0, self._top_left.x - self._width_margin)
             y = max(0, self._top_left.y + self._likely_distance * row - self._height_margin * 2)
             width = self._expected_channel_width + self._width_margin * 2
-            height = self._expected_channel_height + self._height_margin * 3
-            image_slice = ImageSlice(x, y, width, height * 2)
+            height = self._expected_channel_height + self._height_margin
+            image_slice = ImageSlice(x, y, width, height)
         else:
             # right catch channel
             x = max(0, self._bottom_right.x - self._expected_channel_width - self._width_margin)
             y = max(0, self._top_left.y + self._likely_distance * row - self._height_margin * 2)
             width = self._expected_channel_width + self._width_margin * 2
-            height = self._expected_channel_height + self._height_margin * 3
-            image_slice = ImageSlice(x, y, width, height * 2)
+            height = self._expected_channel_height + self._height_margin
+            image_slice = ImageSlice(x, y, width, height)
         image_slice.set_image(self._image)
         return image_slice
 

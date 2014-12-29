@@ -1,4 +1,5 @@
 from fylm.service.interactor.base import HumanInteractor
+from fylm.service.utilities import FileInteractor
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
@@ -51,7 +52,6 @@ class KymographAnnotator(HumanInteractor):
     def _on_key_press(self, human_input):
         actions = {"d": self._delete_last_line,
                    "w": self._save_line,
-                   "enter": self._save_annotation,
                    "escape": self._clear,
                    "left": self._previous_channel,
                    "right": self._next_channel,
@@ -69,19 +69,15 @@ class KymographAnnotator(HumanInteractor):
         annotation_line.timepoint = self._annotation_model_set.current_timepoint
         annotation_line.set_coordinates(self._coordinates)
         self.current_annotation.add_line(annotation_line)
+        file_interactor = FileInteractor(self.current_annotation)
+        file_interactor.write_text()
         self._redraw()
         self._erase_all_points()
 
-    def _save_annotation(self):
-        self._handle_results()
-        self._clear()
-
     def _previous_channel(self):
-        self._save_annotation()
         self._annotation_model_set.decrement_channel()
 
     def _next_channel(self):
-        self._save_annotation()
         self._annotation_model_set.increment_channel()
 
     def _previous_timepoint(self):
@@ -95,12 +91,6 @@ class KymographAnnotator(HumanInteractor):
     def _clear(self):
         self._erase_all_points()
         self._close()
-
-    def _handle_results(self):
-        if self._coordinates:
-            # do stuff
-            pass
-        self._clear()
 
     def _redraw(self):
         result_array = np.zeros(self._image.shape)
