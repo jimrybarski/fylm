@@ -24,7 +24,7 @@ class RegistrationSet(BaseSetService):
         :type registration_model:   fylm.model.registration.Registration()
 
         """
-        log.debug("Creating registration file %s" % registration_model.filename)
+        log.info("Creating registration file %s" % registration_model.filename)
         # This is a pretty naive loop - the same file will get opened 8-12 times
         # There are obvious ways to optimize this but that can be done later if it matters
         # It probably doesn't matter though and I like simple things
