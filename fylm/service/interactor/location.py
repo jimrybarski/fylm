@@ -11,9 +11,10 @@ class ApproximateChannelFinder(HumanInteractor):
     Returns an ImageSliceSet with 28 ImageSlices, each with the image data of what is hopefully a catch channel.
 
     """
-    def __init__(self, image_data):
+    def __init__(self, image_data, field_of_view):
         super(ApproximateChannelFinder, self).__init__()
         self._image_data = image_data
+        self._field_of_view = field_of_view
         self._start()
 
     def _on_mouse_click(self, human_input):
@@ -30,6 +31,7 @@ class ApproximateChannelFinder(HumanInteractor):
             self._erase_all_points()
 
     def _start(self):
+        self._fig.suptitle("Field of View: %s" % self._field_of_view, fontsize=20)
         self._ax.imshow(self._image_data, cmap='gray')
         self._ax.autoscale(False)
         plt.show()
