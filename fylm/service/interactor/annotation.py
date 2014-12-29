@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from skimage.color import gray2rgb
 from fylm.model.annotation import AnnotationLine
+from fylm.service.reader import Reader
 
 log = logging.getLogger("fylm")
 
@@ -115,6 +116,8 @@ class KymographAnnotator(HumanInteractor):
         return self._annotation_model_set.current_model
 
     def _start(self):
+        # Refresh the lines from disk in case we saved some during this session
+        Reader().read(self.current_annotation)
         timepoint = self._annotation_model_set.current_timepoint
         self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (timepoint,
                                                                     self._annotation_model_set.max_timepoint,
