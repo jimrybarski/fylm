@@ -18,6 +18,13 @@ class KymographSet(BaseSet):
         self._model = Kymograph
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.png""")
 
+    def get_kymographs(self, field_of_view, channel_number):
+        kymographs = []
+        for model in self.existing:
+            if model.field_of_view == field_of_view and model.channel_number == channel_number:
+                kymographs.append(model)
+        return kymographs
+
     @property
     def _expected(self):
         """
