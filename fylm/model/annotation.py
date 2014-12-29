@@ -84,19 +84,6 @@ class ChannelAnnotationGroup(BaseTextFile):
                 y_list, x_list = line(int(from_point.y), int(from_point.x), int(to_point.y), int(to_point.x))
                 yield y_list, x_list
 
-#     def add_images(self, kymographs):
-#         for kymograph in kymographs:
-#             self._images[kymograph.timepoint] = kymograph.data
-#
-#
-#     @property
-#     def current_timepoint(self):
-#         return self._current_timepoint
-#
-#     @property
-#     def work_complete(self):
-#         return self._last_state_timepoint == max(self._images.keys())
-
     def get_image(self, timepoint):
         for kymo in self.kymographs:
             if kymo.timepoint == timepoint:
@@ -147,28 +134,6 @@ class ChannelAnnotationGroup(BaseTextFile):
         else:
             self._lines[annotation.timepoint][annotation.index] = annotation
 
-#     def add_line(self, annotation_line):
-#         """
-#         Saves a line to the model when the user feels it's complete.
-#         Even though it is not currently implemented, we have indices on the data so that in the future we'll have the option
-#         of deleting lines based on which one the user has clicked on.
-#
-#         :param annotation_line:     the points of an annotation line
-#         :type annotation_line:      list of fylm.model.annotation.AnnotationLine()
-#
-#         """
-#         if not self._annotations[self._current_timepoint]:
-#             # first time to add data for this timepoint
-#             index = 0
-#         else:
-#             # we already have data for this timepoint, so use the next available index
-#             index = max(self._annotations[self._current_timepoint].keys()) + 1
-#         self._annotations[self._current_timepoint][index] = annotation_line
-#
-#     @property
-#     def data(self):
-#         return None
-#
     @property
     def channel_number(self):
         return self._channel_number
