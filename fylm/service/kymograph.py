@@ -1,7 +1,7 @@
 from fylm.service.base import BaseSetService
 from fylm.model.location import LocationSet
 from fylm.service.location import LocationSet as LocationSetService
-
+from fylm.service.utilities import timer
 from fylm.service.image_reader import ImageReader
 import skimage.io
 import logging
@@ -37,39 +37,44 @@ class KymographSet(BaseSetService):
 
             # Each location model contains data for 28 channels in one field of view
             available_kymographs = [kymo for kymo in self.set_kymograph_locations(location_model, kymograph_model_set)]
+            self.action(location_model, available_kymographs)
 
-            for timepoint in self._experiment.timepoints:
-                log.info("Making kymographs for timepoint %s" % timepoint)
-                image_reader = ImageReader(self._experiment)
-                image_reader.field_of_view = location_model.field_of_view
-                image_reader.timepoint = timepoint
-                # Now that we know the width and height of the kymographs, we can allocate memory for the images
-                did_work = self.allocate_kymographs(available_kymographs, image_reader)
-
-                # only iterate over this timepoint's images if there is at least one channel it
-                for kymograph_model in available_kymographs:
-                    if kymograph_model.timepoint == timepoint:
-                        # at least one catch channel has data
-                        break
-                else:
-                    # skip this timepoint
-                    continue
-
-                for time_index, image_set in enumerate(image_reader):
-                    log.debug("Adding lines for kymographs from time index %s" % time_index)
-                    image = image_set.get_image(channel="", z_level=1)
-
-                    for kymograph_model in available_kymographs:
-                        if kymograph_model.timepoint == timepoint:
-                            kymograph_model.set_image(image)
-                            kymograph_model.add_line(time_index)
-                for kymograph_model in available_kymographs:
-                    if kymograph_model.timepoint == timepoint:
-                        log.info("Saving kymograph %s" % kymograph_model.channel_number)
-                        skimage.io.imsave(kymograph_model.path, kymograph_model.data)
-                        kymograph_model.free_memory()
         if not did_work:
             log.info("All %s have been created." % self._name)
+
+    @timer
+    def action(self, location_model, available_kymographs):
+        log.info("Making kymographs for field of view %s:" % location_model.field_of_view)
+        for timepoint in self._experiment.timepoints:
+            log.info("  - timepoint %s" % timepoint)
+            image_reader = ImageReader(self._experiment)
+            image_reader.field_of_view = location_model.field_of_view
+            image_reader.timepoint = timepoint
+            # Now that we know the width and height of the kymographs, we can allocate memory for the images
+            did_work = self.allocate_kymographs(available_kymographs, image_reader)
+
+            # only iterate over this timepoint's images if there is at least one channel it
+            for kymograph_model in available_kymographs:
+                if kymograph_model.timepoint == timepoint:
+                    # at least one catch channel has data
+                    break
+            else:
+                # skip this timepoint
+                continue
+
+            for time_index, image_set in enumerate(image_reader):
+                log.debug("Adding lines for kymographs from time index %s" % time_index)
+                image = image_set.get_image(channel="", z_level=1)
+
+                for kymograph_model in available_kymographs:
+                    if kymograph_model.timepoint == timepoint:
+                        kymograph_model.set_image(image)
+                        kymograph_model.add_line(time_index)
+            for kymograph_model in available_kymographs:
+                if kymograph_model.timepoint == timepoint:
+                    log.info("Saving kymograph %s" % kymograph_model.channel_number)
+                    skimage.io.imsave(kymograph_model.path, kymograph_model.data)
+                    kymograph_model.free_memory()
 
     @staticmethod
     def set_kymograph_locations(location_model, kymograph_model_set):
