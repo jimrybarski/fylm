@@ -22,22 +22,22 @@ class RotationSetTests(unittest.TestCase):
 
     def test_expected_rotations(self):
         rotations = [r for r in self.rset._expected]
-        self.assertEqual(len(rotations), 24)
+        self.assertEqual(len(rotations), 8)
 
     def test_add_current_rotation(self):
         # two valid names
-        self.rset.add_existing_data_file("tp1-fov1.txt")
-        self.rset.add_existing_data_file("tp1-fov5.txt")
+        self.rset.add_existing_data_file("fov1.txt")
+        self.rset.add_existing_data_file("fov5.txt")
         # two invalid names
         self.rset.add_existing_data_file("rotation.txt")
         self.rset.add_existing_data_file("tp-fov-rotation.txt")
         self.assertEqual(len(self.rset._current_filenames), 2)
 
     def test_remaining_rotations(self):
-        self.rset.add_existing_data_file("tp1-fov1.txt")
-        self.rset.add_existing_data_file("tp1-fov5.txt")
+        self.rset.add_existing_data_file("fov1.txt")
+        self.rset.add_existing_data_file("fov5.txt")
         rotations = [r for r in self.rset.remaining]
-        self.assertEqual(len(rotations), 22)
+        self.assertEqual(len(rotations), 6)
 
 
 class RotationTests(unittest.TestCase):
@@ -50,7 +50,7 @@ class RotationTests(unittest.TestCase):
         self.rotation.field_of_view = 3
 
     def test_path(self):
-        self.assertEqual(self.rotation.path, "/home/lulz/141117/rotation/tp2-fov3.txt")
+        self.assertEqual(self.rotation.path, "/home/lulz/141117/rotation/fov3.txt")
 
     def test_line(self):
         self.rotation._offset = 5.6363

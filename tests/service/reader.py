@@ -49,7 +49,7 @@ class BaseModelServiceTests(unittest.TestCase):
         mo.return_value = BytesIO("0.0943695191964\n")
         rotation = Rotation()
         self.reader.read(rotation)
-        self.assertEqual(next(rotation.data), 0.0943695191964)
+        self.assertEqual(rotation.data, 0.0943695191964)
 
     @patch('__builtin__.open')
     def test_read_timestamps(self, mo):
