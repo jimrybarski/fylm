@@ -81,6 +81,13 @@ class ChannelAnnotationGroup(BaseTextFile):
             index = max(self._lines[annotation_line.timepoint].keys()) + 1
         self._lines[annotation_line.timepoint][index] = annotation_line
 
+    def delete_last_line(self, timepoint):
+        try:
+            index = max(self._lines[timepoint].keys())
+            del(self._lines[timepoint][index])
+        except KeyError:
+            pass
+
     @property
     def is_finished(self):
         return self._last_state in ("dies", "finished")

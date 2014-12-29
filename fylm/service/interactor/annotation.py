@@ -62,7 +62,7 @@ class KymographAnnotator(HumanInteractor):
             actions[human_input.key]()
 
     def _delete_last_line(self):
-        raise NotImplemented
+        self.current_annotation.delete_last_line()
 
     def _save_line(self):
         annotation_line = AnnotationLine()
