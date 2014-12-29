@@ -37,16 +37,17 @@ class KymographSet(BaseSetService):
 
             # Each location model contains data for 28 channels in one field of view
             available_kymographs = [kymo for kymo in self.set_kymograph_locations(location_model, kymograph_model_set)]
-            self.action(location_model, available_kymographs)
+            did_work = self.action(location_model, available_kymographs)
 
         if not did_work:
             log.info("All %s have been created." % self._name)
 
     @timer
     def action(self, location_model, available_kymographs):
+        did_work = False
         log.info("Making kymographs for field of view %s:" % location_model.field_of_view)
         for timepoint in self._experiment.timepoints:
-            log.info("  - timepoint %s" % timepoint)
+            log.info("  Timepoint %s" % timepoint)
             image_reader = ImageReader(self._experiment)
             image_reader.field_of_view = location_model.field_of_view
             image_reader.timepoint = timepoint
@@ -72,9 +73,10 @@ class KymographSet(BaseSetService):
                         kymograph_model.add_line(time_index)
             for kymograph_model in available_kymographs:
                 if kymograph_model.timepoint == timepoint:
-                    log.info("Saving kymograph %s" % kymograph_model.channel_number)
+                    log.debug("Saving kymograph %s" % kymograph_model.channel_number)
                     skimage.io.imsave(kymograph_model.path, kymograph_model.data)
                     kymograph_model.free_memory()
+        return did_work
 
     @staticmethod
     def set_kymograph_locations(location_model, kymograph_model_set):
