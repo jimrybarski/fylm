@@ -22,6 +22,7 @@ class KymographAnnotator(HumanInteractor):
         self._annotation = self._annotation_model_set.get_first_unfinished_model()
         self._current_channel_number = self._annotation.channel_number
         self._current_field_of_view = self._annotation.field_of_view
+        self._max_field_of_view = self._annotation_model_set.max_field_of_view
         self._line_indices = None
         self._im = None
 
@@ -76,43 +77,23 @@ class KymographAnnotator(HumanInteractor):
 
     def _save_annotation(self):
         self._handle_results()
-        self._increment_channel()
         self._clear()
 
     def _previous_channel(self):
-        self._clear()
-        self._decrement_channel()
+        self._save_annotation()
+        self._annotation_model_set.decrement_channel()
 
     def _next_channel(self):
-        self._clear()
-        self._increment_channel()
+        self._save_annotation()
+        self._annotation_model_set.increment_channel()
 
     def _previous_timepoint(self):
+        self._annotation.decrement_timepoint()
         self._clear()
-        self._decrement_timepoint()
 
     def _next_timepoint(self):
+        self._annotation.increment_timepoint()
         self._clear()
-        self._increment_timepoint()
-
-    def _decrement_channel(self):
-        # TODO: Add support for fields of view as well
-        if self._current_channel_number == 1:
-            self._current_channel_number = Constants.NUM_CATCH_CHANNELS
-        else:
-            self._current_channel_number -= 1
-
-    def _increment_channel(self):
-        if self._current_channel_number == Constants.NUM_CATCH_CHANNELS:
-            self._current_channel_number = 1
-        else:
-            self._current_channel_number += 1
-
-    def _decrement_timepoint(self):
-        self._annotation_model_set.decrement_timepoint()
-
-    def _increment_timepoint(self):
-        self._annotation_model_set.increment_timepoint()
 
     def _clear(self):
         self._erase_all_points()
@@ -137,7 +118,7 @@ class KymographAnnotator(HumanInteractor):
 
     def _start(self):
         self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (self._annotation.current_timepoint,
-                                                                    self._annotation.max_timepoint,
+                                                                    self._annotation_model_set.max_timepoint,
                                                                     self._annotation.field_of_view,
                                                                     self._current_channel_number), fontsize=20)
         self._im = self._ax.imshow(self._annotation.current_image, cmap='gray')

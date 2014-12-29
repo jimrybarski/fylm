@@ -59,69 +59,41 @@ class AnnotationLine(object):
         return self._coodinates
 
 
-class KymographAnnotationSet(BaseSet):
-    """
-    Models all kymograph images for a given experiment.
-
-    """
-    def __init__(self, experiment):
-        super(KymographAnnotationSet, self).__init__(experiment, "annotation")
-        self._model = KymographAnnotation
-        self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
-        self._timepoint = 1
-        self._max_timepoint = experiment.timepoint_count
-        self.kymograph_set = None
-
-    @property
-    def work_remains(self):
-        if len(self._existing) == len(self._fields_of_view) * Constants.NUM_CATCH_CHANNELS:
-            for model in self._existing:
-                if not model.work_complete:
-                    return True
-            return False
-        return True
-
-    @property
-    def _expected(self):
-        assert self._model is not None
-        for field_of_view in self._fields_of_view:
-            for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
-                for model in self._existing:
-                    if model.field_of_view == field_of_view and model.channel_number == channel_number:
-                        yield model
-                        break
-                else:
-                    remaining_model = self._model()
-                    remaining_model.field_of_view = field_of_view
-                    remaining_model.channel_number = channel_number
-                    remaining_model.base_path = self.base_path
-                    yield remaining_model
-
-    def get_annotation(self, field_of_view, channel_number):
-        kymographs = [kymograph for kymograph in self.kymograph_set.existing if kymograph.field_of_view == field_of_view and kymograph.channel_number == channel_number]
-        for model in self._expected:
-            if model.field_of_view == field_of_view and model.channel_number == channel_number:
-                model.add_images(kymographs)
-                return model
-
-    def get_first_unfinished_model(self):
-        return self.get_annotation(0, 3)
-
-
-class KymographAnnotation(BaseTextFile):
+class ChannelAnnotationGroup(BaseTextFile):
     """
     Models all of the lines of an annotation of any number of kymographs for a single field of view and channel.
     That is, all the kymographs over several timepoints.
 
     """
-    def __init__(self):
-        super(KymographAnnotation, self).__init__()
+    def __init__(self, max_timepoint):
+        super(ChannelAnnotationGroup, self).__init__()
         self._channel_number = None
         self._images = {}
         self._annotations = defaultdict(dict)  # index == timepoint
         self._last_state = "active"
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
         self._current_timepoint = 1
+        self._max_timepoint = max_timepoint
+
+    def increment_timepoint(self):
+        """
+        Actually goes to an earlier timepoint so that the key direction corresponds
+        with the direction of the kymograph in time.
+
+        """
+        self._current_timepoint -= 1
+        if self._current_timepoint == 0:
+            self._current_timepoint = self._max_timepoint
+
+    def decrement_timepoint(self):
+        """
+        Actually goes to a later timepoint so that the key direction corresponds
+        with the direction of the kymograph in time.
+
+        """
+        self._current_timepoint += 1
+        if self._current_timepoint > self._max_timepoint:
+            self._current_timepoint = 1
 
     @property
     def points(self):
@@ -144,20 +116,8 @@ class KymographAnnotation(BaseTextFile):
         return self._annotations[self._current_timepoint]
 
     @property
-    def max_timepoint(self):
-        if self._annotations:
-            return max(self._annotations.keys())
-        return 1
-
-    @property
     def current_timepoint(self):
         return self._current_timepoint
-
-    def increment_timepoint(self):
-        self._current_timepoint += 1 if self._current_timepoint < self.max_timepoint else 1
-
-    def decrement_timepoint(self):
-        self._current_timepoint -= 1 if self._current_timepoint > 1 else self.max_timepoint
 
     @property
     def work_complete(self):
@@ -217,8 +177,8 @@ class KymographAnnotation(BaseTextFile):
         Even though it is not currently implemented, we have indices on the data so that in the future we'll have the option
         of deleting lines based on which one the user has clicked on.
 
-        :param coordinates:     the points of an annotation line
-        :type coordinates:      list of fylm.model.coordinates.Coordinates()
+        :param annotation_line:     the points of an annotation line
+        :type annotation_line:      list of fylm.model.annotation.AnnotationLine()
 
         """
         if not self._annotations[self._current_timepoint]:
@@ -244,3 +204,94 @@ class KymographAnnotation(BaseTextFile):
     @property
     def filename(self):
         return "fov%s-channel%s.txt" % (self.field_of_view, self.channel_number)
+
+
+class KymographAnnotationSet(BaseSet):
+    """
+    Models all kymograph images for a given experiment.
+
+    """
+    def __init__(self, experiment):
+        super(KymographAnnotationSet, self).__init__(experiment, "annotation")
+        self._model = ChannelAnnotationGroup
+        self._current_annotation = 0
+        self._max_field_of_view = experiment.field_of_view_count - 1
+        self._max_timepoint = experiment.timepoint_count
+        self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
+        self.kymograph_set = None
+        self._annotations = None
+
+    @property
+    def annotations(self):
+        if self._annotations is None:
+            self._annotations = [expected for expected in self._expected]
+        return self._annotations
+
+    @property
+    def max_field_of_view(self):
+        return self._max_field_of_view
+
+    def increment_channel(self):
+        self._current_annotation += 1
+        if self._current_annotation == len(self.annotations):
+            self._current_annotation = 0
+
+    def decrement_channel(self):
+        self._current_annotation -= 1
+        if self._current_annotation == -1:
+            self._current_annotation = len(self.annotations) - 1
+
+    @property
+    def max_timepoint(self):
+        return self._max_timepoint
+
+    @property
+    def work_remains(self):
+        if len(self.existing) == len(self._fields_of_view) * Constants.NUM_CATCH_CHANNELS:
+            for model in self.existing:
+                if not model.work_complete:
+                    return True
+            return False
+        return True
+
+    @property
+    def _expected(self):
+        """
+        We have to combine the existing and remaining here because we want to be able
+        to keep working on annotations that are partially done, and there's no good way
+        to designate some as done (or at least it would be annoying to do so and then
+        find out that more changes were needed).
+
+        """
+        assert self._model is not None
+        for field_of_view in self._fields_of_view:
+            for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+                if self.kymograph_set.has_fov_and_channel(field_of_view, channel_number):
+                    for model in self._existing:
+                        if model.field_of_view == field_of_view and model.channel_number == channel_number:
+                            yield model
+                            break
+                    else:
+                        remaining_model = self._model(self._max_timepoint)
+                        remaining_model.field_of_view = field_of_view
+                        remaining_model.channel_number = channel_number
+                        remaining_model.base_path = self.base_path
+                        yield remaining_model
+
+    def get_current_annotation(self):
+        return self.annotations[self._current_annotation]
+
+    def get_annotation(self, field_of_view, channel_number):
+        # Get all kymographs for this field of view and channel, across every timepoint
+        kymographs = [kymograph for kymograph in self.kymograph_set.existing
+                      if kymograph.field_of_view == field_of_view
+                      and kymograph.channel_number == channel_number]
+        # Find the annotation model for this field of view and channel
+        for model in self._expected:
+            if model.field_of_view == field_of_view and model.channel_number == channel_number:
+                # Add the kymographs for every timepoint to this annotation model
+                model.add_images(kymographs)
+                return model
+
+    def get_first_unfinished_model(self):
+        return self.get_annotation(0, 3)
