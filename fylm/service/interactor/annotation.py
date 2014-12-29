@@ -81,31 +81,19 @@ class KymographAnnotator(HumanInteractor):
 
     def _previous_channel(self):
         self._save_annotation()
-        self._decrement_channel()
+        self._annotation_model_set.decrement_channel()
 
     def _next_channel(self):
         self._save_annotation()
-        self._increment_channel()
+        self._annotation_model_set.increment_channel()
 
     def _previous_timepoint(self):
-        self._clear()
         self._annotation.decrement_timepoint()
+        self._clear()
 
     def _next_timepoint(self):
-        self._clear()
         self._annotation.increment_timepoint()
-
-    def _decrement_channel(self):
-        if self._current_channel_number == 1:
-            self._current_channel_number = Constants.NUM_CATCH_CHANNELS
-        else:
-            self._current_channel_number -= 1
-
-    def _increment_channel(self):
-        if self._current_channel_number == Constants.NUM_CATCH_CHANNELS:
-            self._current_channel_number = 1
-        else:
-            self._current_channel_number += 1
+        self._clear()
 
     def _clear(self):
         self._erase_all_points()
