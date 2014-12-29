@@ -1,4 +1,5 @@
 from fylm.service.base import BaseSetService
+from fylm.service.utilities import timer
 import nd2reader
 import logging
 from skimage.feature.phase_correlate import phase_correlate
@@ -17,6 +18,7 @@ class RegistrationSet(BaseSetService):
         self._experiment = experiment
         self._name = "registration offsets"
 
+    @timer
     def save_action(self, registration_model):
         """
         Calculates the rotation offset for a single field of view and timepoint.
