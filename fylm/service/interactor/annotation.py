@@ -1,4 +1,3 @@
-from fylm.model.constants import Constants
 from fylm.service.interactor.base import HumanInteractor
 import logging
 import numpy as np
@@ -19,13 +18,8 @@ class KymographAnnotator(HumanInteractor):
         super(KymographAnnotator, self).__init__()
         self._annotation_model_set = annotation_model_set
         self._done = False
-        self._annotation = self._annotation_model_set.get_first_unfinished_model()
-        self._current_channel_number = self._annotation.channel_number
-        self._current_field_of_view = self._annotation.field_of_view
-        self._max_field_of_view = self._annotation_model_set.max_field_of_view
         self._line_indices = None
         self._im = None
-
         while not self._done:
             self._start()
             if not self._done:
@@ -71,7 +65,7 @@ class KymographAnnotator(HumanInteractor):
     def _save_line(self):
         annotation_line = AnnotationLine()
         annotation_line.set_coordinates(self._coordinates)
-        self._annotation.add_line(annotation_line)
+        self.current_annotation.add_line(annotation_line)
         self._redraw()
         self._erase_all_points()
 
@@ -79,21 +73,21 @@ class KymographAnnotator(HumanInteractor):
         self._handle_results()
         self._clear()
 
-    def _previous_channel(self):
-        self._save_annotation()
-        self._annotation_model_set.decrement_channel()
-
-    def _next_channel(self):
-        self._save_annotation()
-        self._annotation_model_set.increment_channel()
-
-    def _previous_timepoint(self):
-        self._annotation.decrement_timepoint()
-        self._clear()
-
-    def _next_timepoint(self):
-        self._annotation.increment_timepoint()
-        self._clear()
+    # def _previous_channel(self):
+    #     self._save_annotation()
+    #     self._annotation_model_set.decrement_channel()
+    #
+    # def _next_channel(self):
+    #     self._save_annotation()
+    #     self._annotation_model_set.increment_channel()
+    #
+    # def _previous_timepoint(self):
+    #     self.current_annotation.decrement_timepoint()
+    #     self._clear()
+    #
+    # def _next_timepoint(self):
+    #     self.current_annotation.increment_timepoint()
+    #     self._clear()
 
     def _clear(self):
         self._erase_all_points()
@@ -106,22 +100,28 @@ class KymographAnnotator(HumanInteractor):
         self._clear()
 
     def _redraw(self):
-        result_array = np.zeros(self._annotation.current_image.shape)
-        for y_list, x_list in self._annotation.points:
+        result_array = np.zeros(self._image.shape)
+        for y_list, x_list in self.current_annotation.points(self._annotation_model_set.current_timepoint):
             result_array[y_list, x_list] = 1
         line_indices = np.where(result_array == 1)
 
-        active_image = gray2rgb(np.copy(self._annotation.current_image))
+        active_image = gray2rgb(np.copy(self._image))
         active_image[line_indices] = self._label_line_color
         self._im.set_data(active_image)
         plt.draw()
 
+    @property
+    def current_annotation(self):
+        return self._annotation_model_set.current_model
+
     def _start(self):
-        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (self._annotation.current_timepoint,
+        timepoint = self._annotation_model_set.current_timepoint
+        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (timepoint,
                                                                     self._annotation_model_set.max_timepoint,
-                                                                    self._annotation.field_of_view,
-                                                                    self._current_channel_number), fontsize=20)
-        self._im = self._ax.imshow(self._annotation.current_image, cmap='gray')
+                                                                    self.current_annotation.field_of_view,
+                                                                    self.current_annotation.channel_number), fontsize=20)
+        self._image = self.current_annotation.get_image(timepoint)
+        self._im = self._ax.imshow(self._image, cmap='gray')
         self._ax.autoscale(False)
         self._redraw()
         plt.show()

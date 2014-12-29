@@ -65,67 +65,63 @@ class ChannelAnnotationGroup(BaseTextFile):
     That is, all the kymographs over several timepoints.
 
     """
-    def __init__(self, max_timepoint):
+    def __init__(self):
         super(ChannelAnnotationGroup, self).__init__()
         self._channel_number = None
-        self._images = {}
-        self._annotations = defaultdict(dict)  # index == timepoint
+        self._lines = defaultdict(dict)
         self._last_state = "active"
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
-        self._current_timepoint = 1
-        self._max_timepoint = max_timepoint
-
-    def increment_timepoint(self):
-        """
-        Actually goes to an earlier timepoint so that the key direction corresponds
-        with the direction of the kymograph in time.
-
-        """
-        self._current_timepoint -= 1
-        if self._current_timepoint == 0:
-            self._current_timepoint = self._max_timepoint
-
-    def decrement_timepoint(self):
-        """
-        Actually goes to a later timepoint so that the key direction corresponds
-        with the direction of the kymograph in time.
-
-        """
-        self._current_timepoint += 1
-        if self._current_timepoint > self._max_timepoint:
-            self._current_timepoint = 1
+        self.kymographs = None
 
     @property
-    def points(self):
-        for index, annotation in sorted(self._annotations[self._current_timepoint].items()):
+    def is_finished(self):
+        return self._last_state in ("dies", "finished")
+
+#     def increment_timepoint(self):
+#         """
+#         Actually goes to an earlier timepoint so that the key direction corresponds
+#         with the direction of the kymograph in time.
+#
+#         """
+#         self._current_timepoint -= 1
+#         if self._current_timepoint == 0:
+#             self._current_timepoint = self._max_timepoint
+#
+#     def decrement_timepoint(self):
+#         """
+#         Actually goes to a later timepoint so that the key direction corresponds
+#         with the direction of the kymograph in time.
+#
+#         """
+#         self._current_timepoint += 1
+#         if self._current_timepoint > self._max_timepoint:
+#             self._current_timepoint = 1
+
+    def points(self, timepoint):
+        for index, annotation in sorted(self._lines[timepoint].items()):
             for n, from_point in enumerate(annotation.coordinates[:-1]):
                 to_point = annotation.coordinates[n + 1]
                 y_list, x_list = line(int(from_point.y), int(from_point.x), int(to_point.y), int(to_point.x))
                 yield y_list, x_list
 
-    def add_images(self, kymographs):
-        for kymograph in kymographs:
-            self._images[kymograph.timepoint] = kymograph.data
+#     def add_images(self, kymographs):
+#         for kymograph in kymographs:
+#             self._images[kymograph.timepoint] = kymograph.data
+#
+#
+#     @property
+#     def current_timepoint(self):
+#         return self._current_timepoint
+#
+#     @property
+#     def work_complete(self):
+#         return self._last_state_timepoint == max(self._images.keys())
 
-    @property
-    def current_image(self):
-        return self._images[self._current_timepoint]
-
-    @property
-    def current_annotations(self):
-        return self._annotations[self._current_timepoint]
-
-    @property
-    def current_timepoint(self):
-        return self._current_timepoint
-
-    @property
-    def work_complete(self):
-        return self._last_state_timepoint == max(self._images.keys())
-
-    @property
-    def current_image(self):
-        return self._images[self._current_timepoint]
+    def get_image(self, timepoint):
+        for kymo in self.kymographs:
+            if kymo.timepoint == timepoint:
+                return kymo.data
+        raise ValueError("The kymograph didn't have any image data!")
 
     @property
     def state(self):
@@ -133,7 +129,7 @@ class ChannelAnnotationGroup(BaseTextFile):
 
     @state.setter
     def state(self, value):
-        assert value[0] in ("active", "dies")
+        assert value[0] in ("active", "dies", "finished")
         assert isinstance(value[1], int)
         self._last_state = value[0]
         self._last_state_timepoint = value[1]
@@ -141,7 +137,7 @@ class ChannelAnnotationGroup(BaseTextFile):
     @property
     def lines(self):
         yield self.state
-        for index, annotation in sorted(self._annotations.items()):
+        for index, annotation in sorted(self._lines.items()):
             yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in annotation.coordinates])
 
     def load(self, data):
@@ -169,30 +165,30 @@ class ChannelAnnotationGroup(BaseTextFile):
         except:
             log.warn("Skipping invalid line: %s" % str(line))
         else:
-            self._annotations[annotation.timepoint][annotation.index] = annotation
+            self._lines[annotation.timepoint][annotation.index] = annotation
 
-    def add_line(self, annotation_line):
-        """
-        Saves a line to the model when the user feels it's complete.
-        Even though it is not currently implemented, we have indices on the data so that in the future we'll have the option
-        of deleting lines based on which one the user has clicked on.
-
-        :param annotation_line:     the points of an annotation line
-        :type annotation_line:      list of fylm.model.annotation.AnnotationLine()
-
-        """
-        if not self._annotations[self._current_timepoint]:
-            # first time to add data for this timepoint
-            index = 0
-        else:
-            # we already have data for this timepoint, so use the next available index
-            index = max(self._annotations[self._current_timepoint].keys()) + 1
-        self._annotations[self._current_timepoint][index] = annotation_line
-
-    @property
-    def data(self):
-        return None
-
+#     def add_line(self, annotation_line):
+#         """
+#         Saves a line to the model when the user feels it's complete.
+#         Even though it is not currently implemented, we have indices on the data so that in the future we'll have the option
+#         of deleting lines based on which one the user has clicked on.
+#
+#         :param annotation_line:     the points of an annotation line
+#         :type annotation_line:      list of fylm.model.annotation.AnnotationLine()
+#
+#         """
+#         if not self._annotations[self._current_timepoint]:
+#             # first time to add data for this timepoint
+#             index = 0
+#         else:
+#             # we already have data for this timepoint, so use the next available index
+#             index = max(self._annotations[self._current_timepoint].keys()) + 1
+#         self._annotations[self._current_timepoint][index] = annotation_line
+#
+#     @property
+#     def data(self):
+#         return None
+#
     @property
     def channel_number(self):
         return self._channel_number
@@ -214,84 +210,60 @@ class KymographAnnotationSet(BaseSet):
     def __init__(self, experiment):
         super(KymographAnnotationSet, self).__init__(experiment, "annotation")
         self._model = ChannelAnnotationGroup
-        self._current_annotation = 0
-        self._max_field_of_view = experiment.field_of_view_count - 1
-        self._max_timepoint = experiment.timepoint_count
-        self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
         self.kymograph_set = None
-        self._annotations = None
-
-    @property
-    def annotations(self):
-        if self._annotations is None:
-            self._annotations = [expected for expected in self._expected]
-        return self._annotations
-
-    @property
-    def max_field_of_view(self):
-        return self._max_field_of_view
-
-    def increment_channel(self):
-        self._current_annotation += 1
-        if self._current_annotation == len(self.annotations):
-            self._current_annotation = 0
-
-    def decrement_channel(self):
-        self._current_annotation -= 1
-        if self._current_annotation == -1:
-            self._current_annotation = len(self.annotations) - 1
+        self._unfinished = None
+        self._current_timepoint = 1
+        self._current_model_pointer = 0
+        self._max_timepoint = experiment.timepoint_count
 
     @property
     def max_timepoint(self):
         return self._max_timepoint
 
     @property
-    def work_remains(self):
-        if len(self.existing) == len(self._fields_of_view) * Constants.NUM_CATCH_CHANNELS:
-            for model in self.existing:
-                if not model.work_complete:
-                    return True
-            return False
-        return True
+    def current_model(self):
+        return self.unfinished[self._current_model_pointer]
 
     @property
     def _expected(self):
         """
-        We have to combine the existing and remaining here because we want to be able
-        to keep working on annotations that are partially done, and there's no good way
-        to designate some as done (or at least it would be annoying to do so and then
-        find out that more changes were needed).
+        Yields instantiated children of BaseFile that represent the work we expect to have done.
 
         """
         assert self._model is not None
-        for field_of_view in self._fields_of_view:
-            for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
-                if self.kymograph_set.has_fov_and_channel(field_of_view, channel_number):
-                    for model in self._existing:
-                        if model.field_of_view == field_of_view and model.channel_number == channel_number:
-                            yield model
-                            break
-                    else:
-                        remaining_model = self._model(self._max_timepoint)
-                        remaining_model.field_of_view = field_of_view
-                        remaining_model.channel_number = channel_number
-                        remaining_model.base_path = self.base_path
-                        yield remaining_model
+        for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+            for field_of_view in self._fields_of_view:
+                kymographs = self.kymograph_set.get_kymographs(field_of_view, channel_number)
+                if kymographs:
+                    model = self._model()
+                    model.kymographs = kymographs
+                    model.channel_number = channel_number
+                    model.field_of_view = field_of_view
+                    model.base_path = self.base_path
+                    yield model
 
-    def get_current_annotation(self):
-        return self.annotations[self._current_annotation]
+    @property
+    def unfinished(self):
+        """
+        We define this in addition to self.remaining. This is because annotations can be
+        incomplete - a file can be saved even though more work can be done.
+        A user can declare a channel to be finished, which will prevent it from showing
+        up here.
 
-    def get_annotation(self, field_of_view, channel_number):
-        # Get all kymographs for this field of view and channel, across every timepoint
-        kymographs = [kymograph for kymograph in self.kymograph_set.existing
-                      if kymograph.field_of_view == field_of_view
-                      and kymograph.channel_number == channel_number]
-        # Find the annotation model for this field of view and channel
-        for model in self._expected:
-            if model.field_of_view == field_of_view and model.channel_number == channel_number:
-                # Add the kymographs for every timepoint to this annotation model
-                model.add_images(kymographs)
-                return model
+        """
+        if self._unfinished is None:
+            self._unfinished = []
+            for model in self.remaining:
+                self._unfinished.append(model)
+            for model in self.existing:
+                if not model.is_finished:
+                    self._unfinished.append(model)
+        return self._unfinished
 
-    def get_first_unfinished_model(self):
-        return self.get_annotation(0, 3)
+    @property
+    def work_remains(self):
+        return len(self.unfinished) > 0
+
+    @property
+    def current_timepoint(self):
+        return self._current_timepoint
