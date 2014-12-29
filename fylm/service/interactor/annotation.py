@@ -1,4 +1,5 @@
 from fylm.service.interactor.base import HumanInteractor
+from fylm.service.utilities import FileInteractor
 import logging
 import numpy as np
 from matplotlib import pyplot as plt
@@ -51,7 +52,6 @@ class KymographAnnotator(HumanInteractor):
     def _on_key_press(self, human_input):
         actions = {"d": self._delete_last_line,
                    "w": self._save_line,
-                   "enter": self._save_annotation,
                    "escape": self._clear,
                    "left": self._previous_channel,
                    "right": self._next_channel,
@@ -66,22 +66,22 @@ class KymographAnnotator(HumanInteractor):
 
     def _save_line(self):
         annotation_line = AnnotationLine()
+        annotation_line.timepoint = self._annotation_model_set.current_timepoint
         annotation_line.set_coordinates(self._coordinates)
         self.current_annotation.add_line(annotation_line)
-        self._redraw()
+        file_interactor = FileInteractor(self.current_annotation)
+        file_interactor.write_text()
+        Reader().read(self.current_annotation, expect_missing_file=True)
         self._erase_all_points()
-
-    def _save_annotation(self):
-        self._handle_results()
-        self._clear()
+        self._redraw()
 
     def _previous_channel(self):
-        self._save_annotation()
         self._annotation_model_set.decrement_channel()
+        self._clear()
 
     def _next_channel(self):
-        self._save_annotation()
         self._annotation_model_set.increment_channel()
+        self._clear()
 
     def _previous_timepoint(self):
         self._annotation_model_set.decrement_timepoint()
@@ -94,12 +94,6 @@ class KymographAnnotator(HumanInteractor):
     def _clear(self):
         self._erase_all_points()
         self._close()
-
-    def _handle_results(self):
-        if self._coordinates:
-            # do stuff
-            pass
-        self._clear()
 
     def _redraw(self):
         result_array = np.zeros(self._image.shape)
@@ -117,7 +111,7 @@ class KymographAnnotator(HumanInteractor):
 
     def _start(self):
         # Refresh the lines from disk in case we saved some during this session
-        Reader().read(self.current_annotation)
+        Reader().read(self.current_annotation, expect_missing_file=True)
         timepoint = self._annotation_model_set.current_timepoint
         self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (timepoint,
                                                                     self._annotation_model_set.max_timepoint,

@@ -1,10 +1,8 @@
 from fylm.service.base import BaseSetService
-import time
-import numpy as np
 import nd2reader
 import logging
 from skimage.feature.phase_correlate import phase_correlate
-import skimage.io
+
 
 log = logging.getLogger("fylm")
 
@@ -26,7 +24,7 @@ class RegistrationSet(BaseSetService):
         :type registration_model:   fylm.model.registration.Registration()
 
         """
-        log.debug("Creating registration file %s" % registration_model.filename)
+        log.info("Creating registration file %s" % registration_model.filename)
         # This is a pretty naive loop - the same file will get opened 8-12 times
         # There are obvious ways to optimize this but that can be done later if it matters
         # It probably doesn't matter though and I like simple things

@@ -3,6 +3,7 @@ from fylm.model.image_slice import ImageSlice
 from fylm.service.interactor.base import HumanInteractor
 import logging
 from matplotlib import pyplot as plt
+import time
 
 log = logging.getLogger("fylm")
 
@@ -43,15 +44,15 @@ class ExactChannelFinder(HumanInteractor):
             x = max(0, self._top_left.x - self._width_margin)
             y = max(0, self._top_left.y + self._likely_distance * row - self._height_margin * 2)
             width = self._expected_channel_width + self._width_margin * 2
-            height = self._expected_channel_height + self._height_margin * 3
-            image_slice = ImageSlice(x, y, width, height * 2)
+            height = self._expected_channel_height + self._height_margin
+            image_slice = ImageSlice(x, y, width, height)
         else:
             # right catch channel
             x = max(0, self._bottom_right.x - self._expected_channel_width - self._width_margin)
             y = max(0, self._top_left.y + self._likely_distance * row - self._height_margin * 2)
             width = self._expected_channel_width + self._width_margin * 2
-            height = self._expected_channel_height + self._height_margin * 3
-            image_slice = ImageSlice(x, y, width, height * 2)
+            height = self._expected_channel_height + self._height_margin
+            image_slice = ImageSlice(x, y, width, height)
         image_slice.set_image(self._image)
         return image_slice
 
@@ -76,28 +77,29 @@ class ExactChannelFinder(HumanInteractor):
             self._increment_channel()
         elif human_input.key == 'left':
             if not self._coordinates:
-                self._clear()
-                self._decrement_channel()
+                self._handle_results()
+            self._clear()
+            self._decrement_channel()
         elif human_input.key == 'right':
             if not self._coordinates:
-                self._clear()
-                self._increment_channel()
+                self._handle_results()
+            self._clear()
+            self._increment_channel()
 
     def _decrement_channel(self):
-        if self._current_channel_number == 1:
-            self._current_channel_number = Constants.NUM_CATCH_CHANNELS
-        else:
-            self._current_channel_number -= 1
+        self._current_channel_number -= 1
+        if self._current_channel_number == -1:
+            self._current_channel_number = Constants.NUM_CATCH_CHANNELS - 1
 
     def _increment_channel(self):
+        self._current_channel_number += 1
         if self._current_channel_number == Constants.NUM_CATCH_CHANNELS:
-            self._current_channel_number = 1
-        else:
-            self._current_channel_number += 1
+            self._current_channel_number = 0
 
     def _clear(self):
         self._erase_all_points()
         self._close()
+        time.sleep(0.2)
 
     def _handle_results(self):
         if self._coordinates:

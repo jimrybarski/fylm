@@ -74,6 +74,13 @@ class ChannelAnnotationGroup(BaseTextFile):
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
         self.kymographs = None
 
+    def add_line(self, annotation_line):
+        if not self._lines or not self._lines[annotation_line.timepoint]:
+            index = 0
+        else:
+            index = max(self._lines[annotation_line.timepoint].keys()) + 1
+        self._lines[annotation_line.timepoint][index] = annotation_line
+
     @property
     def is_finished(self):
         return self._last_state in ("dies", "finished")
@@ -105,8 +112,9 @@ class ChannelAnnotationGroup(BaseTextFile):
     @property
     def lines(self):
         yield self.state
-        for index, annotation in sorted(self._lines.items()):
-            yield "%s " % index + " ".join(["%s,%s" % (coord.x, coord.y) for coord in annotation.coordinates])
+        for timepoint in sorted(self._lines.keys()):
+            for index, annotation in sorted(self._lines[timepoint].items()):
+                yield "%s %s " % (timepoint, index) + " ".join(["%s,%s" % (coord.x, coord.y) for coord in annotation.coordinates])
 
     def load(self, data):
         try:
