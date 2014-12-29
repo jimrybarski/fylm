@@ -66,6 +66,7 @@ class KymographAnnotator(HumanInteractor):
 
     def _save_line(self):
         annotation_line = AnnotationLine()
+        annotation_line.timepoint = self._annotation_model_set.current_timepoint
         annotation_line.set_coordinates(self._coordinates)
         self.current_annotation.add_line(annotation_line)
         self._redraw()
@@ -117,7 +118,7 @@ class KymographAnnotator(HumanInteractor):
 
     def _start(self):
         # Refresh the lines from disk in case we saved some during this session
-        Reader().read(self.current_annotation)
+        Reader().read(self.current_annotation, expect_missing_file=True)
         timepoint = self._annotation_model_set.current_timepoint
         self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (timepoint,
                                                                     self._annotation_model_set.max_timepoint,
