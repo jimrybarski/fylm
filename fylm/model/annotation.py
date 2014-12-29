@@ -77,26 +77,6 @@ class ChannelAnnotationGroup(BaseTextFile):
     def is_finished(self):
         return self._last_state in ("dies", "finished")
 
-#     def increment_timepoint(self):
-#         """
-#         Actually goes to an earlier timepoint so that the key direction corresponds
-#         with the direction of the kymograph in time.
-#
-#         """
-#         self._current_timepoint -= 1
-#         if self._current_timepoint == 0:
-#             self._current_timepoint = self._max_timepoint
-#
-#     def decrement_timepoint(self):
-#         """
-#         Actually goes to a later timepoint so that the key direction corresponds
-#         with the direction of the kymograph in time.
-#
-#         """
-#         self._current_timepoint += 1
-#         if self._current_timepoint > self._max_timepoint:
-#             self._current_timepoint = 1
-
     def points(self, timepoint):
         for index, annotation in sorted(self._lines[timepoint].items()):
             for n, from_point in enumerate(annotation.coordinates[:-1]):
@@ -215,6 +195,36 @@ class KymographAnnotationSet(BaseSet):
         self._current_timepoint = 1
         self._current_model_pointer = 0
         self._max_timepoint = experiment.timepoint_count
+
+    def decrement_channel(self):
+        self._current_model_pointer -= 1
+        if self._current_model_pointer == -1:
+            self._current_model_pointer = len(self._unfinished) - 1
+
+    def increment_channel(self):
+        self._current_model_pointer += 1
+        if self._current_model_pointer == len(self._unfinished):
+            self._current_model_pointer = 0
+
+    def increment_timepoint(self):
+        """
+        Actually goes to an earlier timepoint so that the key direction corresponds
+        with the direction of the kymograph in time.
+
+        """
+        self._current_timepoint -= 1
+        if self._current_timepoint == 0:
+            self._current_timepoint = self.max_timepoint
+
+    def decrement_timepoint(self):
+        """
+        Actually goes to a later timepoint so that the key direction corresponds
+        with the direction of the kymograph in time.
+
+        """
+        self._current_timepoint += 1
+        if self._current_timepoint > self.max_timepoint:
+            self._current_timepoint = 1
 
     @property
     def max_timepoint(self):

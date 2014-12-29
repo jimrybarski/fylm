@@ -57,7 +57,8 @@ class KymographAnnotator(HumanInteractor):
                    "up": self._next_timepoint,
                    "down": self._previous_timepoint
                    }
-        actions[human_input.key]()
+        if human_input.key in actions.keys():
+            actions[human_input.key]()
 
     def _delete_last_line(self):
         raise NotImplemented
@@ -73,21 +74,21 @@ class KymographAnnotator(HumanInteractor):
         self._handle_results()
         self._clear()
 
-    # def _previous_channel(self):
-    #     self._save_annotation()
-    #     self._annotation_model_set.decrement_channel()
-    #
-    # def _next_channel(self):
-    #     self._save_annotation()
-    #     self._annotation_model_set.increment_channel()
-    #
-    # def _previous_timepoint(self):
-    #     self.current_annotation.decrement_timepoint()
-    #     self._clear()
-    #
-    # def _next_timepoint(self):
-    #     self.current_annotation.increment_timepoint()
-    #     self._clear()
+    def _previous_channel(self):
+        self._save_annotation()
+        self._annotation_model_set.decrement_channel()
+
+    def _next_channel(self):
+        self._save_annotation()
+        self._annotation_model_set.increment_channel()
+
+    def _previous_timepoint(self):
+        self._annotation_model_set.decrement_timepoint()
+        self._clear()
+
+    def _next_timepoint(self):
+        self._annotation_model_set.increment_timepoint()
+        self._clear()
 
     def _clear(self):
         self._erase_all_points()
@@ -104,7 +105,6 @@ class KymographAnnotator(HumanInteractor):
         for y_list, x_list in self.current_annotation.points(self._annotation_model_set.current_timepoint):
             result_array[y_list, x_list] = 1
         line_indices = np.where(result_array == 1)
-
         active_image = gray2rgb(np.copy(self._image))
         active_image[line_indices] = self._label_line_color
         self._im.set_data(active_image)
