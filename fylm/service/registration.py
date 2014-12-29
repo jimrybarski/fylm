@@ -1,10 +1,8 @@
 from fylm.service.base import BaseSetService
-import time
-import numpy as np
 import nd2reader
 import logging
 from skimage.feature.phase_correlate import phase_correlate
-import skimage.io
+
 
 log = logging.getLogger("fylm")
 

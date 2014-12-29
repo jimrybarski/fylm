@@ -56,7 +56,7 @@ class KymographSet(BaseSetService):
                     continue
 
                 for time_index, image_set in enumerate(image_reader):
-                    log.info("Adding lines for kymographs from time index %s" % time_index)
+                    log.debug("Adding lines for kymographs from time index %s" % time_index)
                     image = image_set.get_image(channel="", z_level=1)
 
                     for kymograph_model in available_kymographs:
@@ -65,11 +65,11 @@ class KymographSet(BaseSetService):
                             kymograph_model.add_line(time_index)
                 for kymograph_model in available_kymographs:
                     if kymograph_model.timepoint == timepoint:
-                        log.debug("Saving kymograph %s" % kymograph_model.channel_number)
+                        log.info("Saving kymograph %s" % kymograph_model.channel_number)
                         skimage.io.imsave(kymograph_model.path, kymograph_model.data)
                         kymograph_model.free_memory()
         if not did_work:
-            log.debug("All %s have been created." % self._name)
+            log.info("All %s have been created." % self._name)
 
     @staticmethod
     def set_kymograph_locations(location_model, kymograph_model_set):
