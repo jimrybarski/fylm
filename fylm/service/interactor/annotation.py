@@ -71,8 +71,9 @@ class KymographAnnotator(HumanInteractor):
         self.current_annotation.add_line(annotation_line)
         file_interactor = FileInteractor(self.current_annotation)
         file_interactor.write_text()
-        self._redraw()
+        Reader().read(self.current_annotation, expect_missing_file=True)
         self._erase_all_points()
+        self._redraw()
 
     def _previous_channel(self):
         self._annotation_model_set.decrement_channel()
