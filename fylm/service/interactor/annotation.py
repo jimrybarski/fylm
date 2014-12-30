@@ -62,13 +62,17 @@ class KymographAnnotator(HumanInteractor):
             actions[human_input.key]()
 
     def _delete_last_line(self):
-        self.current_annotation.delete_last_line()
+        self.current_annotation.delete_last_line(self._annotation_model_set.current_timepoint)
+        self._refresh_data()
 
     def _save_line(self):
         annotation_line = AnnotationLine()
         annotation_line.timepoint = self._annotation_model_set.current_timepoint
         annotation_line.set_coordinates(self._coordinates)
         self.current_annotation.add_line(annotation_line)
+        self._refresh_data()
+
+    def _refresh_data(self):
         file_interactor = FileInteractor(self.current_annotation)
         file_interactor.write_text()
         Reader().read(self.current_annotation, expect_missing_file=True)

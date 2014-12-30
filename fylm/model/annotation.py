@@ -85,7 +85,7 @@ class ChannelAnnotationGroup(BaseTextFile):
         try:
             index = max(self._lines[timepoint].keys())
             del(self._lines[timepoint][index])
-        except KeyError:
+        except (KeyError, ValueError):
             pass
 
     @property
