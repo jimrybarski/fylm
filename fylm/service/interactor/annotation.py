@@ -56,10 +56,15 @@ class KymographAnnotator(HumanInteractor):
                    "left": self._previous_channel,
                    "right": self._next_channel,
                    "up": self._next_timepoint,
-                   "down": self._previous_timepoint
+                   "down": self._previous_timepoint,
+                   "q": self._shutdown
                    }
         if human_input.key in actions.keys():
             actions[human_input.key]()
+
+    def _shutdown(self):
+        self._done = True
+        self._close()
 
     def _delete_last_line(self):
         self.current_annotation.delete_last_line(self._annotation_model_set.current_timepoint)
