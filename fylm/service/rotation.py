@@ -1,5 +1,5 @@
 from skimage import transform
-from fylm.service.utilities import ImageUtilities
+from fylm.service.utilities import ImageUtilities, timer
 from fylm.service.base import BaseSetService
 from skimage.morphology import skeletonize
 from fylm.model.constants import Constants
@@ -22,6 +22,7 @@ class RotationSet(BaseSetService):
         self._experiment = experiment
         self._name = "rotation corrections"
 
+    @timer
     def save_action(self, rotation_model):
         """
         Calculates the rotation offset for a single field of view and timepoint.
@@ -29,7 +30,7 @@ class RotationSet(BaseSetService):
         :type rotation_model:   fylm.model.rotation.Rotation()
 
         """
-        log.debug("Creating rotation file %s" % rotation_model.filename)
+        log.info("Creating rotation file %s" % rotation_model.filename)
         # This is a pretty naive loop - the same file will get opened 8-12 times
         # There are obvious ways to optimize this but that can be done later if it matters
         # It probably doesn't matter though and I like simple things

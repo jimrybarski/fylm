@@ -38,7 +38,7 @@ class KymographSet(BaseSet):
                     model = self._model()
                     model.timepoint = timepoint
                     model.field_of_view = field_of_view
-                    model.channel_number = channel_number + 1  # we want 1-28 instead of 0-27
+                    model.channel_number = channel_number
                     model.base_path = self.base_path
                     yield model
 

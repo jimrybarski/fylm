@@ -1,6 +1,7 @@
 from fylm.model.timestamp import Timestamps
 from fylm.service.reader import Reader
 from fylm.service.base import BaseSetService
+from fylm.service.utilities import timer
 import logging
 import nd2reader
 
@@ -17,6 +18,7 @@ class TimestampSet(BaseSetService):
         self._experiment = experiment
         self._name = "timestamps"
 
+    @timer
     def save_action(self, timestamps_model):
         """
         Writes missing timestamp files.
@@ -34,8 +36,8 @@ class TimestampSet(BaseSetService):
             last_timestamp = previous_model.last
         else:
             last_timestamp = 0.0
-        log.debug("Creating timestamps for Timepoint:%s, Field of View:%s" % (timestamps_model.timepoint,
-                                                                              timestamps_model.field_of_view))
+        log.info("Creating timestamps for Timepoint:%s, Field of View:%s" % (timestamps_model.timepoint,
+                                                                             timestamps_model.field_of_view))
         nd2_filename = self._experiment.get_nd2_from_timepoint(timestamps_model.timepoint)
         nd2 = nd2reader.Nd2(nd2_filename)
         # subtract 1 from the field of view since nd2reader uses 0-based indexing, but we

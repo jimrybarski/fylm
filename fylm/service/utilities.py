@@ -1,7 +1,20 @@
+import logging
 from skimage.filter import rank, threshold_otsu, vsobel
 from skimage.morphology import disk, remove_small_objects
 from scipy import ndimage
 import os.path
+import time
+
+log = logging.getLogger("fylm")
+
+
+def timer(f):
+    def timed(*args, **kw):
+        ts = time.time()
+        result = f(*args, **kw)
+        log.info('Process took: %.2f sec' % (time.time() - ts))
+        return result
+    return timed
 
 
 class FileInteractor(object):

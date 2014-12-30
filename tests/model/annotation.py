@@ -1,5 +1,5 @@
 import unittest
-from fylm.model.annotation import AnnotationLine, KymographAnnotation
+from fylm.model.annotation import AnnotationLine, ChannelAnnotationGroup
 from fylm.model.coordinates import Coordinates
 
 
@@ -21,7 +21,7 @@ class AnnotationTests(unittest.TestCase):
 class KymographAnnotationTests(unittest.TestCase):
 
     def setUp(self):
-        self.ka = KymographAnnotation()
+        self.ka = ChannelAnnotationGroup()
 
     def test_lines(self):
         a0 = AnnotationLine()
@@ -41,18 +41,18 @@ class KymographAnnotationTests(unittest.TestCase):
         # self.assertEqual(self.ka.state, "dying 2")
         self.assertEqual(self.ka._last_state, "dying")
         self.assertEqual(self.ka._last_state_timepoint, 2)
-        self.assertListEqual(self.ka._annotations[1][0], [Coordinates(1.2, 3.4),
-                                                          Coordinates(1.4, 3.5),
-                                                          Coordinates(6.7, 5.5)])
+        self.assertListEqual(self.ka._lines[1][0], [Coordinates(1.2, 3.4),
+                                                    Coordinates(1.4, 3.5),
+                                                    Coordinates(6.7, 5.5)])
 
     def test_load_different_timepoint(self):
         data = ["active 4", "2 0 1.2,3.4 1.4,3.5 6.7,5.5", "2 1 1.0,9.9 1.2,7.5 1.3,4.5"]
         self.ka.load(data)
         self.assertEqual(self.ka._last_state, "active")
         self.assertEqual(self.ka._last_state_timepoint, 4)
-        self.assertListEqual(self.ka._annotations[2][0], [Coordinates(1.2, 3.4),
-                                                          Coordinates(1.4, 3.5),
-                                                          Coordinates(6.7, 5.5)])
-        self.assertListEqual(self.ka._annotations[2][1], [Coordinates(1.0, 9.9),
-                                                          Coordinates(1.2, 7.5),
-                                                          Coordinates(1.3, 4.5)])
+        self.assertListEqual(self.ka._lines[2][0], [Coordinates(1.2, 3.4),
+                                                    Coordinates(1.4, 3.5),
+                                                    Coordinates(6.7, 5.5)])
+        self.assertListEqual(self.ka._lines[2][1], [Coordinates(1.0, 9.9),
+                                                    Coordinates(1.2, 7.5),
+                                                    Coordinates(1.3, 4.5)])
