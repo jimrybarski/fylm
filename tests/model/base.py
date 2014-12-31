@@ -47,11 +47,3 @@ class BaseSetTests(unittest.TestCase):
             self.assertEqual(n + 1, model.timepoint)
         for model in models:
             self.assertEqual(model.field_of_view, 1)
-
-    def test_get_data(self):
-        # reset model id number
-        MockModel.model_id = 1
-        self.bs._current_filenames = ["tp2-fov0.txt", "tp3-fov0.txt", "tp4-fov0.txt", "tp1-fov0.txt"]
-        expected = [0, 1, 2, 3, 4, 0, 2, 4, 6, 8, 0, 3, 6, 9, 12, 0, 4, 8, 12, 16]
-        actual = list(self.bs.get_data(0, 1))
-        self.assertListEqual(expected, actual)
