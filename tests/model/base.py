@@ -9,8 +9,6 @@ class MockModel(object):
         self.timepoint = None
         self.field_of_view = None
         self.base_path = None
-        self.data = [i * MockModel.model_id for i in range(5)]
-        MockModel.model_id += 1
 
     @property
     def filename(self):
