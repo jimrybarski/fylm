@@ -29,7 +29,7 @@ class ExactChannelFinder(HumanInteractor):
         self._image = image
         # dynamic variables
         self._location_model = location_model
-        self._current_channel_number = 1
+        self._current_channel_number = 0
         self._done = False
         while not self._done:
             self._start()
@@ -38,8 +38,8 @@ class ExactChannelFinder(HumanInteractor):
 
     def _get_image_slice(self):
         # we need a row number from 0 to 13 to calculate the offset from the first row
-        row = (self._current_channel_number + self._current_channel_number % 2) / 2 - 1
-        if self._current_channel_number % 2 == 1:
+        row = (self._current_channel_number - self._current_channel_number % 2) / 2
+        if self._current_channel_number % 2 == 0:
             # left catch channel
             x = max(0, self._top_left.x - self._width_margin)
             y = max(0, self._top_left.y + self._likely_distance * row - self._height_margin * 2)
