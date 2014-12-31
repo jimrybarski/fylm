@@ -3,11 +3,11 @@ from fylm.activity import Activity
 import sys
 
 # The date of the experiment you want to quantify. This must match the ND2 files.
-experiment_date = "141111"
+experiment_date = sys.argv[1]
 
 # The directory where the ND2 files are location. A directory will be created within
 # this directory, named whatever the experiment date is. All the output will go there.
-nd2_dir = "/home/jim/Desktop/experiments"
+nd2_dir = sys.argv[2]
 
 experiment = ExperimentService().get_experiment(experiment_date, nd2_dir)
 
@@ -32,5 +32,5 @@ actions = {"rotation": act.calculate_rotation_offset,
 # and just do two fields of view total before moving on to the next steps.
 
 for activity in activities:
-    if activity not in sys.argv[1:]:
+    if activity not in sys.argv[3:]:
         actions[activity]()
