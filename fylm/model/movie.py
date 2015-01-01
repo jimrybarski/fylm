@@ -25,45 +25,24 @@ class Movie(object):
     def __init__(self, height, width):
         self._slot_height = height
         self._slot_width = width
-        self._slots = defaultdict(dict)
+        self.__slots = defaultdict(dict)
         self._channel_order = {0: ""}
-        self._frame_height = None
+        self.__frame_height = None
 
     @property
     def frame(self):
         """
-        Combines the image data from each of the slots in a deterministic order, adds arrows if needed, and returns the image
+        Combines the image data from each of the slots in a deterministic order, adds arrows if needed,
+        and returns the image
 
         :return:    np.ndarray()
 
         """
-        for slot in self.slots:
-            pass
-
-    @property
-    def frame_height(self):
-        slot_count = 0
-        if self._frame_height is None:
-            for channel in self._slots.values():
-                slot_count += len(channel)
-            self._frame_height = slot_count * self._slot_height
-        return self._frame_height
-
-    @property
-    def frame_width(self):
-        return self._slot_width
-
-    @property
-    def slots(self):
-        """
-        Yields slots in a deterministic order.
-
-        :return:    np.ndarray()
-
-        """
-        for index, channel in sorted(self._channel_order.items()):
-            for slot_index, slot in sorted(self._slots[channel].items()):
-                yield slot
+        image = np.zeros((self._frame_height, self._frame_width))
+        for n, slot in enumerate(self._slots):
+            top, bottom = self._get_slot_bounds(n)
+            image[top:bottom, :, :] = slot[:, :, :]
+        return image
 
     def add_slot(self, channel_name, z_level):
         """
@@ -83,10 +62,47 @@ class Movie(object):
         # doesn't have image data for the first frame. This occurs for fluorescent channels sometimes since we only take
         # those images every four minutes instead of every two, in order to minimize the amount of blue light that the cells
         # are exposed to (there's evidence that it's phototoxic).
-        self._slots[channel_name][z_level] = np.zeros((self._slot_height, self._slot_width, 3))
+        self.__slots[channel_name][z_level] = np.zeros((self._slot_height, self._slot_width, 3))
 
     def update_image(self, channel_name, z_level, image_data):
-        self._slots[channel_name][z_level] = gray2rgb(image_data[:, :])
+        self.__slots[channel_name][z_level] = gray2rgb(image_data[:, :])
+
+    def _get_slot_bounds(self, position):
+        """
+        Determines the row where the slot starts in the overall image, and the row where it ends.
+
+        :param position:    the order of the slot
+        :type position:     int
+        :return:            (int, int)
+
+        """
+        start = self._frame_height * position
+        return start, start + self._frame_height
+
+    @property
+    def _frame_height(self):
+        slot_count = 0
+        if self.__frame_height is None:
+            for channel in self.__slots.values():
+                slot_count += len(channel)
+            self.__frame_height = slot_count * self._slot_height
+        return self.__frame_height
+
+    @property
+    def _frame_width(self):
+        return self._slot_width
+
+    @property
+    def _slots(self):
+        """
+        Yields slots in a deterministic order.
+
+        :return:    np.ndarray()
+
+        """
+        for index, channel in sorted(self._channel_order.items()):
+            for slot_index, slot in sorted(self.__slots[channel].items()):
+                yield slot
 
     def _get_triangle(self, pointing, trim=0):
         assert pointing in ("up", "down")

@@ -27,7 +27,7 @@ class MovieTests(unittest.TestCase):
         self.movie.add_slot("", 2)
         self.movie.add_slot("GFP", 1)
         self.movie.add_slot("dsRed", 1)
-        self.assertEqual(self.movie.frame_height, 500)
+        self.assertEqual(self.movie._frame_height, 500)
 
     def test_frame_height_again(self):
         self.movie.add_slot("", 0)
