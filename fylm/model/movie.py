@@ -41,8 +41,8 @@ class Movie(object):
         image = np.zeros((self._frame_height, self._frame_width))
         for n, slot in enumerate(self._slots):
             top, bottom = self._get_slot_bounds(n)
-            image[top:bottom, :, :] = slot[:, :, :]
-        return image
+            image[top:bottom, :] = slot[:, :]
+        return gray2rgb(image)
 
     def add_slot(self, channel_name, z_level):
         """
@@ -55,7 +55,7 @@ class Movie(object):
         # Images are placed from top to bottom in order of channel, in the order that the channels are added
         # Here we add the channel to the list of channels to yield if we don't have it yet.
         # The brightfield channel always comes first, however. It's called "" (empty string)
-        if channel_name not in self._channel_order.keys():
+        if channel_name not in self._channel_order.values():
             index = max(self._channel_order.keys()) + 1
             self._channel_order[index] = channel_name
         # Now allocate some space for the image. We start with zeros (i.e. a black image) in case this particular channel
@@ -65,7 +65,7 @@ class Movie(object):
         self.__slots[channel_name][z_level] = np.zeros((self._slot_height, self._slot_width, 3))
 
     def update_image(self, channel_name, z_level, image_data):
-        self.__slots[channel_name][z_level] = gray2rgb(image_data[:, :])
+        self.__slots[channel_name][z_level] = image_data[:, :]
 
     def _get_slot_bounds(self, position):
         """
@@ -76,8 +76,8 @@ class Movie(object):
         :return:            (int, int)
 
         """
-        start = self._frame_height * position
-        return start, start + self._frame_height
+        start = self._slot_height * position
+        return start, start + self._slot_height
 
     @property
     def _frame_height(self):
