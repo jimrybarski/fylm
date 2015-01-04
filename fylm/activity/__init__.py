@@ -10,6 +10,7 @@ from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.model.kymograph import KymographSet
 from fylm.service.annotation import AnnotationSet
 from fylm.model.annotation import KymographAnnotationSet
+from fylm.service.movie import Movie
 
 
 class Activity(object):
@@ -49,15 +50,6 @@ class Activity(object):
         annotation_set = KymographAnnotationSet(self._experiment)
         annotation_service.save(annotation_set)
 
-    def fov_movie(self):
-        from fylm.service.image_reader import ImageReader
-        from skimage import io
-        reader = ImageReader(self._experiment)
-        reader.field_of_view = 0
-        reader.timepoint = 2
-        i = 0
-        for image_set in reader:
-            image = image_set.get_image(channel="", z_level=0)
-            name = "/home/jim/Desktop/experiments/141111/%s.png" % i
-            io.imsave(name, image)
-            i += 1
+    def make_movie(self):
+        movie = Movie(self._experiment)
+        movie.make_channel_overview(0, 3)

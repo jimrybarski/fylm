@@ -44,7 +44,7 @@ class Movie(object):
             image[top:bottom, :] = slot[:, :]
         return gray2rgb(image)
 
-    def add_slot(self, channel_name, z_level):
+    def _add_slot(self, channel_name, z_level):
         """
         Allocates space for a slot in the movie frame.
 
@@ -65,6 +65,8 @@ class Movie(object):
         self.__slots[channel_name][z_level] = np.zeros((self._slot_height, self._slot_width, 3))
 
     def update_image(self, channel_name, z_level, image_data):
+        if channel_name not in self.__slots.keys() or z_level not in self.__slots[channel_name].keys():
+            self._add_slot(channel_name, z_level)
         self.__slots[channel_name][z_level] = image_data[:, :]
 
     def _get_slot_bounds(self, position):

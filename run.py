@@ -16,7 +16,8 @@ activities = ("rotation",
               "registration",
               "location",
               "kymograph",
-              "annotation")
+              "annotation",
+              "movie")
 
 act = Activity(experiment)
 
@@ -25,7 +26,8 @@ actions = {"rotation": act.calculate_rotation_offset,
            "registration": act.calculate_registration,
            "location": act.input_channel_locations,
            "kymograph": act.create_kymographs,
-           "annotation": act.annotate_kymographs}
+           "annotation": act.annotate_kymographs,
+           "movie": act.make_movie}
 
 # For debugging purposes, you can skip certain actions by passing their names as arguments on the command line.
 # My current use case for this is to skip the channel location thing, since I don't want to quantify everything
