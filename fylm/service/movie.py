@@ -5,6 +5,9 @@ from fylm.model.image_slice import ImageSlice
 from fylm.model.movie import Movie as MovieModel
 from skimage import io
 from fylm.service.errors import terminal_error
+import logging
+
+log = logging.getLogger("fylm")
 
 
 class Movie(object):
@@ -29,10 +32,10 @@ class Movie(object):
         channels = self._get_channels(image_reader)
         z_levels = image_reader.nd2.z_level_count
         image_slice = self._get_image_slice(field_of_view, channel_number)
-        movie = MovieModel(image_slice.height, image_slice.width)
+        movie = MovieModel(image_slice.height * 2, image_slice.width)
 
         for image_set in image_reader:
-            self._update_image_data(image_set, channels, z_levels, movie)
+            self._update_image_data(image_slice, image_set, channels, z_levels, movie)
             io.imshow(movie.frame)
             io.show()
 
@@ -48,8 +51,8 @@ class Movie(object):
                 x = tube.x
                 fliplr = True
             y = tube.y
-            width = abs(notch.x - tube.x)
-            height = (tube.y - notch.y) * 2
+            width = int(abs(notch.x - tube.x))
+            height = int(notch.y - tube.y)
             return ImageSlice(x, y, width, height, fliplr=fliplr)
         terminal_error("Channel location has not been provided.")
 
@@ -57,14 +60,15 @@ class Movie(object):
     def _get_channels(image_reader):
         channels = [""]
         for channel in sorted(image_reader.nd2.channels):
-            if channel not in channels:
-                channels.append(channel)
+            if channel.name not in channels:
+                channels.append(channel.name)
         return channels
 
     @staticmethod
-    def _update_image_data(image_set, channels, z_levels, movie):
+    def _update_image_data(image_slice, image_set, channels, z_levels, movie):
         for channel in channels:
             for z_level in xrange(z_levels):
                 image = image_set.get_image(channel, z_level)
                 if image is not None:
-                    movie.update_image(channel, z_level, image.data)
+                    image_slice.set_image(image)
+                    movie.update_image(channel, z_level, image_slice.image_data)
