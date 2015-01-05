@@ -9,8 +9,6 @@ class Movie(object):
     has a "frame" property which dynamically builds the image
     for each frame, the service updates the pictures as they're available
     so if a fluorescence image isn't there, we use the already-existing image by default and thus can use any frequency of FL images
-    slots are labelled by channel and zoom level, they need a deterministic order
-    write orange triangles, deal with overflow
 
     """
     # We create a single triangle once to save time
