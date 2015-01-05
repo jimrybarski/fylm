@@ -23,15 +23,15 @@ class MovieTests(unittest.TestCase):
         self.assertEqual(stop, 11)
 
     def test_frame_height(self):
-        self.movie.add_slot("", 0)
-        self.movie.add_slot("", 1)
-        self.movie.add_slot("", 2)
-        self.movie.add_slot("GFP", 1)
-        self.movie.add_slot("dsRed", 1)
+        self.movie._add_slot("", 0)
+        self.movie._add_slot("", 1)
+        self.movie._add_slot("", 2)
+        self.movie._add_slot("GFP", 1)
+        self.movie._add_slot("dsRed", 1)
         self.assertEqual(self.movie._frame_height, 500)
 
     def test_frame_height_again(self):
-        self.movie.add_slot("", 0)
+        self.movie._add_slot("", 0)
 
     def test_get_slot_bounds(self):
         start, stop = self.movie._get_slot_bounds(0)
@@ -43,11 +43,11 @@ class MovieTests(unittest.TestCase):
 
     def test_slots(self):
         movie = Movie(2, 3)
-        movie.add_slot("", 0)
-        movie.add_slot("", 1)
-        movie.add_slot("", 2)
-        movie.add_slot("GFP", 1)
-        movie.add_slot("dsRed", 1)
+        movie._add_slot("", 0)
+        movie._add_slot("", 1)
+        movie._add_slot("", 2)
+        movie._add_slot("GFP", 1)
+        movie._add_slot("dsRed", 1)
         movie.update_image("", 0, np.array([[0, 0, 0], [0, 0, 0]]))
         movie.update_image("", 1, np.array([[1, 1, 1], [1, 1, 1]]))
         movie.update_image("", 2, np.array([[2, 2, 2], [2, 2, 2]]))
@@ -62,11 +62,11 @@ class MovieTests(unittest.TestCase):
         
     def test_frame(self):
         movie = Movie(2, 3)
-        movie.add_slot("", 0)
-        movie.add_slot("", 1)
-        movie.add_slot("", 2)
-        movie.add_slot("GFP", 1)
-        movie.add_slot("dsRed", 1)
+        movie._add_slot("", 0)
+        movie._add_slot("", 1)
+        movie._add_slot("", 2)
+        movie._add_slot("GFP", 1)
+        movie._add_slot("dsRed", 1)
         movie.update_image("", 0, np.array([[0, 0, 0], [0, 0, 0]]))
         movie.update_image("", 1, np.array([[1, 1, 1], [1, 1, 1]]))
         movie.update_image("", 2, np.array([[2, 2, 2], [2, 2, 2]]))

@@ -51,7 +51,7 @@ class BaseSetService(BaseService):
             self.save_action(model)
             writer.write_text()
         if not did_work:
-            log.debug("All %s have been calculated." % self._name)
+            log.info("All %s have been calculated." % self._name)
 
     def load_existing_models(self, model_set):
         """

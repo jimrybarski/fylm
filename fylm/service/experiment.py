@@ -47,7 +47,8 @@ class Experiment(object):
                    "location",
                    "registration",
                    "rotation",
-                   "timestamp"]
+                   "timestamp",
+                   "movie"]
         for subdir in subdirs:
             try:
                 self._os.makedirs(experiment.data_dir + "/" + subdir)

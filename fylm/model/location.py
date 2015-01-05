@@ -171,6 +171,4 @@ class Location(BaseTextFile):
             return None
 
     def skip_channel(self, channel_number):
-        if channel_number == 28:
-            log.error("WTF CHANNEL 28")
         self._channels[channel_number] = "skipped"
