@@ -43,11 +43,11 @@ class Movie(object):
         self._annotation.channel_number = channel_number
         try:
             self._annotation_service.load_existing_models(self._annotation)
-        except TypeError:
+            channel_group = self._annotation.get_model(field_of_view, channel_number)
+        except ValueError:
             # That annotation doesn't exist yet or it has no data
             return {}
         else:
-            channel_group = self._annotation.get_model(field_of_view, channel_number)
             return channel_group.get_cell_bounds(timepoint)
 
     def make_channel_overview(self, timepoint, field_of_view, channel_number):
