@@ -112,7 +112,7 @@ class ExactChannelFinder(HumanInteractor):
 
     def _start(self):
         self._current_image_slice = self._get_image_slice()
-        self._fig.suptitle("Channel: " + str(self._current_channel_number), fontsize=20)
+        self._fig.suptitle("Channel: " + str(self._current_channel_number + 1), fontsize=20)
         self._ax.imshow(self._current_image_slice.image_data, cmap='gray')
         self._ax.autoscale(False)
         self._draw_existing_data()

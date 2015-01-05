@@ -27,7 +27,7 @@ class LocationSet(BaseSet):
         assert self._model is not None
         for field_of_view in self._fields_of_view:
             model = self._model()
-            model.field_of_view = field_of_view
+            model.field_of_view = int(field_of_view)
             model.base_path = self.base_path
             yield model
 

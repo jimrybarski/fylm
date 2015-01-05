@@ -31,7 +31,7 @@ class ApproximateChannelFinder(HumanInteractor):
             self._erase_all_points()
 
     def _start(self):
-        self._fig.suptitle("Field of View: %s" % self._field_of_view, fontsize=20)
+        self._fig.suptitle("Field of View: %s" % str(self._field_of_view + 1), fontsize=20)
         self._ax.imshow(self._image_data, cmap='gray')
         self._ax.autoscale(False)
         plt.show()

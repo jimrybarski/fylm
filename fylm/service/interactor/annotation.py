@@ -124,8 +124,8 @@ class KymographAnnotator(HumanInteractor):
         timepoint = self._annotation_model_set.current_timepoint
         self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (timepoint,
                                                                     self._annotation_model_set.max_timepoint,
-                                                                    self.current_annotation.field_of_view,
-                                                                    self.current_annotation.channel_number), fontsize=20)
+                                                                    self.current_annotation.field_of_view + 1,
+                                                                    self.current_annotation.channel_number + 1), fontsize=20)
         self._image = self.current_annotation.get_image(timepoint)
         self._im = self._ax.imshow(self._image, cmap='gray')
         self._ax.autoscale(False)
