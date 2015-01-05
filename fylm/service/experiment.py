@@ -43,8 +43,10 @@ class Experiment(object):
         """
         # first make all the top-level directories
         subdirs = ["annotation",
+                   "fluorescence",
                    "kymograph",
                    "location",
+                   "puncta",
                    "registration",
                    "rotation",
                    "timestamp",
