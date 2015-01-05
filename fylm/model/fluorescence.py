@@ -1,8 +1,19 @@
-from fylm.model.base import BaseTextFile
+from fylm.model.base import BaseTextFile, BaseSet
 import logging
 import re
 
 log = logging.getLogger("fylm")
+
+
+class FluorescenceSet(BaseSet):
+    """
+    Models all the fluorescence intensity values for each channel.
+
+    """
+    def __init__(self, experiment):
+        super(FluorescenceSet).__init__(experiment, "fluorescence")
+        self._model = Fluorescence
+        self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
 
 
 class Fluorescence(BaseTextFile):
