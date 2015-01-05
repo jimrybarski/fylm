@@ -1,10 +1,13 @@
 import argparse
 from fylm.service.experiment import Experiment as ExperimentService
 from fylm.activity import Activity
-import sys
 
 
 class Args(dict):
+    """
+    This class just allows us to get arguments from argparse using dot syntax.
+
+    """
     pass
 
 parser = argparse.ArgumentParser()
@@ -20,15 +23,16 @@ args = parser.parse_args(namespace=Args())
 
 experiment = ExperimentService().get_experiment(args.date, args.dir)
 
-activities = ("rotation",
-              "timestamp",
-              "registration",
-              "location",
-              "kymograph",
-              "annotation")
+# These are the actions that need to be run to completion for each experiment.
+standard_activities = ("rotation",
+                       "timestamp",
+                       "registration",
+                       "location",
+                       "kymograph",
+                       "annotation")
 
+# Define what each action is and the arguments it takes (note: not all methods take arguments)
 act = Activity(experiment)
-
 actions = {"rotation": act.calculate_rotation_offset,
            "timestamp": act.extract_timestamps,
            "registration": act.calculate_registration,
@@ -36,15 +40,20 @@ actions = {"rotation": act.calculate_rotation_offset,
            "kymograph": act.create_kymographs,
            "annotation": act.annotate_kymographs,
            "movie": act.make_movie}
-
 action_args = {"movie": (args.timepoint, args.fov, args.channel)}
 
+# Now run whatever methods are needed
 if not args.action:
     # The user didn't specify a specific action, so we'll do the standard set of actions
-    for activity in activities:
+    for activity in standard_activities:
         if activity not in args.skip:
             actions[activity]()
 else:
+    # A specific action was selected
     method = actions[args.action]
-    arguments = action_args[args.action]
-    method(*arguments)
+    # Check if the method needs arguments to be passed to it, and look them up if so
+    arguments = action_args.get(args.action)
+    if arguments:
+        method(*arguments)
+    else:
+        method()

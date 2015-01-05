@@ -4,6 +4,7 @@ from fylm.model.constants import Constants
 from fylm.model.coordinates import Coordinates
 from fylm.service.errors import terminal_error
 from skimage.draw import line
+import numpy as np
 import logging
 import re
 
@@ -25,7 +26,6 @@ class AnnotationLine(object):
         self._coodinates = []
 
     def load_from_text(self, line):
-        log.warn(line)
         index = AnnotationLine.index_regex.match(line)
         self.index = index.group("index")
         self.timepoint = index.group("timepoint")
@@ -92,7 +92,39 @@ class ChannelAnnotationGroup(BaseTextFile):
     def is_finished(self):
         return self._last_state in ("dies", "finished")
 
+    def _skeleton(self, timepoint):
+        kymograph = self.get_image(timepoint)
+        data = np.zeros(kymograph.shape)
+        for y_list, x_list in self.points(timepoint):
+            data[y_list, x_list] = 1
+        return data
+
+    def get_cell_bounds(self, timepoint):
+        """
+        Gets the two leftmost white pixels in the skeleton image, which ostensibly are the old pole and new pole of the
+        elder sibling cell.
+
+        """
+        bounds = {}
+        skeleton = self._skeleton(timepoint)
+        for n, row in enumerate(skeleton):
+            # get a list of the indices of the non-zero values in this row
+            pole_locations = np.nonzero(row)[0]
+            if len(pole_locations) > 1:
+                bounds[n] = pole_locations
+            else:
+                bounds[n] = None
+        return bounds
+
     def points(self, timepoint):
+        """
+        Annotation lines are stored as sets of end points. We take each pair of end points, draw a line between them,
+        and record the coordinates of the individual pixels that are in that line. This saves space and lets us add
+        and delete lines at will, even if overlapping. We can use these pixels to draw the lines on the screen when the
+        user is making annotations, and later we take the two leftmost pixels for each row and consider those to be the
+        locations of the cell poles of the elder sibling cell.
+
+        """
         for index, annotation in sorted(self._lines[timepoint].items()):
             for n, from_point in enumerate(annotation.coordinates[:-1]):
                 to_point = annotation.coordinates[n + 1]
@@ -177,6 +209,13 @@ class KymographAnnotationSet(BaseSet):
         self._current_timepoint = 1
         self._current_model_pointer = 0
         self._max_timepoint = experiment.timepoint_count
+        self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
+
+    def get_model(self, field_of_view, channel_number):
+        for model in self._existing:
+            if model.field_of_view == field_of_view and model.channel_number == channel_number:
+                return model
+        raise ValueError("That annotation doesn't exist!")
 
     def decrement_channel(self):
         self._current_model_pointer -= 1

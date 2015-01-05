@@ -4,13 +4,16 @@ from fylm.model.movie import Movie as MovieModel
 from fylm.service.errors import terminal_error
 from fylm.service.image_reader import ImageReader
 from fylm.service.location import LocationSet as LocationSetService
+from fylm.service.annotation import AnnotationSet as AnnotationSetService
+from fylm.model.annotation import KymographAnnotationSet
+from fylm.model.kymograph import KymographSet
+from fylm.service.kymograph import KymographSet as KymographSetService
 import logging
 from skimage import io
 import subprocess
 import os
 
 log = logging.getLogger("fylm")
-log.setLevel(logging.DEBUG)
 
 
 class Movie(object):
@@ -18,9 +21,34 @@ class Movie(object):
         self._location_set = LocationSet(experiment)
         location_service = LocationSetService(experiment)
         location_service.load_existing_models(self._location_set)
+        self._annotation_service = AnnotationSetService(experiment)
+        self._annotation = KymographAnnotationSet(experiment)
         self._image_reader = ImageReader(experiment)
         self._base_dir = experiment.data_dir + "/movie/"
-        print(self._base_dir)
+        kymograph_service = KymographSetService(experiment)
+        kymograph_set = KymographSet(experiment)
+        kymograph_service.load_existing_models(kymograph_set)
+        self._annotation.kymograph_set = kymograph_set
+
+    def _get_cell_bounds(self, timepoint, field_of_view, channel_number):
+        """
+        Gets the x-position (in pixels) of the old and new cell poles for each frame. Each index holds a tuple
+        of ints. If not available, the index holds None.
+
+        :return:    dict
+
+        """
+        self._annotation.timepoint = timepoint
+        self._annotation.field_of_view = field_of_view
+        self._annotation.channel_number = channel_number
+        try:
+            self._annotation_service.load_existing_models(self._annotation)
+        except TypeError:
+            # That annotation doesn't exist yet or it has no data
+            return {}
+        else:
+            channel_group = self._annotation.get_model(field_of_view, channel_number)
+            return channel_group.get_cell_bounds(timepoint)
 
     def make_channel_overview(self, timepoint, field_of_view, channel_number):
         """
@@ -33,45 +61,46 @@ class Movie(object):
         """
         self._image_reader.timepoint = timepoint
         self._image_reader.field_of_view = field_of_view
+        cell_bounds = self._get_cell_bounds(timepoint, field_of_view, channel_number)
         channels = self._get_channels(self._image_reader)
         z_levels = self._image_reader.nd2.z_level_count
         image_slice = self._get_image_slice(field_of_view, channel_number)
         movie = MovieModel(image_slice.height * 2, image_slice.width)
-
         images = os.listdir(self._base_dir)
+        base_filename = self._base_dir + "tp%s-fov%s-channel%s" % (timepoint, field_of_view, channel_number)
+
+        log.info("Creating movie file: %s.avi" % base_filename)
+
+        for n, image_set in enumerate(self._image_reader):
+            filename = "tp%s-fov%s-channel%s-%03d.png" % (timepoint, field_of_view, channel_number, n)
+            if filename not in images:
+                self._update_image_data(image_slice, image_set, channels, z_levels, movie)
+                log.debug("Adding movie frame %s" % n)
+                poles = cell_bounds.get(n)
+                if poles is not None:
+                    movie.add_triangle(poles[0])
+                    movie.add_triangle(poles[1])
+                frame = movie.frame
+                io.imsave(self._base_dir + filename, frame)
+
+        command = ("/usr/bin/mencoder",
+                   'mf://%s*.png' % self._base_dir,
+                   '-mf',
+                   'w=%s:h=%s:fps=24:type=png' % (movie.frame.shape[1], movie.frame.shape[0]),
+                   '-ovc', 'copy', '-oac', 'copy', '-o', '%s.avi' % base_filename)
+        DEVNULL = open(os.devnull, "w")
+        failure = subprocess.call(" ".join(command), shell=True, stdout=DEVNULL, stderr=subprocess.STDOUT)
+        if not failure:
+            self._delete_temp_images()
+
+    def _delete_temp_images(self):
         try:
-            for n, image_set in enumerate(self._image_reader):
-                filename = "tp%s-fov%s-channel%s-%03d.png" % (timepoint, field_of_view, channel_number, n)
-                # if filename not in images:
-                if filename not in images:
-                    self._update_image_data(image_slice, image_set, channels, z_levels, movie)
-                    log.info("Adding movie frame %s" % n)
-                    io.imsave(self._base_dir + filename, movie.frame)
-                else:
-                    log.debug("Skipping %s" % filename)
-        except:
-            log.exception("Movie maker crashed!")
-        else:
-            base_filename = self._base_dir + "tp%s-fov%s-channel%s" % (timepoint, field_of_view, channel_number)
-            command = ("/usr/bin/mencoder",
-                       'mf://%s*.png' % self._base_dir,
-                       '-mf',
-                       'w=%s:h=%s:fps=24:type=png' % (movie.frame.shape[1], movie.frame.shape[0]),
-                       '-ovc', 'copy', '-oac', 'copy', '-o' ' %s.avi' % base_filename)
-            print(" ".join(command))
-            try:
-                failure = subprocess.call(command, shell=True)
-                log.info("Done with movie")
-                files = os.listdir(self._base_dir)
-                if not failure:
-                    for f in files:
-                        if f.endswith(".png"):
-                            log.info("deleting %s" % self._base_dir + f)
-                            os.remove(self._base_dir + f)
-            except:
-                log.exception()
-            else:
-                log.info("All is over")
+            files = os.listdir(self._base_dir)
+            for f in files:
+                if f.endswith(".png"):
+                    os.remove(self._base_dir + f)
+        except Exception:
+            log.exception("Error deleting temporary movie images.")
 
     def _get_image_slice(self, field_of_view, channel_number):
         for model in self._location_set.existing:

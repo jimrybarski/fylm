@@ -20,7 +20,7 @@ class Movie(object):
     triangle_y_coords = np.array([0, 0, triangle_height])
     rr, cc = draw.polygon(triangle_y_coords, triangle_x_coords)
     triangle = np.zeros((triangle_height, triangle_width, 3), dtype=np.uint16)
-    triangle[rr, cc] = 45536, 23000, 0
+    triangle[rr, cc] = 177, 89, 0
 
     def __init__(self, height, width):
         self._slot_height = height
@@ -28,6 +28,7 @@ class Movie(object):
         self.__slots = defaultdict(dict)
         self._channel_order = {0: ""}
         self.__frame_height = None
+        self._triangles = {}
 
     @property
     def frame(self):
@@ -42,7 +43,18 @@ class Movie(object):
         for n, slot in enumerate(self._slots):
             top, bottom = self._get_slot_bounds(n)
             image[top:bottom, :] = slot[:, :]
-        return (gray2rgb(image) * 255).astype(np.uint8)
+        color_image = (gray2rgb(image) * 255).astype(np.uint8)
+        for x, triangle in self._triangles.items():
+            if x >= 5 and x <= self._slot_width - 5:
+                xx, yy, zz = np.where(triangle != (0, 0, 0))
+                for x_coord, y_coord in zip(xx, yy):
+                    color_image[0:12, x-5:x+6][x_coord, y_coord] = 177, 89, 0
+        self._triangles = {}
+        return color_image
+
+    def add_triangle(self, x):
+        trim = self._calculate_trim(x, self._frame_width)
+        self._triangles[x] = self._get_triangle("down", trim)
 
     def _add_slot(self, channel_name, z_level):
         """
@@ -105,6 +117,13 @@ class Movie(object):
         for index, channel in sorted(self._channel_order.items()):
             for slot_index, slot in sorted(self.__slots[channel].items()):
                 yield slot
+
+    def _calculate_trim(self, x, width):
+        if x < 5:
+            return 5 - x
+        if x > (width - 5):
+            return x - width
+        return 0
 
     def _get_triangle(self, pointing, trim=0):
         assert pointing in ("up", "down")
