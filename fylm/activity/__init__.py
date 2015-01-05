@@ -50,6 +50,6 @@ class Activity(object):
         annotation_set = KymographAnnotationSet(self._experiment)
         annotation_service.save(annotation_set)
 
-    def make_movie(self):
+    def make_movie(self, timepoint, field_of_view, channel_number):
         movie = Movie(self._experiment)
-        movie.make_channel_overview(0, 3)
+        movie.make_channel_overview(timepoint, field_of_view, channel_number)

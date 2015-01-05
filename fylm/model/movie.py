@@ -6,7 +6,7 @@ from skimage.color import gray2rgb
 
 class Movie(object):
     """
-    has a "frame" property which dynamically builds the image
+    has a "frame" property which dynamencoder mf:///home/jim/Desktop/experiments/*.png -mf w=131:h=80:fps=24:type=png -ovc copy -oac copy -o output.avimically builds the image
     for each frame, the service updates the pictures as they're available
     so if a fluorescence image isn't there, we use the already-existing image by default and thus can use any frequency of FL images
     slots are labelled by channel and zoom level, they need a deterministic order
@@ -42,7 +42,7 @@ class Movie(object):
         for n, slot in enumerate(self._slots):
             top, bottom = self._get_slot_bounds(n)
             image[top:bottom, :] = slot[:, :]
-        return gray2rgb(image)
+        return (gray2rgb(image) * 255).astype(np.uint8)
 
     def _add_slot(self, channel_name, z_level):
         """

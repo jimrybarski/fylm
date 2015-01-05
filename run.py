@@ -1,23 +1,31 @@
+import argparse
 from fylm.service.experiment import Experiment as ExperimentService
 from fylm.activity import Activity
 import sys
 
-# The date of the experiment you want to quantify. This must match the ND2 files.
-experiment_date = sys.argv[1]
 
-# The directory where the ND2 files are location. A directory will be created within
-# this directory, named whatever the experiment date is. All the output will go there.
-nd2_dir = sys.argv[2]
+class Args(dict):
+    pass
 
-experiment = ExperimentService().get_experiment(experiment_date, nd2_dir)
+parser = argparse.ArgumentParser()
+parser.add_argument('date', help='Date formatted like YYMMDD')
+parser.add_argument('dir', help='The directory where the ND2 files are located (and where results are stored)')
+parser.add_argument('--skip', nargs="+", help='Steps to skip (useful mostly for debugging)')
+parser.add_argument('--action', help='Do an optional action')
+parser.add_argument('-t', '--timepoint', type=int, help='Specifies a timepoint (needed only for some steps)')
+parser.add_argument('-f', '--fov', type=int, help='Specifies a field of view (needed only for some steps)')
+parser.add_argument('-c', '--channel', type=int, help='Specifies a channel (needed only for some steps)')
+parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
+args = parser.parse_args(namespace=Args())
+
+experiment = ExperimentService().get_experiment(args.date, args.dir)
 
 activities = ("rotation",
               "timestamp",
               "registration",
               "location",
               "kymograph",
-              "annotation",
-              "movie")
+              "annotation")
 
 act = Activity(experiment)
 
@@ -29,10 +37,14 @@ actions = {"rotation": act.calculate_rotation_offset,
            "annotation": act.annotate_kymographs,
            "movie": act.make_movie}
 
-# For debugging purposes, you can skip certain actions by passing their names as arguments on the command line.
-# My current use case for this is to skip the channel location thing, since I don't want to quantify everything
-# and just do two fields of view total before moving on to the next steps.
+action_args = {"movie": (args.timepoint, args.fov, args.channel)}
 
-for activity in activities:
-    if activity not in sys.argv[3:]:
-        actions[activity]()
+if not args.action:
+    # The user didn't specify a specific action, so we'll do the standard set of actions
+    for activity in activities:
+        if activity not in args.skip:
+            actions[activity]()
+else:
+    method = actions[args.action]
+    arguments = action_args[args.action]
+    method(*arguments)
