@@ -66,11 +66,13 @@ class ChannelAnnotationGroup(BaseTextFile):
     That is, all the kymographs over several timepoints.
 
     """
+    states = ["Active", "Empty", "Dies", "Ejected", "Survives"]
+
     def __init__(self):
         super(ChannelAnnotationGroup, self).__init__()
         self._channel_number = None
         self._lines = defaultdict(dict)
-        self._last_state = "active"
+        self._last_state = "Active"
         self._last_state_timepoint = 1  # the last timepoint to be saved by a human
         self.kymographs = None
 
@@ -90,7 +92,7 @@ class ChannelAnnotationGroup(BaseTextFile):
 
     @property
     def is_finished(self):
-        return self._last_state in ("dies", "finished")
+        return self._last_state in ("Empty", "Dies", "Ejected", "Survives")
 
     def _skeleton(self, timepoint):
         kymograph = self.get_image(timepoint)
@@ -143,10 +145,22 @@ class ChannelAnnotationGroup(BaseTextFile):
 
     @state.setter
     def state(self, value):
-        assert value[0] in ("active", "dies", "finished")
+        assert value[0] in ChannelAnnotationGroup.states
         assert isinstance(value[1], int)
         self._last_state = value[0]
         self._last_state_timepoint = value[1]
+
+    def change_state(self, timepoint):
+        """
+        Cycles through possible states, one at a time. This lets the user press "tab" until they find the state they want.
+
+        """
+        self.state = ChannelAnnotationGroup.states[self._get_next_state_index(self._last_state)], timepoint
+
+    @staticmethod
+    def _get_next_state_index(state):
+        current_state_index = ChannelAnnotationGroup.states.index(state)
+        return (current_state_index + 1) % len(ChannelAnnotationGroup.states)
 
     @property
     def lines(self):
