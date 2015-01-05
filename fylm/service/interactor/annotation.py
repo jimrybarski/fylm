@@ -52,6 +52,7 @@ class KymographAnnotator(HumanInteractor):
     def _on_key_press(self, human_input):
         actions = {"d": self._delete_last_line,
                    "w": self._save_line,
+                   "c": self._change_state,
                    "escape": self._clear,
                    "left": self._previous_channel,
                    "right": self._next_channel,
@@ -62,6 +63,11 @@ class KymographAnnotator(HumanInteractor):
         if human_input.key in actions.keys():
             actions[human_input.key]()
 
+    def _change_state(self):
+        self.current_annotation.change_state(self._annotation_model_set.current_timepoint)
+        self._refresh_data()
+        self._clear()
+
     def _shutdown(self):
         self._done = True
         self._close()
@@ -69,6 +75,7 @@ class KymographAnnotator(HumanInteractor):
     def _delete_last_line(self):
         self.current_annotation.delete_last_line(self._annotation_model_set.current_timepoint)
         self._refresh_data()
+        self._redraw()
 
     def _save_line(self):
         annotation_line = AnnotationLine()
@@ -122,10 +129,11 @@ class KymographAnnotator(HumanInteractor):
         # Refresh the lines from disk in case we saved some during this session
         Reader().read(self.current_annotation, expect_missing_file=True)
         timepoint = self._annotation_model_set.current_timepoint
-        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s" % (timepoint,
+        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s State: %s" % (timepoint,
                                                                     self._annotation_model_set.max_timepoint,
-                                                                    self.current_annotation.field_of_view,
-                                                                    self.current_annotation.channel_number), fontsize=20)
+                                                                    self.current_annotation.field_of_view + 1,
+                                                                    self.current_annotation.channel_number + 1,
+                                                                    self.current_annotation.state), fontsize=20)
         self._image = self.current_annotation.get_image(timepoint)
         self._im = self._ax.imshow(self._image, cmap='gray')
         self._ax.autoscale(False)

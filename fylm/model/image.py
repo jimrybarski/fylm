@@ -17,6 +17,7 @@ class ImageSet(object):
         for image in self._nd2_image_set:
             if image.channel == channel and image.z_level == z_level:
                 return self._correct_image(image)
+        return None
 
     def _correct_image(self, image):
         """

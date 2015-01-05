@@ -27,7 +27,7 @@ class LocationSet(BaseSet):
         assert self._model is not None
         for field_of_view in self._fields_of_view:
             model = self._model()
-            model.field_of_view = field_of_view
+            model.field_of_view = int(field_of_view)
             model.base_path = self.base_path
             yield model
 
@@ -171,6 +171,4 @@ class Location(BaseTextFile):
             return None
 
     def skip_channel(self, channel_number):
-        if channel_number == 28:
-            log.error("WTF CHANNEL 28")
         self._channels[channel_number] = "skipped"
