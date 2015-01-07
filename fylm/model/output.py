@@ -24,6 +24,7 @@ class OutputSet(BaseSet):
         for field_of_view in self._fields_of_view:
             for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
                 model = self._model()
+                model.time_period = 0  # output files are for every time period
                 model.field_of_view = field_of_view
                 model.channel_number = channel_number + 1  # 1-based indexing for compatibility with Matlab
                 model.timestamp_set = self.timestamp_set
