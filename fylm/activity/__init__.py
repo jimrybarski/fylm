@@ -11,6 +11,8 @@ from fylm.model.kymograph import KymographSet
 from fylm.service.annotation import AnnotationSet
 from fylm.model.annotation import KymographAnnotationSet
 from fylm.service.movie import Movie
+from fylm.model.output import OutputSet
+from fylm.service.output import OutputSet as OutputSetService
 
 
 class Activity(object):
@@ -53,3 +55,6 @@ class Activity(object):
     def make_movie(self, time_period, field_of_view, channel_number):
         movie = Movie(self._experiment)
         movie.make_channel_overview(time_period, field_of_view, channel_number)
+
+    def generate_output(self):
+        self._calculate_and_save_text(OutputSet, OutputSetService)
