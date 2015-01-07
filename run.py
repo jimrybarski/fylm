@@ -17,7 +17,7 @@ class Args(dict):
 parser = argparse.ArgumentParser()
 parser.add_argument('date', help='Date formatted like YYMMDD')
 parser.add_argument('dir', help='The directory where the ND2 files are located (and where results are stored)')
-parser.add_argument('--skip', nargs="+", help='Steps to skip (useful mostly for debugging)')
+parser.add_argument('--skip', nargs="+", default=[], help='Steps to skip (useful mostly for debugging)')
 parser.add_argument('--action', help='Do an optional action')
 parser.add_argument('-t', '--timepoint', type=int, help='Specifies a timepoint (needed only for some steps)')
 parser.add_argument('-f', '--fov', type=int, help='Specifies a field of view (needed only for some steps)')
