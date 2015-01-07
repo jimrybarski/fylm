@@ -12,8 +12,9 @@ class Experiment(object):
     def __init__(self):
         self._os = os
 
-    def get_experiment(self, experiment_start_date, base_dir):
+    def get_experiment(self, experiment_start_date, base_dir, version):
         experiment = ExperimentModel()
+        experiment.version = version
 
         # set start date
         experiment.start_date = experiment_start_date
@@ -43,8 +44,10 @@ class Experiment(object):
         """
         # first make all the top-level directories
         subdirs = ["annotation",
+                   "fluorescence",
                    "kymograph",
                    "location",
+                   "puncta",
                    "registration",
                    "rotation",
                    "timestamp",

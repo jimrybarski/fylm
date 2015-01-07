@@ -1,3 +1,4 @@
+from fylm.service.errors import terminal_error
 import logging
 import re
 
@@ -40,6 +41,20 @@ class Experiment(object):
         self._base_dir = None
         self._timepoints = set()
         self.field_of_view_count = None
+        self._version = None
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, value):
+        version_regex = re.compile(r"""\d+\.\d+\.\d+""")
+        if version_regex.match(value):
+            self._version = value
+        else:
+            log.critical("Change the value in the VERSION file in the root directory of fylm_critic to 'x.y.z'.")
+            terminal_error("Invalid version number! %s" % value)
 
     @property
     def start_date(self):

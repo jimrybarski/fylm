@@ -3,6 +3,10 @@ from fylm.service.experiment import Experiment as ExperimentService
 from fylm.activity import Activity
 
 
+with open("VERSION") as f:
+    version = f.read(-1).strip()
+
+
 class Args(dict):
     """
     This class just allows us to get arguments from argparse using dot syntax.
@@ -21,7 +25,7 @@ parser.add_argument('-c', '--channel', type=int, help='Specifies a channel (need
 parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
 args = parser.parse_args(namespace=Args())
 
-experiment = ExperimentService().get_experiment(args.date, args.dir)
+experiment = ExperimentService().get_experiment(args.date, args.dir, version)
 
 # These are the actions that need to be run to completion for each experiment.
 standard_activities = ("rotation",

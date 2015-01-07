@@ -31,6 +31,7 @@ class KymographSet(BaseSet):
         Yields instantiated children of BaseFile that represent the work we expect to have done.
 
         """
+        # TODO: This is wrong! We should only expect files if there are location and annotation files available for a channel
         assert self._model is not None
         for field_of_view in self._fields_of_view:
             for timepoint in self._timepoints:
