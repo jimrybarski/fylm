@@ -27,7 +27,7 @@ class ImageReader(object):
         self._registration_set = RegistrationSet(experiment)
         self._rotation_set = RotationSet(experiment)
         self._timestamp_set = TimestampSet(experiment)
-        self._timepoint = None
+        self._time_period = None
         self._nd2 = None
 
         set_service = BaseSetService()
@@ -38,25 +38,25 @@ class ImageReader(object):
         return self.nd2.time_index_count
 
     @property
-    def timepoint(self):
-        return self._timepoint
+    def time_period(self):
+        return self._time_period
 
-    @timepoint.setter
-    def timepoint(self, value):
-        self._timepoint = int(value)
+    @time_period.setter
+    def time_period(self, value):
+        self._time_period = int(value)
         self._nd2 = None
 
     @property
     def nd2(self):
         if self._nd2 is None:
-            filename = self._experiment.get_nd2_from_timepoint(self._timepoint)
+            filename = self._experiment.get_nd2_from_timepoint(self._time_period)
             self._nd2 = Nd2(filename)
         return self._nd2
 
     def get_image(self, index, channel="", z_level=1):
         rotation_offset = self._rotation_set.existing[index].offset
-        dx, dy = next(self._registration_set.get_data(self.field_of_view, self.timepoint))
-        timestamp = next(self._timestamp_set.get_data(self.field_of_view, self.timepoint))
+        dx, dy = next(self._registration_set.get_data(self.field_of_view, self.time_period))
+        timestamp = next(self._timestamp_set.get_data(self.field_of_view, self.time_period))
         raw_image = self.nd2.get_image(index, self.field_of_view, channel, z_level)
         return Image(raw_image.data, rotation_offset, dx, dy, timestamp)
 
@@ -74,8 +74,8 @@ class ImageReader(object):
 
         """
         rotation_offset = self._rotation_set.get_data(self.field_of_view)
-        registration_data = self._registration_set.get_data(self.field_of_view, self.timepoint)
-        timestamp_data = self._timestamp_set.get_data(self.field_of_view, self.timepoint)
+        registration_data = self._registration_set.get_data(self.field_of_view, self.time_period)
+        timestamp_data = self._timestamp_set.get_data(self.field_of_view, self.time_period)
         for nd2_image_set, registration_offset, (time_index, timestamp) in izip(self.nd2.image_sets(self.field_of_view),
                                                                                 registration_data,
                                                                                 timestamp_data):

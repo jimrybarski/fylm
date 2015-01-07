@@ -28,8 +28,8 @@ class Experiment(object):
         experiment.base_dir = base_dir
         log.debug("Experiment base directory: %s" % experiment.base_dir)
 
-        # set the timepoints
-        self._find_timepoints(experiment)
+        # set the time_periods
+        self._find_time_periods(experiment)
         self._build_directories(experiment)
         self._get_nd2_attributes(experiment)
         return experiment
@@ -59,9 +59,9 @@ class Experiment(object):
             except OSError:
                 pass
 
-    def _find_timepoints(self, experiment):
+    def _find_time_periods(self, experiment):
         """
-        Finds the timepoints of all available ND2 files associated with the experiment.
+        Finds the time_periods of all available ND2 files associated with the experiment.
 
         """
         regex = re.compile(r"""FYLM-%s-0(?P<index>\d+)\.nd2""" % experiment.start_date.clean_date)
@@ -71,8 +71,8 @@ class Experiment(object):
             if match:
                 found = True
                 index = int(match.group("index"))
-                log.debug("Timepoint: %s" % index)
-                experiment.add_timepoint(index)
+                log.debug("time_period: %s" % index)
+                experiment.add_time_period(index)
         if not found:
             log.warn("No ND2s available for this experiment!")
 

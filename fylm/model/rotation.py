@@ -11,7 +11,7 @@ class RotationSet(BaseSet):
         super(RotationSet, self).__init__(experiment, "rotation")
         self._model = Rotation
         self._regex = re.compile(r"""fov\d+.txt""")
-        self._timepoints = [1]
+        self._time_periods = [1]
 
     def get_data(self, field_of_view):
         """
@@ -26,7 +26,7 @@ class RotationSet(BaseSet):
         Returns the model for a given field of view.
 
         """
-        for model in sorted(self.existing, key=lambda x: x.timepoint):
+        for model in sorted(self.existing, key=lambda x: x.time_period):
             if model.field_of_view == field_of_view:
                 return model
 

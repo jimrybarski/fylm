@@ -33,17 +33,17 @@ class ExperimentTests(unittest.TestCase):
 
     def test_add_nd2(self):
         for i in range(1, 6):
-            self.ex.add_timepoint(i)
-        self.assertSetEqual({1, 2, 3, 4, 5}, self.ex._timepoints)
+            self.ex.add_time_period(i)
+        self.assertSetEqual({1, 2, 3, 4, 5}, self.ex._time_periods)
 
     def test_add_nd2_empty(self):
-        self.assertSetEqual(set(), self.ex._timepoints)
+        self.assertSetEqual(set(), self.ex._time_periods)
 
     def test_nds2(self):
         self.ex.start_date = "140914"
         self.ex.base_dir = "/home/lulz"
         for i in range(1, 6):
-            self.ex.add_timepoint(i)
+            self.ex.add_time_period(i)
         expected = ["/home/lulz/FYLM-140914-001.nd2", "/home/lulz/FYLM-140914-002.nd2",
                     "/home/lulz/FYLM-140914-003.nd2", "/home/lulz/FYLM-140914-004.nd2",
                     "/home/lulz/FYLM-140914-005.nd2"]

@@ -23,7 +23,7 @@ class RegistrationSet(BaseSet):
         """
         assert self._model is not None
         for field_of_view in self._fields_of_view:
-            for timepoint in self._timepoints:
+            for timepoint in self._time_periods:
                 for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
                     model = self._model()
                     model.timepoint = timepoint

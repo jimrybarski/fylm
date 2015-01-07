@@ -6,7 +6,7 @@ class MockExperiment(object):
     def __init__(self):
         self.data_dir = "/tmp/"
         self.fields_of_view = [1, 2]
-        self.timepoints = [1, 2]
+        self.time_periods = [1, 2]
         self.base_path = None
         self.field_of_view_count = 2
 
