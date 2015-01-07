@@ -113,10 +113,27 @@ class ChannelAnnotationGroup(BaseTextFile):
             # get a list of the indices of the non-zero values in this row
             pole_locations = np.nonzero(row)[0]
             if len(pole_locations) > 1:
-                bounds[n] = pole_locations
+                bounds[n] = pole_locations[0], pole_locations[1]
             else:
                 bounds[n] = None
         return bounds
+
+    def get_cell_lengths(self, timepoint):
+        """
+        If there are two pole locations (an old pole and a new pole) calculate the distance between them. This gives us
+        the cell length at each time index.
+
+        :type timepoint:    int
+        :rtype:             dict
+
+        """
+        lengths = {}
+        for time_index, bounds in self.get_cell_bounds(timepoint).items():
+            if bounds:
+                lengths[time_index] = bounds[1] - bounds[0]
+            else:
+                lengths[time_index] = None
+        return lengths
 
     def points(self, timepoint):
         """
