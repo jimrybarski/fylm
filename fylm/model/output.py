@@ -38,8 +38,9 @@ class Output(BaseTextFile):
         for time_period in self.time_periods:
             cell_lengths = self.annotation.get_cell_lengths(time_period)
             # TODO: load fluorescence data here
-            for time_index, timestamp in self.timestamp_set.get_data(self.field_of_view, time_period):
-                yield "%s %s" % (timestamp, cell_lengths.get(time_index))
+            for time_index, timestamp in self.timestamp_set.get_data(self.field_of_view, time_period).items():
+                length = cell_lengths.get(time_index)
+                yield "%s\t%s" % (timestamp, length if length is not None else "NaN")
 
     def add_cell_length(self, time_index, length):
         if length < 10:
