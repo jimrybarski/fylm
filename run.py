@@ -1,9 +1,11 @@
 import argparse
 from fylm.service.experiment import Experiment as ExperimentService
 from fylm.activity import Activity
+import sys
+import os
 
 
-with open("VERSION") as f:
+with open(os.path.dirname(sys.argv[0]) + "/VERSION") as f:
     version = f.read(-1).strip()
 
 
