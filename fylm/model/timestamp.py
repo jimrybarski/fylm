@@ -18,7 +18,7 @@ class TimestampSet(BaseSet):
 class Timestamps(BaseTextFile):
     def __init__(self):
         super(Timestamps, self).__init__()
-        self.timepoint = None
+        self.time_period = None
         self.field_of_view = None
         self._timestamps = {}
         self._line_regex = re.compile(r"""^(?P<index>\d+) (?P<timestamp>\d+\.\d+)""")

@@ -10,7 +10,7 @@ class AnnotationTests(unittest.TestCase):
     def test_parse(self):
         text_line = "2 4 12.345,13.222 6.757,4.646"
         self.annotation.load_from_text(text_line)
-        self.assertEqual(self.annotation.timepoint, 2)
+        self.assertEqual(self.annotation.time_period, 2)
         self.assertEqual(self.annotation.index, 4)
         self.assertEqual(self.annotation.coordinates[0].x, 12.345)
         self.assertEqual(self.annotation.coordinates[0].y, 13.222)

@@ -1,8 +1,37 @@
-from collections import defaultdict
-from fylm.model.base import BaseTextFile
+from fylm.model.base import BaseTextFile, BaseSet
+from fylm.model.constants import Constants
 import logging
+import re
 
 log = logging.getLogger("fylm")
+
+
+class OutputSet(BaseSet):
+    def __init__(self, experiment):
+        super(OutputSet, self).__init__(experiment, "output")
+        self._model = Output
+        self._regex = re.compile(r"""\d_\d+.txt""")
+        self.timestamp_set = None
+        self.annotation_set = None
+
+    @property
+    def _expected(self):
+        """
+        Yields instantiated children of BaseFile that represent the work we expect to have done.
+
+        """
+        assert self._model is not None
+        for field_of_view in self._fields_of_view:
+            for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+                model = self._model()
+                model.time_period = 0  # output files are for every time period
+                model.field_of_view = field_of_view
+                model.channel_number = channel_number + 1  # 1-based indexing for compatibility with Matlab
+                model.timestamp_set = self.timestamp_set
+                model.annotation = self.annotation_set.get_model(field_of_view, channel_number)
+                model.base_path = self.base_path
+                model.time_periods = self._time_periods
+                yield model
 
 
 class Output(BaseTextFile):
@@ -10,7 +39,7 @@ class Output(BaseTextFile):
     Models the output file that is used by Matlab to generate figures. No methods for reading the files exist
     as we never use this for anything in fylm_critic - it's just the final results.
 
-    Each file holds data for one channel in one field of view for all timepoints.
+    Each file holds data for one channel in one field of view for all time periods.
 
     """
     def __init__(self):
@@ -33,4 +62,8 @@ class Output(BaseTextFile):
 
     @property
     def filename(self):
+        """
+        We increase the channel number by one for compatibility with the Matlab script.
+
+        """
         return "%s_%s.txt" % (self.field_of_view, self.channel_number)

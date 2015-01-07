@@ -6,21 +6,21 @@ class MockModel(object):
     model_id = 1
 
     def __init__(self):
-        self.timepoint = None
+        self.time_period = None
         self.field_of_view = None
         self.base_path = None
 
     @property
     def filename(self):
         # This is just the default filename and it won't always be valid.
-        return "tp%s-fov%s.txt" % (self.timepoint, self.field_of_view)
+        return "tp%s-fov%s.txt" % (self.time_period, self.field_of_view)
 
 
 class MockExperiment(object):
     def __init__(self):
         self.data_dir = None
         self.fields_of_view = None
-        self.timepoints = None
+        self.time_periods = None
         self.base_path = None
         self.field_of_view_count = None
 
@@ -30,7 +30,7 @@ class BaseSetTests(unittest.TestCase):
         experiment = MockExperiment()
         experiment.data_dir = "/home/lulz/"
         experiment.field_of_view_count = 4
-        experiment.timepoints = [1, 2, 3, 4]
+        experiment.time_periods = [1, 2, 3, 4]
         self.bs = BaseSet(experiment, "/tmp/")
         self.bs._model = MockModel
 
@@ -42,6 +42,6 @@ class BaseSetTests(unittest.TestCase):
         models = list(self.bs._get_current(1))
         self.assertEqual(len(models), 4)
         for n, model in enumerate(models):
-            self.assertEqual(n + 1, model.timepoint)
+            self.assertEqual(n + 1, model.time_period)
         for model in models:
             self.assertEqual(model.field_of_view, 1)

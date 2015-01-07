@@ -56,15 +56,15 @@ class KymographAnnotator(HumanInteractor):
                    "escape": self._clear,
                    "left": self._previous_channel,
                    "right": self._next_channel,
-                   "up": self._next_timepoint,
-                   "down": self._previous_timepoint,
+                   "up": self._next_time_period,
+                   "down": self._previous_time_period,
                    "q": self._shutdown
                    }
         if human_input.key in actions.keys():
             actions[human_input.key]()
 
     def _change_state(self):
-        self.current_annotation.change_state(self._annotation_model_set.current_timepoint)
+        self.current_annotation.change_state(self._annotation_model_set.current_time_period)
         self._refresh_data()
         self._clear()
 
@@ -73,13 +73,13 @@ class KymographAnnotator(HumanInteractor):
         self._close()
 
     def _delete_last_line(self):
-        self.current_annotation.delete_last_line(self._annotation_model_set.current_timepoint)
+        self.current_annotation.delete_last_line(self._annotation_model_set.current_time_period)
         self._refresh_data()
         self._redraw()
 
     def _save_line(self):
         annotation_line = AnnotationLine()
-        annotation_line.timepoint = self._annotation_model_set.current_timepoint
+        annotation_line.time_period = self._annotation_model_set.current_time_period
         annotation_line.set_coordinates(self._coordinates)
         self.current_annotation.add_line(annotation_line)
         self._refresh_data()
@@ -99,12 +99,12 @@ class KymographAnnotator(HumanInteractor):
         self._annotation_model_set.increment_channel()
         self._clear()
 
-    def _previous_timepoint(self):
-        self._annotation_model_set.decrement_timepoint()
+    def _previous_time_period(self):
+        self._annotation_model_set.decrement_time_period()
         self._clear()
 
-    def _next_timepoint(self):
-        self._annotation_model_set.increment_timepoint()
+    def _next_time_period(self):
+        self._annotation_model_set.increment_time_period()
         self._clear()
 
     def _clear(self):
@@ -113,7 +113,7 @@ class KymographAnnotator(HumanInteractor):
 
     def _redraw(self):
         result_array = np.zeros(self._image.shape)
-        for y_list, x_list in self.current_annotation.points(self._annotation_model_set.current_timepoint):
+        for y_list, x_list in self.current_annotation.points(self._annotation_model_set.current_time_period):
             result_array[y_list, x_list] = 1
         line_indices = np.where(result_array == 1)
         active_image = gray2rgb(np.copy(self._image))
@@ -128,13 +128,13 @@ class KymographAnnotator(HumanInteractor):
     def _start(self):
         # Refresh the lines from disk in case we saved some during this session
         Reader().read(self.current_annotation, expect_missing_file=True)
-        timepoint = self._annotation_model_set.current_timepoint
-        self._fig.suptitle("Timepoint %s/%s FOV: %s Channel: %s State: %s" % (timepoint,
-                                                                    self._annotation_model_set.max_timepoint,
+        time_period = self._annotation_model_set.current_time_period
+        self._fig.suptitle("time_period %s/%s FOV: %s Channel: %s State: %s" % (time_period,
+                                                                    self._annotation_model_set.max_time_period,
                                                                     self.current_annotation.field_of_view + 1,
                                                                     self.current_annotation.channel_number + 1,
                                                                     self.current_annotation.state), fontsize=20)
-        self._image = self.current_annotation.get_image(timepoint)
+        self._image = self.current_annotation.get_image(time_period)
         self._im = self._ax.imshow(self._image, cmap='gray')
         self._ax.autoscale(False)
         self._redraw()
