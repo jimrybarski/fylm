@@ -65,7 +65,7 @@ class KymographSet(BaseSetService):
 
             for time_index, image_set in enumerate(image_reader):
                 log.debug("Adding lines for kymographs from time index %s" % time_index)
-                image = image_set.get_image(channel="", z_level=1)
+                image = image_set.get_image(channel="", z_level=0)
 
                 for kymograph_model in available_kymographs:
                     if kymograph_model.timepoint == timepoint:
