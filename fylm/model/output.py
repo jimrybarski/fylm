@@ -1,16 +1,6 @@
-"""
-%%% FYLM Critic output data:
-%%% separate files for each catch channel
-%%% no separate files for Time Periods
-%%% times are all relative to beginning of experiment
-%%% fluorescence data is alphabetical by name in Elements
-
-"""
 from collections import defaultdict
 from fylm.model.base import BaseTextFile
-from fylm.model.constants import Constants
 import logging
-import re
 
 log = logging.getLogger("fylm")
 
@@ -26,12 +16,11 @@ class Output(BaseTextFile):
     def __init__(self):
         super(Output, self).__init__()
         self.field_of_view = None
-        self.channel = None
-        self._data = defaultdict(dict)
+        self.channel_number = None
         self.timestamp_set = None  # TimestampSet
         self.annotation = None  # ChannelAnnotationGroup
         self.fluorescence_data = None
-        self.time_periods = None
+        self.time_periods = None  # [<int>]
 
     @property
     def lines(self):
@@ -42,9 +31,6 @@ class Output(BaseTextFile):
                 length = cell_lengths.get(time_index)
                 yield "%s\t%s" % (timestamp, length if length is not None else "NaN")
 
-    def add_cell_length(self, time_index, length):
-        if length < 10:
-            log.warn("Abnormally short cell length! TP:%s FOV:%s Time index:%s" % (self.timepoint,
-                                                                                   self.field_of_view,
-                                                                                   time_index))
-        self._data[time_index] = int(length)
+    @property
+    def filename(self):
+        return "%s_%s.txt" % (self.field_of_view, self.channel_number)

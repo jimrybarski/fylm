@@ -22,7 +22,7 @@ class OutputTests(unittest.TestCase):
     def setUp(self):
         self.output = Output()
 
-    def test_lines(self):
+    def test_lines_no_fluorescence(self):
         self.output.time_periods = [1, 2]
         timestamps = {1: {0: 2.135135, 1: 8.12515, 2: 14.9966, 3: 21.071698},
                       2: {0: 27.23589, 1: 33.46240, 2: 39.909011, 3: 45.41}}
