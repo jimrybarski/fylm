@@ -14,7 +14,7 @@ class ImageReader(object):
     """
     Gets ImageSet objects from the nd2reader library, sets metadata as appropriate, applies transformations to each image
     to correct for rotational and translational distortion, and yields the ImageSet. Seamlessly gets images from separate
-    ND2 files for an unlimited number of timepoints, so the application will behave as if there was only a single acquisition.
+    ND2 files for an unlimited number of time_periods, so the application will behave as if there was only a single acquisition.
 
     The registration and rotation can be optionally deactivated in case they misbehave, and the start point can also be set.
 
@@ -49,7 +49,7 @@ class ImageReader(object):
     @property
     def nd2(self):
         if self._nd2 is None:
-            filename = self._experiment.get_nd2_from_timepoint(self._time_period)
+            filename = self._experiment.get_nd2_from_time_period(self._time_period)
             self._nd2 = Nd2(filename)
         return self._nd2
 
@@ -70,7 +70,7 @@ class ImageReader(object):
 
     def __iter__(self):
         """
-        Provides image sets for a single timepoint.
+        Provides image sets for a single time_period.
 
         """
         rotation_offset = self._rotation_set.get_data(self.field_of_view)
