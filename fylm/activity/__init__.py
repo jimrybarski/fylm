@@ -39,7 +39,7 @@ class Activity(object):
 
     def create_kymographs(self):
         """
-        We can't use _calulate_and_save() because it would be inefficient to iterate
+        We can't use _calculate_and_save() because it would be inefficient to iterate
         over the entire image stack for each channel.
 
         """
