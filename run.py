@@ -5,7 +5,9 @@ import sys
 import os
 
 
-with open(os.path.dirname(sys.argv[0]) + "/VERSION") as f:
+root = os.path.dirname(sys.argv[0])
+version_filename = "VERSION" if root == '' else "/VERSION"
+with open(root + version_filename) as f:
     version = f.read(-1).strip()
 
 
