@@ -11,8 +11,6 @@ class OutputSet(BaseSet):
         super(OutputSet, self).__init__(experiment, "output")
         self._model = Output
         self._regex = re.compile(r"""\d_\d+.txt""")
-        self.timestamp_set = None
-        self.annotation_set = None
 
     @property
     def _expected(self):
@@ -27,8 +25,6 @@ class OutputSet(BaseSet):
                 model.time_period = 0  # output files are for every time period
                 model.field_of_view = field_of_view
                 model.channel_number = channel_number + 1  # 1-based indexing for compatibility with Matlab
-                model.timestamp_set = self.timestamp_set
-                model.annotation = self.annotation_set.get_model(field_of_view, channel_number)
                 model.base_path = self.base_path
                 model.time_periods = self._time_periods
                 yield model
