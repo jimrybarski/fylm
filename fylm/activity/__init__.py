@@ -57,10 +57,4 @@ class Activity(object):
         movie.make_channel_overview(time_period, field_of_view, channel_number)
 
     def generate_output(self):
-        timestamp_set = TimestampSet(experiment)
-        timestamp_service = TimestampService(experiment)
-        timestamp_service.load_existing_models(timestamp_set)
-        annotation_set = KymographAnnotationSet(experiment)
-        annotation_service = KymographSetService(experiment)
-        annotation_service.load_existing_models(annotation_set)
         self._calculate_and_save_text(OutputSet, OutputSetService)
