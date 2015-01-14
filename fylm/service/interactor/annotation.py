@@ -129,7 +129,7 @@ class KymographAnnotator(HumanInteractor):
         # Refresh the lines from disk in case we saved some during this session
         Reader().read(self.current_annotation, expect_missing_file=True)
         time_period = self._annotation_model_set.current_time_period
-        self._fig.suptitle("time_period %s/%s FOV: %s Channel: %s State: %s" % (time_period,
+        self._fig.suptitle("Time Period %s/%s FOV: %s Channel: %s State: %s" % (time_period,
                                                                     self._annotation_model_set.max_time_period,
                                                                     self.current_annotation.field_of_view + 1,
                                                                     self.current_annotation.channel_number + 1,
