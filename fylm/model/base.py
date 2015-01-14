@@ -10,7 +10,7 @@ class BaseResult(object):
     """
     def __init__(self):
         self.base_path = None
-        self.timepoint = None
+        self.time_period = None
         self.field_of_view = None
 
     @property
@@ -20,7 +20,7 @@ class BaseResult(object):
     @property
     def filename(self):
         # This is just the default filename and it won't always be valid.
-        return "tp%s-fov%s.txt" % (self.timepoint, self.field_of_view)
+        return "tp%s-fov%s.txt" % (self.time_period, self.field_of_view)
 
     @abstractmethod
     def load(self, *args):
@@ -93,12 +93,12 @@ class BaseSet(object):
         self.base_path = experiment.data_dir + "/" + top_level_dir
         self._current_filenames = []
         self._existing = []
-        # The default regex assumes the only distinguishing features are timepoints and fields of view.
+        # The default regex assumes the only distinguishing features are time_periods and fields of view.
         self._regex = re.compile(r"""tp\d+-fov\d+.txt""")
         # We use 0-based indexing for fields of view
         self._fields_of_view = [fov for fov in range(experiment.field_of_view_count)]
-        # Timepoints are 1-based since they come from the ND2 filenames
-        self._timepoints = [timepoint for timepoint in experiment.timepoints]
+        # Time periods are 1-based since they come from the ND2 filenames
+        self._time_periods = [time_period for time_period in experiment.time_periods]
         # The BaseFile model that this set contains
         self._model = None
 
@@ -110,9 +110,9 @@ class BaseSet(object):
         """
         assert self._model is not None
         for field_of_view in self._fields_of_view:
-            for timepoint in self._timepoints:
+            for time_period in self._time_periods:
                 model = self._model()
-                model.timepoint = timepoint
+                model.time_period = time_period
                 model.field_of_view = field_of_view
                 model.base_path = self.base_path
                 yield model
@@ -144,18 +144,18 @@ class BaseSet(object):
         Yields models in order of acquisition for a given field of view.
 
         """
-        for model in sorted(self.existing, key=lambda x: x.timepoint):
+        for model in sorted(self.existing, key=lambda x: x.time_period):
             if model.field_of_view == field_of_view:
                 yield model
 
-    def get_data(self, field_of_view, timepoint):
+    def get_data(self, field_of_view, time_period):
         """
-        Yields model data in order of acquisition across all timepoints.
+        Yields model data in order of acquisition across all time_periods.
 
         """
         for model in self._get_current(field_of_view):
             for data in model.data:
-                if model.timepoint == timepoint:
+                if model.time_period == time_period:
                     yield data
 
     def add_existing_data_file(self, filename):

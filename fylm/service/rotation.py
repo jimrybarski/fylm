@@ -25,7 +25,7 @@ class RotationSet(BaseSetService):
     @timer
     def save_action(self, rotation_model):
         """
-        Calculates the rotation offset for a single field of view and timepoint.
+        Calculates the rotation offset for a single field of view and time_period.
 
         :type rotation_model:   fylm.model.rotation.Rotation()
 
@@ -34,7 +34,7 @@ class RotationSet(BaseSetService):
         # This is a pretty naive loop - the same file will get opened 8-12 times
         # There are obvious ways to optimize this but that can be done later if it matters
         # It probably doesn't matter though and I like simple things
-        nd2_filename = self._experiment.get_nd2_from_timepoint(rotation_model.timepoint)
+        nd2_filename = self._experiment.get_nd2_from_time_period(rotation_model.time_period)
         nd2 = nd2reader.Nd2(nd2_filename)
         # gets the first in-focus image from the first timpoint in the stack
         # TODO: Update nd2reader to figure out which one is in focus or to be able to set it

@@ -116,6 +116,8 @@ class ExactChannelFinder(HumanInteractor):
         self._ax.imshow(self._current_image_slice.image_data, cmap='gray')
         self._ax.autoscale(False)
         self._draw_existing_data()
+        mng = plt.get_current_fig_manager()
+        mng.resize(*mng.window.maxsize())
         plt.show()
 
     def _draw_existing_data(self):
