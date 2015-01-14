@@ -320,7 +320,7 @@ class KymographAnnotationSet(BaseSet):
             for model in self.existing:
                 if not model.is_finished:
                     self._unfinished.append(model)
-        return self._unfinished
+        return sorted(self._unfinished, key=lambda x: (x.field_of_view, x.channel_number))
 
     @property
     def work_remains(self):
