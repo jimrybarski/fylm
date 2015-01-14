@@ -34,6 +34,8 @@ class ApproximateChannelFinder(HumanInteractor):
         self._fig.suptitle("Field of View: %s" % str(self._field_of_view + 1), fontsize=20)
         self._ax.imshow(self._image_data, cmap='gray')
         self._ax.autoscale(False)
+        mng = plt.get_current_fig_manager()
+        mng.resize(*mng.window.maxsize())
         plt.show()
 
     def _handle_results(self):
