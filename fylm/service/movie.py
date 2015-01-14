@@ -30,7 +30,7 @@ class Movie(object):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
 
-    def _get_cell_bounds(self, timepoint, field_of_view, channel_number):
+    def _get_cell_bounds(self, time_period, field_of_view, channel_number):
         """
         Gets the x-position (in pixels) of the old and new cell poles for each frame. Each index holds a tuple
         of ints. If not available, the index holds None.
@@ -38,7 +38,7 @@ class Movie(object):
         :return:    dict
 
         """
-        self._annotation.timepoint = timepoint
+        self._annotation.time_period = time_period
         self._annotation.field_of_view = field_of_view
         self._annotation.channel_number = channel_number
         try:
@@ -48,9 +48,9 @@ class Movie(object):
             # That annotation doesn't exist yet or it has no data
             return {}
         else:
-            return channel_group.get_cell_bounds(timepoint)
+            return channel_group.get_cell_bounds(time_period)
 
-    def make_channel_overview(self, timepoint, field_of_view, channel_number):
+    def make_channel_overview(self, time_period, field_of_view, channel_number):
         """
         Makes a movie of a single catch channel, showing every focus level
         and filter channel available (lined up along the horizontal axis).
@@ -59,20 +59,20 @@ class Movie(object):
         :type channel_number:   int
 
         """
-        self._image_reader.timepoint = timepoint
+        self._image_reader.time_period = time_period
         self._image_reader.field_of_view = field_of_view
-        cell_bounds = self._get_cell_bounds(timepoint, field_of_view, channel_number)
+        cell_bounds = self._get_cell_bounds(time_period, field_of_view, channel_number)
         channels = self._get_channels(self._image_reader)
         z_levels = self._image_reader.nd2.z_level_count
         image_slice = self._get_image_slice(field_of_view, channel_number)
         movie = MovieModel(image_slice.height * 2, image_slice.width)
         images = os.listdir(self._base_dir)
-        base_filename = self._base_dir + "tp%s-fov%s-channel%s" % (timepoint, field_of_view, channel_number)
+        base_filename = self._base_dir + "tp%s-fov%s-channel%s" % (time_period, field_of_view, channel_number)
 
         log.info("Creating movie file: %s.avi" % base_filename)
 
         for n, image_set in enumerate(self._image_reader):
-            filename = "tp%s-fov%s-channel%s-%03d.png" % (timepoint, field_of_view, channel_number, n)
+            filename = "tp%s-fov%s-channel%s-%03d.png" % (time_period, field_of_view, channel_number, n)
             if filename not in images:
                 self._update_image_data(image_slice, image_set, channels, z_levels, movie)
                 log.debug("Adding movie frame %s" % n)

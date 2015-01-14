@@ -6,7 +6,7 @@ class MockExperiment(object):
     def __init__(self):
         self.data_dir = None
         self.fields_of_view = None
-        self.timepoints = None
+        self.time_periods = None
         self.base_path = None
         self.field_of_view_count = None
         
@@ -17,7 +17,7 @@ class RotationSetTests(unittest.TestCase):
         experiment.data_dir = "/home/lulz/"
         experiment.fields_of_view = [1, 2, 3, 4, 5, 6, 7, 8]
         experiment.field_of_view_count = 8
-        experiment.timepoints = [1, 2, 3]
+        experiment.time_periods = [1, 2, 3]
         self.rset = RotationSet(experiment)
 
     def test_expected_rotations(self):
@@ -46,7 +46,7 @@ class RotationTests(unittest.TestCase):
         experiment.data_dir = "/home/lulz/141117"
         self.rotation = Rotation()
         self.rotation.base_path = experiment.data_dir + "/rotation"
-        self.rotation.timepoint = 2
+        self.rotation.time_period = 2
         self.rotation.field_of_view = 3
 
     def test_path(self):

@@ -21,7 +21,7 @@ class RegistrationSet(BaseSetService):
     @timer
     def save_action(self, registration_model):
         """
-        Calculates the rotation offset for a single field of view and timepoint.
+        Calculates the rotation offset for a single field of view and time_period.
 
         :type registration_model:   fylm.model.registration.Registration()
 
@@ -30,11 +30,11 @@ class RegistrationSet(BaseSetService):
         # This is a pretty naive loop - the same file will get opened 8-12 times
         # There are obvious ways to optimize this but that can be done later if it matters
         # It probably doesn't matter though and I like simple things
-        base_nd2_filename = self._experiment.get_nd2_from_timepoint(1)
-        nd2_filename = self._experiment.get_nd2_from_timepoint(registration_model.timepoint)
+        base_nd2_filename = self._experiment.get_nd2_from_time_period(1)
+        nd2_filename = self._experiment.get_nd2_from_time_period(registration_model.time_period)
         base_nd2 = nd2reader.Nd2(base_nd2_filename)
         nd2 = nd2reader.Nd2(nd2_filename)
-        # gets the first out-of-focus image from the first timepoint in the stack
+        # gets the first out-of-focus image from the first time_period in the stack
         base_image = base_nd2.get_image(0, registration_model.field_of_view, "", 0)
         for i in range(nd2.time_index_count):
             image = nd2.get_image(i, registration_model.field_of_view, "", 0)

@@ -1,3 +1,4 @@
+from fylm.service.errors import terminal_error
 import logging
 import re
 
@@ -38,8 +39,22 @@ class Experiment(object):
         """
         self._start_date = None
         self._base_dir = None
-        self._timepoints = set()
+        self._time_periods = set()
         self.field_of_view_count = None
+        self._version = None
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, value):
+        version_regex = re.compile(r"""\d+\.\d+\.\d+""")
+        if version_regex.match(value):
+            self._version = value
+        else:
+            log.critical("Change the value in the VERSION file in the root directory of fylm_critic to 'x.y.z'.")
+            terminal_error("Invalid version number! %s" % value)
 
     @property
     def start_date(self):
@@ -83,14 +98,14 @@ class Experiment(object):
         :returns:   str
 
         """
-        for timepoint in self.timepoints:
-            yield self.get_nd2_from_timepoint(timepoint)
+        for time_period in self.time_periods:
+            yield self.get_nd2_from_time_period(time_period)
 
-    def get_nd2_from_timepoint(self, timepoint):
-        # pads timepoint with leading zeros to create 3-digit number
-        return self._nd2_base_filename + "%03d.nd2" % timepoint
+    def get_nd2_from_time_period(self, time_period):
+        # pads time_period with leading zeros to create 3-digit number
+        return self._nd2_base_filename + "%03d.nd2" % time_period
 
-    def add_timepoint(self, number):
+    def add_time_period(self, number):
         """
         Registers the existence of an ND2 file with a given index.
 
@@ -99,16 +114,16 @@ class Experiment(object):
 
         """
         assert number > 0
-        self._timepoints.add(number)
+        self._time_periods.add(number)
 
     @property
-    def timepoints(self):
-        for timepoint in sorted(self._timepoints):
-            yield timepoint
+    def time_periods(self):
+        for time_period in sorted(self._time_periods):
+            yield time_period
 
     @property
-    def timepoint_count(self):
-        return len(self._timepoints)
+    def time_period_count(self):
+        return len(self._time_periods)
 
     @property
     def fields_of_view(self):

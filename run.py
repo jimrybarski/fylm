@@ -1,6 +1,14 @@
 import argparse
 from fylm.service.experiment import Experiment as ExperimentService
 from fylm.activity import Activity
+import sys
+import os
+
+
+root = os.path.dirname(sys.argv[0])
+version_filename = "VERSION" if root == '' else "/VERSION"
+with open(root + version_filename) as f:
+    version = f.read(-1).strip()
 
 
 class Args(dict):
@@ -21,7 +29,7 @@ parser.add_argument('-c', '--channel', type=int, help='Specifies a channel (need
 parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
 args = parser.parse_args(namespace=Args())
 
-experiment = ExperimentService().get_experiment(args.date, args.dir)
+experiment = ExperimentService().get_experiment(args.date, args.dir, version)
 
 # These are the actions that need to be run to completion for each experiment.
 standard_activities = ("rotation",

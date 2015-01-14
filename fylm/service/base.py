@@ -45,7 +45,8 @@ class BaseSetService(BaseService):
 
         """
         did_work = False
-        for model in model_set.remaining:
+        remaining = list(model_set.remaining)
+        for model in remaining:
             did_work = True
             writer = FileInteractor(model)
             self.save_action(model)

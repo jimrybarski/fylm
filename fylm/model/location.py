@@ -66,7 +66,6 @@ class Location(BaseTextFile):
 
     @property
     def filename(self):
-        # This is just the default filename and it won't always be valid.
         return "fov%s.txt" % self.field_of_view
 
     @property

@@ -31,12 +31,13 @@ class KymographSet(BaseSet):
         Yields instantiated children of BaseFile that represent the work we expect to have done.
 
         """
+        # TODO: This is wrong! We should only expect files if there are location and annotation files available for a channel
         assert self._model is not None
         for field_of_view in self._fields_of_view:
-            for timepoint in self._timepoints:
+            for time_period in self._time_periods:
                 for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
                     model = self._model()
-                    model.timepoint = timepoint
+                    model.time_period = time_period
                     model.field_of_view = field_of_view
                     model.channel_number = channel_number
                     model.base_path = self.base_path
@@ -119,4 +120,4 @@ class Kymograph(BaseImage):
 
     @property
     def filename(self):
-        return "tp%s-fov%s-channel%s.png" % (self.timepoint, self.field_of_view, self.channel_number)
+        return "tp%s-fov%s-channel%s.png" % (self.time_period, self.field_of_view, self.channel_number)

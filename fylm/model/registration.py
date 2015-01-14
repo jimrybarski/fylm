@@ -22,7 +22,7 @@ class Registration(BaseTextFile):
     """
     def __init__(self):
         super(Registration, self).__init__()
-        self.timepoint = None
+        self.time_period = None
         self.field_of_view = None
         self._offsets = {}
         self._line_regex = re.compile(r"""^(?P<index>\d+) (?P<dx>-?\d+\.\d+) (?P<dy>-?\d+\.\d+)""")
