@@ -1,5 +1,4 @@
 from fylm.model.base import BaseTextFile, BaseSet
-from fylm.model.constants import Constants
 import logging
 import re
 
@@ -14,23 +13,6 @@ class RegistrationSet(BaseSet):
     def __init__(self, experiment):
         super(RegistrationSet, self).__init__(experiment, "registration")
         self._model = Registration
-
-    @property
-    def _expected(self):
-        """
-        Yields instantiated children of BaseFile that represent the work we expect to have done.
-
-        """
-        assert self._model is not None
-        for field_of_view in self._fields_of_view:
-            for time_period in self._time_periods:
-                for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
-                    model = self._model()
-                    model.time_period = time_period
-                    model.field_of_view = field_of_view
-                    model.channel_number = channel_number
-                    model.base_path = self.base_path
-                    yield model
 
 
 class Registration(BaseTextFile):

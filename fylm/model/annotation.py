@@ -246,7 +246,7 @@ class KymographAnnotationSet(BaseSet):
         for model in self._existing:
             if model.field_of_view == field_of_view and model.channel_number == channel_number:
                 return model
-        raise ValueError("That annotation doesn't exist!")
+        return None
 
     def decrement_channel(self):
         self._current_model_pointer -= 1
@@ -320,7 +320,7 @@ class KymographAnnotationSet(BaseSet):
             for model in self.existing:
                 if not model.is_finished:
                     self._unfinished.append(model)
-        return self._unfinished
+        return sorted(self._unfinished, key=lambda x: (x.field_of_view, x.channel_number))
 
     @property
     def work_remains(self):
