@@ -37,7 +37,8 @@ standard_activities = ("rotation",
                        "registration",
                        "location",
                        "kymograph",
-                       "annotation")
+                       "annotation",
+                       "output")
 
 # Define what each action is and the arguments it takes (note: not all methods take arguments)
 act = Activity(experiment)
@@ -47,7 +48,8 @@ actions = {"rotation": act.calculate_rotation_offset,
            "location": act.input_channel_locations,
            "kymograph": act.create_kymographs,
            "annotation": act.annotate_kymographs,
-           "movie": act.make_movie}
+           "movie": act.make_movie,
+           "output": act.generate_output}
 action_args = {"movie": (args.timepoint, args.fov, args.channel)}
 
 # Now run whatever methods are needed

@@ -130,10 +130,10 @@ class KymographAnnotator(HumanInteractor):
         Reader().read(self.current_annotation, expect_missing_file=True)
         time_period = self._annotation_model_set.current_time_period
         self._fig.suptitle("Time Period %s/%s FOV: %s Channel: %s State: %s" % (time_period,
-                                                                    self._annotation_model_set.max_time_period,
-                                                                    self.current_annotation.field_of_view + 1,
-                                                                    self.current_annotation.channel_number + 1,
-                                                                    self.current_annotation.state), fontsize=20)
+                           self._annotation_model_set.max_time_period,
+                           self.current_annotation.field_of_view + 1,
+                           self.current_annotation.channel_number + 1,
+                           self.current_annotation.state), fontsize=20)
         self._image = self.current_annotation.get_image(time_period)
         self._im = self._ax.imshow(self._image, cmap='gray')
         self._ax.autoscale(False)
