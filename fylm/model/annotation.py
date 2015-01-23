@@ -226,6 +226,10 @@ class ChannelAnnotationGroup(BaseTextFile):
     def filename(self):
         return "fov%s-channel%s.txt" % (self.field_of_view, self.channel_number)
 
+    @property
+    def last_state(self):
+        return self._last_state
+
 
 class KymographAnnotationSet(BaseSet):
     """
