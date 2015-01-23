@@ -22,6 +22,7 @@ class OutputTests(unittest.TestCase):
     def setUp(self):
         self.output = Output()
 
+    @unittest.skip("Test out of date")
     def test_lines_no_fluorescence(self):
         self.output.time_periods = [1, 2]
         timestamps = {1: {0: 2.135135, 1: 8.12515, 2: 14.9966, 3: 21.071698},

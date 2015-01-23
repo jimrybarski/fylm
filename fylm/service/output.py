@@ -2,7 +2,9 @@ from fylm.service.base import BaseSetService
 from fylm.model.timestamp import TimestampSet
 from fylm.model.annotation import KymographAnnotationSet
 from fylm.service.timestamp import TimestampSet as TimestampService
-from fylm.service.annotation import KymographSetService
+from fylm.service.annotation import AnnotationSet
+from fylm.model.kymograph import KymographSet
+from fylm.service.kymograph import KymographSet as KymographSetService
 import logging
 
 
@@ -21,8 +23,12 @@ class OutputSet(BaseSetService):
         self._timestamp_set = TimestampSet(experiment)
         timestamp_service = TimestampService(experiment)
         timestamp_service.load_existing_models(self._timestamp_set)
+        kymograph_set = KymographSet(experiment)
+        kymograph_service = KymographSetService(experiment)
+        kymograph_service.load_existing_models(kymograph_set)
         self._annotation_set = KymographAnnotationSet(experiment)
-        annotation_service = KymographSetService(experiment)
+        self._annotation_set.kymograph_set = kymograph_set
+        annotation_service = AnnotationSet(experiment)
         annotation_service.load_existing_models(self._annotation_set)
 
     def save_action(self, model):

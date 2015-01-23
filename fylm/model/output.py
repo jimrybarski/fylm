@@ -53,7 +53,7 @@ class Output(BaseTextFile):
             if self.annotation:
                 cell_lengths = self.annotation.get_cell_lengths(time_period)
             # TODO: load fluorescence data here
-            for time_index, timestamp in self.timestamp_set.get_data(self.field_of_view, time_period).items():
+            for time_index, timestamp in self.timestamp_set.get_data(self.field_of_view, time_period):
                 if self.annotation:
                     length = cell_lengths.get(time_index)
                 else:
@@ -66,4 +66,4 @@ class Output(BaseTextFile):
         We increase the channel number by one for compatibility with the Matlab script.
 
         """
-        return "%s_%s.txt" % (self.field_of_view, self.channel_number)
+        return "%s_%s.txt" % (str(int(self.field_of_view) + 1), self.channel_number)
