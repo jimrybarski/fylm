@@ -13,7 +13,8 @@ from fylm.model.annotation import KymographAnnotationSet
 from fylm.service.movie import Movie
 from fylm.model.output import OutputSet
 from fylm.service.output import OutputSet as OutputSetService
-from fylm.service.summary import Summary
+from fylm.model.summary import SummarySet
+from fylm.service.summary import Summary as SummaryService
 
 
 class Activity(object):
@@ -61,5 +62,4 @@ class Activity(object):
         self._calculate_and_save_text(OutputSet, OutputSetService)
 
     def generate_summary(self):
-        summary = Summary(self._experiment)
-        summary.save()
+        self._calculate_and_save_text(SummarySet, SummaryService)

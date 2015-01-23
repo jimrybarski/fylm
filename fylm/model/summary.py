@@ -6,6 +6,7 @@ class SummarySet(BaseSet):
     def __init__(self, experiment):
         super(SummarySet, self).__init__(experiment, "summary")
 
+    @property
     def _expected(self):
         final_state = FinalState()
         final_state.base_path = self.base_path
