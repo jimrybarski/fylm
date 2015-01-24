@@ -24,7 +24,7 @@ class OutputSet(BaseSet):
                 model = self._model()
                 model.time_period = 0  # output files are for every time period
                 model.field_of_view = field_of_view
-                model.channel_number = channel_number + 1  # 1-based indexing for compatibility with Matlab
+                model.channel_number = channel_number
                 model.base_path = self.base_path
                 model.time_periods = self._time_periods
                 yield model
@@ -66,4 +66,5 @@ class Output(BaseTextFile):
         We increase the channel number by one for compatibility with the Matlab script.
 
         """
-        return "%s_%s.txt" % (str(int(self.field_of_view) + 1), self.channel_number)
+        return "%s_%s.txt" % (str(int(self.field_of_view) + 1),
+                              str(int(self.channel_number) + 1))
