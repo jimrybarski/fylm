@@ -35,4 +35,5 @@ class FinalState(BaseTextFile):
         for time_period, channel in sorted(self._data.items()):
             line = tuple(self._state_code[state] for channel, state in sorted(channel.items()))
             template = "%s " * len(line)
-            yield (template % line).strip()
+            # Note: a space at the end of the line is *required* by Matlab
+            yield template % line
