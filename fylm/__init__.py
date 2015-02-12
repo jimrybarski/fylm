@@ -1,5 +1,5 @@
 import logging
 
-log = logging.getLogger("fylm")
+log = logging.getLogger()
 log.addHandler(logging.StreamHandler())
 log.setLevel(logging.INFO)

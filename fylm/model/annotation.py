@@ -8,7 +8,7 @@ import numpy as np
 import logging
 import re
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class AnnotationLine(object):

@@ -5,7 +5,7 @@ import os
 import re
 import nd2reader
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class Experiment(object):

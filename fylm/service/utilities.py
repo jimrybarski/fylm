@@ -5,7 +5,7 @@ from scipy import ndimage
 import os.path
 import time
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 def timer(f):

@@ -8,7 +8,7 @@ from fylm.service.kymograph import KymographSet as KymographSetService
 import logging
 
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class OutputSet(BaseSetService):

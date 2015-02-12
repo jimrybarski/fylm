@@ -13,7 +13,7 @@ from skimage import io
 import subprocess
 import os
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class Movie(object):

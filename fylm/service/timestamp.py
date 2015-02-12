@@ -5,7 +5,7 @@ from fylm.service.utilities import timer
 import logging
 import nd2reader
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class TimestampSet(BaseSetService):

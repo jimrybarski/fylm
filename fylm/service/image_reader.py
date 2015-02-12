@@ -7,7 +7,7 @@ import logging
 from nd2reader import Nd2
 from fylm.service.base import BaseSetService
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class ImageReader(object):
