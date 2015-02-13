@@ -10,11 +10,13 @@ from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.model.kymograph import KymographSet
 from fylm.service.annotation import AnnotationSet
 from fylm.model.annotation import KymographAnnotationSet
-from fylm.service.movie import Movie
+from fylm.service.movie import MovieSet as MovieSetService
+from fylm.model.movie import MovieSet
 from fylm.model.output import OutputSet
 from fylm.service.output import OutputSet as OutputSetService
 from fylm.model.summary import SummarySet
 from fylm.service.summary import Summary as SummaryService
+from fylm.service.utilities import timer
 
 
 class Activity(object):
@@ -55,16 +57,12 @@ class Activity(object):
         annotation_service.save(annotation_set)
 
     def make_movie(self, time_period, field_of_view, channel_number):
-        movie = Movie(self._experiment)
-        movie.make_channel_overview(time_period, field_of_view, channel_number)
+        pass
 
     def make_all_movies(self):
-        kymograph_service = KymographSetService(self._experiment)
-        kymograph_set = KymographSet(self._experiment)
-        kymograph_service.load_existing_models(kymograph_set)
-        movie = Movie(self._experiment)
-        for model in kymograph_set.existing:
-            movie.make_channel_overview(model.time_period, model.field_of_view, model.channel_number)
+        movie_service = MovieSetService(self._experiment)
+        movie_set = MovieSet(self._experiment)
+        movie_service.save(movie_set)
 
     def generate_output(self):
         self._calculate_and_save_text(OutputSet, OutputSetService)

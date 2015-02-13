@@ -47,7 +47,6 @@ class KymographSet(BaseSetService):
         did_work = False
         log.info("Making kymographs for field of view %s:" % location_model.field_of_view)
         for time_period in self._experiment.time_periods:
-            log.info("  time_period %s" % time_period)
             image_reader = ImageReader(self._experiment)
             image_reader.field_of_view = location_model.field_of_view
             image_reader.time_period = time_period
@@ -63,6 +62,7 @@ class KymographSet(BaseSetService):
                 # skip this time_period
                 continue
 
+            log.info("  time_period %s" % time_period)
             for time_index, image_set in enumerate(image_reader):
                 log.debug("Adding lines for kymographs from time index %s" % time_index)
                 image = image_set.get_image(channel="", z_level=0)

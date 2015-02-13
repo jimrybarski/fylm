@@ -1,10 +1,64 @@
+from fylm.model.constants import Constants
+from fylm.model.base import BaseMovie, BaseSet
+from fylm.model.location import LocationSet
+from fylm.service.location import LocationSet as LocationService
+from fylm.model.image_slice import ImageSlice
 from collections import defaultdict
 import numpy as np
 from skimage import draw
 from skimage.color import gray2rgb
+import logging
+import re
+
+log = logging.getLogger(__name__)
 
 
-class Movie(object):
+class MovieSet(BaseSet):
+    def __init__(self, experiment):
+        super(MovieSet, self).__init__(experiment, "movie")
+        self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.avi""")
+        self._location_set_model = LocationSet(experiment)
+        LocationService(experiment).load_existing_models(self._location_set_model)
+        self._model = Movie
+
+    @property
+    def _expected(self):
+        assert self._model is not None
+        for location_model in self._location_set_model.existing:
+            for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+                if location_model.get_channel_location(channel_number):
+                    model = self._model()
+                    model.catch_channel_number = channel_number
+                    model.time_period = location_model.time_period
+                    model.field_of_view = location_model.field_of_view
+                    model.base_path = self.base_path
+                    image_slice = self._get_image_slice(location_model, channel_number)
+                    if image_slice:
+                        log.debug("Added image slice")
+                        model.image_slice = image_slice
+                    log.debug("Need to make a movie: %s %s %s" % (model.time_period,
+                                                                  model.field_of_view,
+                                                                  model.catch_channel_number))
+                    yield model
+
+    def _get_image_slice(self, location_model, channel_number):
+        try:
+            notch, tube = location_model.get_channel_location(channel_number)
+        except ValueError:
+            return None
+        if notch.x < tube.x:
+            x = notch.x
+            fliplr = False
+        else:
+            x = tube.x
+            fliplr = True
+        y = tube.y
+        width = int(abs(notch.x - tube.x))
+        height = int(notch.y - tube.y)
+        return ImageSlice(x, y, width, height, fliplr=fliplr)
+
+
+class Movie(BaseMovie):
     """
     has a "frame" property which dynamically builds the image
     for each frame, the service updates the pictures as they're available
@@ -20,16 +74,28 @@ class Movie(object):
     triangle = np.zeros((triangle_height, triangle_width, 3), dtype=np.uint16)
     triangle[rr, cc] = 177, 89, 0
 
-    def __init__(self, height, width):
-        self._slot_height = height
-        self._slot_width = width
-        self.__slots = defaultdict(dict)
+    def __init__(self):
+        super(Movie, self).__init__()
+        self.catch_channel_number = None
         self._channel_order = {0: ""}
         self.__frame_height = None
+        self.image_slice = None
+        self.__slots = defaultdict(dict)
         self._triangles = {}
 
     @property
-    def frame(self):
+    def filename(self):
+        return "tp%s-fov%s-channel%s.avi" % (self.time_period, self.field_of_view, self.catch_channel_number)
+
+    @property
+    def _slot_height(self):
+        return self.image_slice.height * 2
+
+    @property
+    def _slot_width(self):
+        return self.image_slice.width
+
+    def get_next_frame(self):
         """
         Combines the image data from each of the slots in a deterministic order, adds arrows if needed,
         and returns the image
@@ -38,17 +104,32 @@ class Movie(object):
 
         """
         image = np.zeros((self._frame_height, self._frame_width))
+        log.debug("Movie frame HxW: %sx%s" % (self._frame_height, self._frame_width))
         for n, slot in enumerate(self._slots):
             top, bottom = self._get_slot_bounds(n)
+            log.debug("Top, Bottom: %s, %s" % (top, bottom))
             image[top:bottom, :] = slot[:, :]
+
+        # Convert the grayscale image to RGB. It will still look gray, but we can now add color elements to it
         color_image = (gray2rgb(image) * 255).astype(np.uint8)
-        for x, triangle in self._triangles.items():
-            if x >= 5 and x <= self._slot_width - 5:
-                xx, yy, zz = np.where(triangle != (0, 0, 0))
-                for x_coord, y_coord in zip(xx, yy):
-                    color_image[0:12, x-5:x+6][x_coord, y_coord] = 177, 89, 0
-        self._triangles = {}
+
+        # TODO: We shouldn't do this every frame. WTF is it doing here?
+        # for x, triangle in self._triangles.items():
+        #     if x >= 5 and x <= self._slot_width - 5:
+        #         xx, yy, zz = np.where(triangle != (0, 0, 0))
+        #         for x_coord, y_coord in zip(xx, yy):
+        #             color_image[0:12, x-5:x+6][x_coord, y_coord] = 177, 89, 0
+        # self._triangles = {}
         return color_image
+
+    def update_image(self, channel_name, z_level, image_data):
+        if channel_name not in self.__slots.keys() or z_level not in self.__slots[channel_name].keys():
+            self._add_slot(channel_name, z_level)
+        self.__slots[channel_name][z_level] = image_data[:, :]
+
+    @property
+    def shape(self):
+        return self._frame_height, self._frame_width
 
     def add_triangle(self, x):
         trim = self._calculate_trim(x, self._frame_width)
@@ -73,11 +154,6 @@ class Movie(object):
         # those images every four minutes instead of every two, in order to minimize the amount of blue light that the cells
         # are exposed to (there's evidence that it's phototoxic).
         self.__slots[channel_name][z_level] = np.zeros((self._slot_height, self._slot_width, 3))
-
-    def update_image(self, channel_name, z_level, image_data):
-        if channel_name not in self.__slots.keys() or z_level not in self.__slots[channel_name].keys():
-            self._add_slot(channel_name, z_level)
-        self.__slots[channel_name][z_level] = image_data[:, :]
 
     def _get_slot_bounds(self, position):
         """
