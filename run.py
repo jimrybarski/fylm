@@ -37,6 +37,7 @@ standard_activities = ("rotation",
                        "registration",
                        "location",
                        "kymograph",
+                       "all_movies",
                        "annotation",
                        "output",
                        "summary")
@@ -50,6 +51,7 @@ actions = {"rotation": act.calculate_rotation_offset,
            "kymograph": act.create_kymographs,
            "annotation": act.annotate_kymographs,
            "movie": act.make_movie,
+           "all_movies": act.make_all_movies,
            "output": act.generate_output,
            "summary": act.generate_summary}
 

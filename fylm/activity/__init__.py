@@ -58,6 +58,14 @@ class Activity(object):
         movie = Movie(self._experiment)
         movie.make_channel_overview(time_period, field_of_view, channel_number)
 
+    def make_all_movies(self):
+        kymograph_service = KymographSetService(self._experiment)
+        kymograph_set = KymographSet(self._experiment)
+        kymograph_service.load_existing_models(kymograph_set)
+        movie = Movie(self._experiment)
+        for model in kymograph_set.existing:
+            movie.make_channel_overview(model.time_period, model.field_of_view, model.channel_number)
+
     def generate_output(self):
         self._calculate_and_save_text(OutputSet, OutputSetService)
 
