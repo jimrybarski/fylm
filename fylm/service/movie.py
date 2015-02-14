@@ -1,6 +1,4 @@
-from fylm.model.image_slice import ImageSlice
 from fylm.model.location import LocationSet
-from fylm.service.errors import terminal_error
 from fylm.service.image_reader import ImageReader
 from fylm.service.annotation import AnnotationSet as AnnotationSetService
 from fylm.model.annotation import KymographAnnotationSet
@@ -39,6 +37,8 @@ class MovieSet(BaseSetService):
     def action(self, movie_model_set):
         did_work = False
 
+        movies = [movie for movie in movie_model_set.remaining]
+
         for time_period in self._experiment.time_periods:
             for field_of_view in self._experiment.fields_of_view:
                 image_reader = ImageReader(self._experiment)
@@ -49,10 +49,11 @@ class MovieSet(BaseSetService):
 
                 # Iterate over the images of the channel
                 for n, image_set in enumerate(image_reader):
-                    for movie in movie_model_set.remaining:
+                    for movie in movies:
+                        movie.time_period = time_period
                         self._update_image_data(movie, image_set, channels, z_levels)
                         image_filename = "tp%s-fov%s-channel%s-%03d.png" % (time_period,
-                                                                            movie_model_set.field_of_view,
+                                                                            field_of_view,
                                                                             movie.catch_channel_number,
                                                                             n)
                         frame = movie.get_next_frame()
@@ -70,10 +71,11 @@ class MovieSet(BaseSetService):
 
                         # Add the frame number to the bottom right of the image in red text
                         ax.annotate(str(n + 1), xy=(1, 1), xytext=(frame.shape[1] - 9, frame.shape[0] - 5), color='r')
-                        fig.savefig(image_filename, bbox_inches='tight', pad_inches=0)
+                        log.debug("Creating %s" % movie.base_path + "/" + image_filename)
+                        fig.savefig(movie.base_path + "/" + image_filename, bbox_inches='tight', pad_inches=0)
                         plt.close()
 
-            for movie in movie_model_set.remaining:
+            for movie in movies:
                 # We've finished making the frames of the movie. Now we use mencoder to combine them into a single .avi file
                 command = ("/usr/bin/mencoder",
                            'mf://%s/tp%s-fov%s-channel%s-*.png' % (movie.base_path,
@@ -151,4 +153,4 @@ class MovieSet(BaseSetService):
                 image = image_set.get_image(channel, z_level)
                 if image is not None:
                     movie.image_slice.set_image(image)
-                    movie.update_image(channel, z_level, movie.image_slice.image_data)
+                    movie.update_image(channel, z_level)

@@ -29,17 +29,14 @@ class MovieSet(BaseSet):
                 if location_model.get_channel_location(channel_number):
                     model = self._model()
                     model.catch_channel_number = channel_number
-                    model.time_period = location_model.time_period
                     model.field_of_view = location_model.field_of_view
                     model.base_path = self.base_path
                     image_slice = self._get_image_slice(location_model, channel_number)
                     if image_slice:
-                        log.debug("Added image slice")
                         model.image_slice = image_slice
-                    log.debug("Need to make a movie: %s %s %s" % (model.time_period,
-                                                                  model.field_of_view,
-                                                                  model.catch_channel_number))
-                    yield model
+                        log.debug("Need to make a movie: %s %s" % (model.field_of_view,
+                                                                   model.catch_channel_number))
+                        yield model
 
     def _get_image_slice(self, location_model, channel_number):
         try:
@@ -104,10 +101,8 @@ class Movie(BaseMovie):
 
         """
         image = np.zeros((self._frame_height, self._frame_width))
-        log.debug("Movie frame HxW: %sx%s" % (self._frame_height, self._frame_width))
         for n, slot in enumerate(self._slots):
             top, bottom = self._get_slot_bounds(n)
-            log.debug("Top, Bottom: %s, %s" % (top, bottom))
             image[top:bottom, :] = slot[:, :]
 
         # Convert the grayscale image to RGB. It will still look gray, but we can now add color elements to it
@@ -122,10 +117,10 @@ class Movie(BaseMovie):
         # self._triangles = {}
         return color_image
 
-    def update_image(self, channel_name, z_level, image_data):
+    def update_image(self, channel_name, z_level):
         if channel_name not in self.__slots.keys() or z_level not in self.__slots[channel_name].keys():
             self._add_slot(channel_name, z_level)
-        self.__slots[channel_name][z_level] = image_data[:, :]
+        self.__slots[channel_name][z_level] = self.image_slice.image_data[:, :]
 
     @property
     def shape(self):
