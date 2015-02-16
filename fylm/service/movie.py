@@ -191,23 +191,6 @@ class MovieSet(BaseSetService):
         except OSError:
             log.exception("Error deleting temporary movie images.")
 
-    # def _get_image_slice(self, field_of_view, channel_number):
-    #     for model in self._location_set.existing:
-    #         if not model.field_of_view == field_of_view:
-    #             continue
-    #         notch, tube = model.get_channel_data(channel_number)
-    #         if notch.x < tube.x:
-    #             x = notch.x
-    #             fliplr = False
-    #         else:
-    #             x = tube.x
-    #             fliplr = True
-    #         y = tube.y
-    #         width = int(abs(notch.x - tube.x))
-    #         height = int(notch.y - tube.y)
-    #         return ImageSlice(x, y, width, height, fliplr=fliplr)
-    #     terminal_error("Channel location has not been provided.")
-
     @staticmethod
     def _update_image_data(movie, image_set, channels, z_levels):
         """
