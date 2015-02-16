@@ -1,6 +1,9 @@
 from abc import abstractproperty, abstractmethod
+import logging
 import numpy as np
 import re
+
+log = logging.getLogger(__name__)
 
 
 class BaseResult(object):

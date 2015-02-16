@@ -10,7 +10,9 @@ class Reader(object):
 
         """
         actions = {"text": self.read_text,
-                   "image": self.read_image}
+                   "image": self.read_image,
+                   "movie": lambda *x: None     # These are output only, we never need to load them
+                   }
         return actions[model.kind](model, expect_missing_file)
 
     @staticmethod
