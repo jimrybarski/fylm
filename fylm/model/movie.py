@@ -18,27 +18,28 @@ class MovieSet(BaseSet):
         super(MovieSet, self).__init__(experiment, "movie")
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.avi""")
         self._location_set_model = LocationSet(experiment)
+
         LocationService(experiment).load_existing_models(self._location_set_model)
         self._model = Movie
 
     @property
     def _expected(self):
         assert self._model is not None
-        for location_model in self._location_set_model.existing:
+        for time_period in self._time_periods:
             for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
-                if location_model.get_channel_location(channel_number):
-                    model = self._model()
-                    model.catch_channel_number = channel_number
-                    model.field_of_view = location_model.field_of_view
-                    model.base_path = self.base_path
+                for location_model in self._location_set_model.existing:
                     image_slice = self._get_image_slice(location_model, channel_number)
-                    if image_slice:
+                    if location_model.get_channel_location(channel_number) and image_slice:
+                        model = self._model()
+                        model.base_path = self.base_path
                         model.image_slice = image_slice
-                        log.debug("Need to make a movie: %s %s" % (model.field_of_view,
-                                                                   model.catch_channel_number))
+                        model.time_period = time_period
+                        model.field_of_view = location_model.field_of_view
+                        model.catch_channel_number = channel_number
                         yield model
 
-    def _get_image_slice(self, location_model, channel_number):
+    @staticmethod
+    def _get_image_slice(location_model, channel_number):
         try:
             notch, tube = location_model.get_channel_location(channel_number)
         except ValueError:

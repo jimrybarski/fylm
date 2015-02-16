@@ -60,13 +60,12 @@ class MovieSet(BaseSetService):
     def _make_field_of_view_movie(self, movies, time_period, field_of_view):
         # movies contains movie objects from every field of view. We separate out the ones for the current field
         # of view and act only on them. We also update the time period as that's used in the output file name
-        fov_movies = [movie for movie in movies if movie.field_of_view == field_of_view]
-        for movie in fov_movies:
-            movie.time_period = time_period
+        fov_movies = [movie for movie in movies if movie.field_of_view == field_of_view and movie.time_period == time_period]
 
         # If this field of view has any movies, we're necessarily going to be creating files that don't yet exist,
         # so we can be certain work will be done.
-        did_work = bool(fov_movies)
+        if not fov_movies:
+            return False
 
         # Make ImageReader only show us the relevant images
         image_reader = ImageReader(self._experiment)
@@ -89,7 +88,7 @@ class MovieSet(BaseSetService):
         # Now we use mencoder to combine them into a single .avi file
         for movie in fov_movies:
             self._create_movie_from_frames(movie, time_period)
-        return did_work
+        return True
 
     @timer
     def _create_movie_from_frames(self, movie, time_period):
@@ -105,7 +104,6 @@ class MovieSet(BaseSetService):
                    '-mf',
                    'w=%s:h=%s:fps=24:type=png' % movie.shape,
                    '-ovc', 'copy', '-oac', 'copy', '-o', '%s' % movie.base_path + "/" + movie.filename)
-        log.info("Making movie with: %s" % " ".join(command))
         DEVNULL = open(os.devnull, "w")
         failure = subprocess.call(" ".join(command), shell=True, stdout=DEVNULL, stderr=subprocess.STDOUT)
         if not failure:
