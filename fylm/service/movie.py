@@ -1,16 +1,16 @@
-from fylm.model.location import LocationSet
-from fylm.service.image_reader import ImageReader
-from fylm.service.annotation import AnnotationSet as AnnotationSetService
 from fylm.model.annotation import KymographAnnotationSet
+from fylm.model.location import LocationSet
 from fylm.model.kymograph import KymographSet
-from fylm.service.kymograph import KymographSet as KymographSetService
+from fylm.service.annotation import AnnotationSet as AnnotationSetService
 from fylm.service.base import BaseSetService
+from fylm.service.image_reader import ImageReader
+from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.service.utilities import timer
 import logging
-import subprocess
-import os
-import matplotlib.pyplot as plt
 from matplotlib import cm
+import matplotlib.pyplot as plt
+import os
+import subprocess
 
 log = logging.getLogger(__name__)
 
@@ -134,29 +134,6 @@ class MovieSet(BaseSetService):
         log.debug("Creating %s" % base_path + "/" + image_filename)
         fig.savefig(base_path + "/" + image_filename, bbox_inches='tight', pad_inches=0)
         plt.close()
-
-
-
-    # def _get_cell_bounds(self, time_period, field_of_view, channel_number):
-    #     """
-    #     Gets the x-position (in pixels) of the old and new cell poles for each frame. Each index holds a tuple
-    #     of ints. If not available, the index holds None.
-    #
-    #     :return:    dict
-    #
-    #     """
-    #     self._annotation.time_period = time_period
-    #     self._annotation.field_of_view = field_of_view
-    #     self._annotation.channel_number = channel_number
-    #     try:
-    #         self._annotation_service.load_existing_models(self._annotation)
-    #         channel_group = self._annotation.get_model(field_of_view, channel_number)
-    #         bounds = channel_group.get_cell_bounds(time_period)
-    #     except (ValueError, IndexError, AttributeError):
-    #         # That annotation doesn't exist yet or it has no data
-    #         return {}
-    #     else:
-    #         return bounds
 
     @staticmethod
     def _get_channels(image_reader):

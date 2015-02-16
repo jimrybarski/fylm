@@ -34,6 +34,11 @@ class Experiment(object):
         self._get_nd2_attributes(experiment)
         return experiment
 
+    @staticmethod
+    def add_time_period_to_log(experiment, time_period):
+        with open(experiment.data_dir + "/experiment.txt", "w+") as f:
+            f.write(str(time_period) + "\n")
+
     def _build_directories(self, experiment):
         """
         Creates all the directories needed for output files.
@@ -75,9 +80,21 @@ class Experiment(object):
                 log.debug("time_period: %s" % index)
                 experiment.add_time_period(index)
         if not found:
-            log.warn("No ND2s available for this experiment!")
+            log.error("No ND2s available for this experiment!")
 
-    def _get_nd2_attributes(self, experiment):
+    @staticmethod
+    def _read_time_period_log(experiment):
+        try:
+            with open(experiment.data_dir + "/experiment.txt") as f:
+                data = f.read(-1)
+        except OSError:
+            log.debug("No experiment log file found. Perfectly normal.")
+        else:
+            for filename in data.split("\n"):
+                experiment.add_time_period(filename.strip())
+
+    @staticmethod
+    def _get_nd2_attributes(experiment):
         # grab the first nd2 file available
         try:
             nd2_filename = sorted([n for n in experiment.nd2s])[0]
