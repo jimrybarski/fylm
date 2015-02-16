@@ -5,7 +5,7 @@ import os
 import re
 import nd2reader
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class Experiment(object):
@@ -52,7 +52,8 @@ class Experiment(object):
                    "rotation",
                    "timestamp",
                    "movie",
-                   "output"]
+                   "output",
+                   "summary"]
         for subdir in subdirs:
             try:
                 self._os.makedirs(experiment.data_dir + "/" + subdir)

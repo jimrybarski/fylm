@@ -5,7 +5,7 @@ import logging
 from matplotlib import pyplot as plt
 import time
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class ExactChannelFinder(HumanInteractor):

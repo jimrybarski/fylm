@@ -8,7 +8,7 @@ import numpy as np
 import logging
 import re
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class AnnotationLine(object):
@@ -226,13 +226,17 @@ class ChannelAnnotationGroup(BaseTextFile):
     def filename(self):
         return "fov%s-channel%s.txt" % (self.field_of_view, self.channel_number)
 
+    @property
+    def last_state(self):
+        return self._last_state
+
 
 class KymographAnnotationSet(BaseSet):
     """
     Models all kymograph images for a given experiment.
 
     """
-    def __init__(self, experiment):
+    def __init__(self, experiment, ignore_kymographs=False):
         super(KymographAnnotationSet, self).__init__(experiment, "annotation")
         self._model = ChannelAnnotationGroup
         self.kymograph_set = None
@@ -241,6 +245,7 @@ class KymographAnnotationSet(BaseSet):
         self._current_model_pointer = 0
         self._max_time_period = experiment.time_period_count
         self._regex = re.compile(r"""fov\d+-channel\d+.txt""")
+        self._ignore_kymographs = ignore_kymographs
 
     def get_model(self, field_of_view, channel_number):
         for model in self._existing:
@@ -296,7 +301,7 @@ class KymographAnnotationSet(BaseSet):
         for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
             for field_of_view in self._fields_of_view:
                 kymographs = self.kymograph_set.get_kymographs(field_of_view, channel_number)
-                if kymographs:
+                if kymographs or self._ignore_kymographs:
                     model = self._model()
                     model.kymographs = kymographs
                     model.channel_number = channel_number

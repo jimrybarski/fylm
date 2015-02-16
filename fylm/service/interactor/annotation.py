@@ -7,7 +7,7 @@ from skimage.color import gray2rgb
 from fylm.model.annotation import AnnotationLine
 from fylm.service.reader import Reader
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class KymographAnnotator(HumanInteractor):

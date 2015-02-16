@@ -1,7 +1,7 @@
 import sys
 import logging
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 def terminal_error(message):

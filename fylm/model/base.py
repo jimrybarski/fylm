@@ -88,6 +88,14 @@ class BaseImage(BaseResult):
         raise NotImplemented
 
 
+class BaseMovie(BaseResult):
+    kind = "movie"
+
+    def __init__(self):
+        super(BaseMovie, self).__init__()
+        self._movie_data = None
+
+
 class BaseSet(object):
     def __init__(self, experiment, top_level_dir):
         self.base_path = experiment.data_dir + "/" + top_level_dir

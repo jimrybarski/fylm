@@ -9,7 +9,7 @@ import math
 import logging
 
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class RotationSet(BaseSetService):

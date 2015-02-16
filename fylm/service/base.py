@@ -4,7 +4,7 @@ from fylm.service.utilities import FileInteractor
 import logging
 import os
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class BaseService(object):

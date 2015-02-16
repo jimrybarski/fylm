@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import re
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class KymographSet(BaseSet):

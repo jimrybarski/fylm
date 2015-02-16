@@ -2,7 +2,7 @@ from fylm.service.interactor.base import HumanInteractor
 import logging
 from matplotlib import pyplot as plt
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class ApproximateChannelFinder(HumanInteractor):

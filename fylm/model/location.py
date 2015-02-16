@@ -5,7 +5,7 @@ from fylm.service.errors import terminal_error
 import logging
 import re
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class LocationSet(BaseSet):

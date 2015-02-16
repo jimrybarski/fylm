@@ -4,7 +4,7 @@ from fylm.service.interactor.exact import ExactChannelFinder
 from fylm.service.image_reader import ImageReader
 import logging
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class LocationSet(BaseSetService):

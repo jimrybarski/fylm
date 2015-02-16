@@ -5,7 +5,7 @@ import logging
 from skimage.feature.phase_correlate import phase_correlate
 
 
-log = logging.getLogger("fylm")
+log = logging.getLogger(__name__)
 
 
 class RegistrationSet(BaseSetService):
