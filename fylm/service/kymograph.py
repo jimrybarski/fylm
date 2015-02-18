@@ -4,8 +4,10 @@ from fylm.service.experiment import Experiment as ExperimentService
 from fylm.service.image_reader import ImageReader
 from fylm.service.location import LocationSet as LocationSetService
 from fylm.service.utilities import timer
-import skimage.io
 import logging
+import numpy as np
+from skimage import exposure
+import skimage.io
 
 
 log = logging.getLogger(__name__)
@@ -79,7 +81,12 @@ class KymographSet(BaseSetService):
             for kymograph_model in available_kymographs:
                 if kymograph_model.time_period == time_period:
                     log.debug("Saving kymograph %s" % kymograph_model.channel_number)
-                    skimage.io.imsave(kymograph_model.path, kymograph_model.data)
+                    # we stretch the image contrast to give it a better spread over the available space
+                    # this prevents some information loss and makes the image more distinct
+                    lower_percentile, upper_percentile = np.percentile(kymograph_model.data, (5, 95))
+                    rescaled_image = exposure.rescale_intensity(kymograph_model.data, in_range=(lower_percentile,
+                                                                                                upper_percentile))
+                    skimage.io.imsave(kymograph_model.path, rescaled_image)
                     kymograph_model.free_memory()
             if did_work:
                 # log the completion of this time period's extraction
