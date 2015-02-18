@@ -79,28 +79,36 @@ class Experiment(object):
                 index = int(match.group("index"))
                 log.debug("time_period: %s" % index)
                 experiment.add_time_period(index)
-        if not found:
+        if not self._read_time_period_log(experiment) and not found:
             log.error("No ND2s available for this experiment!")
 
     @staticmethod
     def _read_time_period_log(experiment):
+        found = False
         try:
             with open(experiment.data_dir + "/experiment.txt") as f:
                 data = f.read(-1)
         except OSError:
             log.debug("No experiment log file found. Perfectly normal.")
         else:
-            for filename in data.split("\n"):
-                experiment.add_time_period(filename.strip())
+            for time_period in data.split("\n"):
+                if time_period and int(time_period) > 0:
+                    experiment.add_time_period(int(time_period.strip()))
+                    found = True
+        return found
 
     @staticmethod
     def _get_nd2_attributes(experiment):
         # grab the first nd2 file available
-        try:
-            nd2_filename = sorted([n for n in experiment.nd2s])[0]
-            nd2 = nd2reader.Nd2(nd2_filename)
-            experiment.field_of_view_count = nd2.field_of_view_count
-        except Exception as e:
-            terminal_error("Could not find field of view count: %s" % e)
+        for nd2_filename in experiment.nd2s:
+            try:
+                nd2 = nd2reader.Nd2(nd2_filename)
+            except IOError:
+                pass
+            else:
+                experiment.field_of_view_count = nd2.field_of_view_count
+                break
         else:
-            return True
+            terminal_error("Could not get the field of view count. Maybe all the ND2s are missing?")
+
+        return experiment.field_of_view_count is not None
