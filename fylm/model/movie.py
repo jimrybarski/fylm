@@ -1,13 +1,13 @@
-from fylm.model.constants import Constants
+from collections import defaultdict
 from fylm.model.base import BaseMovie, BaseSet
+from fylm.model.constants import Constants
+from fylm.model.image_slice import ImageSlice
 from fylm.model.location import LocationSet
 from fylm.service.location import LocationSet as LocationService
-from fylm.model.image_slice import ImageSlice
-from collections import defaultdict
+import logging
 import numpy as np
 from skimage import draw
 from skimage.color import gray2rgb
-import logging
 import re
 
 log = logging.getLogger(__name__)
@@ -108,14 +108,6 @@ class Movie(BaseMovie):
 
         # Convert the grayscale image to RGB. It will still look gray, but we can now add color elements to it
         color_image = (gray2rgb(image) * 255).astype(np.uint8)
-
-        # TODO: We shouldn't do this every frame. WTF is it doing here?
-        # for x, triangle in self._triangles.items():
-        #     if x >= 5 and x <= self._slot_width - 5:
-        #         xx, yy, zz = np.where(triangle != (0, 0, 0))
-        #         for x_coord, y_coord in zip(xx, yy):
-        #             color_image[0:12, x-5:x+6][x_coord, y_coord] = 177, 89, 0
-        # self._triangles = {}
         return color_image
 
     def update_image(self, channel_name, z_level):

@@ -1,8 +1,9 @@
-from fylm.service.base import BaseSetService
 from fylm.model.location import LocationSet
+from fylm.service.base import BaseSetService
+from fylm.service.experiment import Experiment as ExperimentService
+from fylm.service.image_reader import ImageReader
 from fylm.service.location import LocationSet as LocationSetService
 from fylm.service.utilities import timer
-from fylm.service.image_reader import ImageReader
 import skimage.io
 import logging
 
@@ -76,6 +77,9 @@ class KymographSet(BaseSetService):
                     log.debug("Saving kymograph %s" % kymograph_model.channel_number)
                     skimage.io.imsave(kymograph_model.path, kymograph_model.data)
                     kymograph_model.free_memory()
+            if did_work:
+                # log the completion of this time period's extraction
+                ExperimentService().add_time_period_to_log(self._experiment, time_period)
         return did_work
 
     @staticmethod
