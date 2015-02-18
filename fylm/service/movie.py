@@ -38,18 +38,23 @@ class MovieSet(BaseSetService):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
 
-    def save(self, movie_model_set):
+    def save(self, movie_model_set, time_periods):
         self.load_existing_models(movie_model_set)
-        # Find the location model that corresponds to the field of view we're interested in
-        did_work = self.action(movie_model_set)
+        if not time_periods:
+            # make all movies if no time periods were specified
+            log.warn("Making movies for every time period! This could take a long time!")
+            time_periods = self._experiment.time_periods
+        else:
+            log.info("Making movies for time periods: %s" % ", ".join(tp for tp in time_periods))
+        did_work = self.action(movie_model_set, time_periods)
         if not did_work:
             log.info("All %s have been created." % self._name)
 
     @timer
-    def action(self, movie_model_set):
+    def action(self, movie_model_set, time_periods):
         did_work = False
         movies = [movie for movie in movie_model_set.remaining]
-        for time_period in self._experiment.time_periods:
+        for time_period in time_periods:
             for field_of_view in self._experiment.fields_of_view:
                 log.info("Making movies for fov: %s" % field_of_view)
                 if self._make_field_of_view_movie(movies, time_period, field_of_view):
@@ -134,8 +139,6 @@ class MovieSet(BaseSetService):
         log.debug("Creating %s" % base_path + "/" + image_filename)
         fig.savefig(base_path + "/" + image_filename, bbox_inches='tight', pad_inches=0)
         plt.close()
-
-
 
     # def _get_cell_bounds(self, time_period, field_of_view, channel_number):
     #     """
