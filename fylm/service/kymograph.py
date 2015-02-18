@@ -78,6 +78,7 @@ class KymographSet(BaseSetService):
                     skimage.io.imsave(kymograph_model.path, kymograph_model.data)
                     kymograph_model.free_memory()
             if did_work:
+                # log the completion of this time period's extraction
                 ExperimentService().add_time_period_to_log(self._experiment, time_period)
         return did_work
 
