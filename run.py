@@ -30,21 +30,22 @@ try:
     parser.add_argument('-t', '--timepoint', type=int, help='Specifies a timepoint (needed only for some steps)')
     parser.add_argument('-f', '--fov', type=int, help='Specifies a field of view (needed only for some steps)')
     parser.add_argument('-c', '--channel', type=int, help='Specifies a channel (needed only for some steps)')
+    parser.add_argument('--movies', nargs="*", default=False, help='Make movies for space-separated time periods')
     parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
     args = parser.parse_args(namespace=Args())
 
     experiment = ExperimentService().get_experiment(args.date, args.dir, version)
 
     # These are the actions that need to be run to completion for each experiment.
-    standard_activities = ("rotation",
-                           "timestamp",
-                           "registration",
-                           "location",
-                           "kymograph",
-                           "all_movies",
-                           "annotation",
-                           "output",
-                           "summary")
+    first_activities = ("rotation",
+                        "timestamp",
+                        "registration",
+                        "location",
+                        "kymograph")
+
+    manual_activities = ("annotation",
+                         "output",
+                         "summary")
 
     # Define what each action is and the arguments it takes (note: not all methods take arguments)
     act = Activity(experiment)
@@ -53,22 +54,31 @@ try:
                "registration": act.calculate_registration,
                "location": act.input_channel_locations,
                "kymograph": act.create_kymographs,
+               "movies": act.make_movies,
                "annotation": act.annotate_kymographs,
-               "movie": act.make_movie,
-               "all_movies": act.make_all_movies,
                "output": act.generate_output,
                "summary": act.generate_summary}
 
-    action_args = {"movie": (args.timepoint, args.fov, args.channel)}
+    action_args = {"movies": (args.movies,)}
 
     # Now run whatever methods are needed
     if not args.action:
         # The user didn't specify a specific action, so we'll do the standard set of actions
-        for activity in standard_activities:
+        for activity in first_activities:
+            if activity not in args.skip:
+                actions[activity]()
+
+        # movies get special treatment since they're almost always needed but take a very long time to produce
+        if args.movies is not False:
+            # args.movies will be either None (make all movies) or a list (make specified movies)
+            actions["movies"](args.movies)
+
+        for activity in manual_activities:
             if activity not in args.skip:
                 actions[activity]()
     else:
-        # A specific action was selected
+        # A specific action was selected. Usually this is for things not related to typical processing, like making
+        # images for machine learning or something.
         method = actions[args.action]
         # Check if the method needs arguments to be passed to it, and look them up if so
         arguments = action_args.get(args.action)
@@ -77,5 +87,5 @@ try:
         else:
             method()
 
-except Exception as e:
+except Exception:
     log.exception("Unhandled exception!")
