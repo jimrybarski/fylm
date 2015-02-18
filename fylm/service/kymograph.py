@@ -52,7 +52,12 @@ class KymographSet(BaseSetService):
             image_reader.field_of_view = location_model.field_of_view
             image_reader.time_period = time_period
             # Now that we know the width and height of the kymographs, we can allocate memory for the images
-            did_work = self.allocate_kymographs(available_kymographs, image_reader)
+            try:
+                did_work = self.allocate_kymographs(available_kymographs, image_reader)
+            except IOError:
+                # kymographs for this time period have already been created and this image has been put in storage
+                log.warn("Not making kymographs for time period %s as the ND2 is not available anymore." % time_period)
+                continue
 
             # only iterate over this time_period's images if there is at least one channel it
             for kymograph_model in available_kymographs:
@@ -63,7 +68,6 @@ class KymographSet(BaseSetService):
                 # skip this time_period
                 continue
 
-            log.info("  time_period %s" % time_period)
             for time_index, image_set in enumerate(image_reader):
                 log.debug("Adding lines for kymographs from time index %s" % time_index)
                 image = image_set.get_image(channel="", z_level=0)
