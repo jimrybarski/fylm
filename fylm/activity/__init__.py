@@ -56,13 +56,15 @@ class Activity(object):
         annotation_set = KymographAnnotationSet(self._experiment)
         annotation_service.save(annotation_set)
 
-    def make_movie(self, time_period, field_of_view, channel_number):
-        pass
+    def make_movies(self, time_periods):
+        """
+        :param time_periods:    the time period(s) to make movies for
+        :type time_periods:     list of str
 
-    def make_all_movies(self):
+        """
         movie_service = MovieSetService(self._experiment)
         movie_set = MovieSet(self._experiment)
-        movie_service.save(movie_set)
+        movie_service.save(movie_set, time_periods)
 
     def generate_output(self):
         self._calculate_and_save_text(OutputSet, OutputSetService)
