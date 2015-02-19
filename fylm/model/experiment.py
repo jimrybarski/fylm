@@ -15,7 +15,7 @@ class StartDate(object):
         try:
             regex = re.compile(r"""^(?P<year>\d\d)(?P<month>\d\d)(?P<day>\d\d)$""")
             match = regex.match(self.clean_date)
-            year_ok = 14 <= int(match.group("year")) <= 25
+            year_ok = 14 <= int(match.group("year")) <= 38  # we'd better cure aging by 2038
             month_ok = 1 <= int(match.group("month")) <= 12
             day_ok = 1 <= int(match.group("day")) <= 31
         except Exception as e:

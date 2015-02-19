@@ -1,10 +1,13 @@
-from fylm.service.base import BaseSetService
 from fylm.model.location import LocationSet
+from fylm.service.base import BaseSetService
+from fylm.service.experiment import Experiment as ExperimentService
+from fylm.service.image_reader import ImageReader
 from fylm.service.location import LocationSet as LocationSetService
 from fylm.service.utilities import timer
-from fylm.service.image_reader import ImageReader
-import skimage.io
 import logging
+import numpy as np
+from skimage import exposure
+import skimage.io
 
 
 log = logging.getLogger(__name__)
@@ -51,7 +54,12 @@ class KymographSet(BaseSetService):
             image_reader.field_of_view = location_model.field_of_view
             image_reader.time_period = time_period
             # Now that we know the width and height of the kymographs, we can allocate memory for the images
-            did_work = self.allocate_kymographs(available_kymographs, image_reader)
+            try:
+                did_work = self.allocate_kymographs(available_kymographs, image_reader)
+            except IOError:
+                # kymographs for this time period have already been created and this image has been put in storage
+                log.warn("Not making kymographs for time period %s as the ND2 is not available anymore." % time_period)
+                continue
 
             # only iterate over this time_period's images if there is at least one channel it
             for kymograph_model in available_kymographs:
@@ -62,7 +70,6 @@ class KymographSet(BaseSetService):
                 # skip this time_period
                 continue
 
-            log.info("  time_period %s" % time_period)
             for time_index, image_set in enumerate(image_reader):
                 log.debug("Adding lines for kymographs from time index %s" % time_index)
                 image = image_set.get_image(channel="", z_level=0)
@@ -74,8 +81,16 @@ class KymographSet(BaseSetService):
             for kymograph_model in available_kymographs:
                 if kymograph_model.time_period == time_period:
                     log.debug("Saving kymograph %s" % kymograph_model.channel_number)
-                    skimage.io.imsave(kymograph_model.path, kymograph_model.data)
+                    # we stretch the image contrast to give it a better spread over the available space
+                    # this prevents some information loss and makes the image more distinct
+                    lower_percentile, upper_percentile = np.percentile(kymograph_model.data, (5, 95))
+                    rescaled_image = exposure.rescale_intensity(kymograph_model.data, in_range=(lower_percentile,
+                                                                                                upper_percentile))
+                    skimage.io.imsave(kymograph_model.path, rescaled_image)
                     kymograph_model.free_memory()
+            if did_work:
+                # log the completion of this time period's extraction
+                ExperimentService().add_time_period_to_log(self._experiment, time_period)
         return did_work
 
     @staticmethod
