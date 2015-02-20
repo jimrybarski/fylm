@@ -39,6 +39,7 @@ class Experiment(object):
         """
         self._start_date = None
         self._base_dir = None
+        self.has_fluorescent_channels = False
         self._time_periods = set()
         self.field_of_view_count = None
         self._version = None

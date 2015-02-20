@@ -32,6 +32,7 @@ class Experiment(object):
         self._find_time_periods(experiment)
         self._build_directories(experiment)
         self._get_nd2_attributes(experiment)
+
         return experiment
 
     @staticmethod
@@ -100,7 +101,12 @@ class Experiment(object):
 
     @staticmethod
     def _get_nd2_attributes(experiment):
-        # grab the first nd2 file available
+        """
+        Determine how many fields of view there are, and whether the ND2s have fluorescent channels.
+
+        :type experiment:   model.experiment.Experiment()
+
+        """
         for nd2_filename in experiment.nd2s:
             try:
                 nd2 = nd2reader.Nd2(nd2_filename)
@@ -108,8 +114,13 @@ class Experiment(object):
                 pass
             else:
                 experiment.field_of_view_count = nd2.field_of_view_count
+                for channel in nd2.channels:
+                    if channel.name != "":
+                        log.info("Experiment has fluorescent channels.")
+                        experiment.has_fluorescent_channels = True
+                        break
+                else:
+                    log.info("Experiment does not have fluorescent channels.")
                 break
         else:
             terminal_error("Could not get the field of view count. Maybe all the ND2s are missing?")
-
-        return experiment.field_of_view_count is not None
