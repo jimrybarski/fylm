@@ -86,7 +86,8 @@ class Experiment(object):
     def _read_time_period_log(experiment):
         found = False
         try:
-            with open(experiment.data_dir + "/experiment.txt") as f:
+            # opening in a+ mode will create the file if it doesn't exist, and we'll just get back no data
+            with open(experiment.data_dir + "/experiment.txt", "a+") as f:
                 data = f.read(-1)
         except OSError:
             log.debug("No experiment log file found. Perfectly normal.")
