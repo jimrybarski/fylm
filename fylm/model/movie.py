@@ -6,19 +6,22 @@ from fylm.model.location import LocationSet
 from fylm.service.location import LocationSet as LocationService
 import logging
 import numpy as np
-from skimage import draw
-from skimage.color import gray2rgb
 import re
+from skimage.color import gray2rgb
+
 
 log = logging.getLogger(__name__)
 
 
 class MovieSet(BaseSet):
+    """
+    Models the collection of movies of catch channels.
+
+    """
     def __init__(self, experiment):
         super(MovieSet, self).__init__(experiment, "movie")
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.avi""")
         self._location_set_model = LocationSet(experiment)
-
         LocationService(experiment).load_existing_models(self._location_set_model)
         self._model = Movie
 
@@ -40,6 +43,13 @@ class MovieSet(BaseSet):
 
     @staticmethod
     def _get_image_slice(location_model, channel_number):
+        """
+        Extracts the image data for a particular catch channel.
+
+        :type location_model:   fylm.model.location.Location()
+        :type channel_number:   int
+
+        """
         try:
             notch, tube = location_model.get_channel_location(channel_number)
         except ValueError:
@@ -58,20 +68,11 @@ class MovieSet(BaseSet):
 
 class Movie(BaseMovie):
     """
-    has a "frame" property which dynamically builds the image
-    for each frame, the service updates the pictures as they're available
-    so if a fluorescence image isn't there, we use the already-existing image by default and thus can use any frequency of FL images
+    Models a movie of a catch channel over a single time period. Has a "frame" property which dynamically builds the image.
+    For each frame, the service updates the pictures as they're available. So if a fluorescence image isn't there,
+    we use the already-existing image by default and thus can use any frequency of FL images.
 
     """
-    # We create a single triangle once to save time
-    triangle_width = 11  # must be odd
-    triangle_height = 12
-    triangle_x_coords = np.array([0, triangle_width, (triangle_width - 1) / 2])
-    triangle_y_coords = np.array([0, 0, triangle_height])
-    rr, cc = draw.polygon(triangle_y_coords, triangle_x_coords)
-    triangle = np.zeros((triangle_height, triangle_width, 3), dtype=np.uint16)
-    triangle[rr, cc] = 177, 89, 0
-
     def __init__(self):
         super(Movie, self).__init__()
         self.catch_channel_number = None
@@ -87,21 +88,34 @@ class Movie(BaseMovie):
 
     @property
     def _slot_height(self):
+        """
+        The height of each distinct area in the movie.
+
+        :return:    int
+
+        """
         return self.image_slice.height * 2
 
     @property
     def _slot_width(self):
+        """
+        The width of each distinct area in the movie.
+
+        :return:    int
+
+        """
         return self.image_slice.width
 
     def get_next_frame(self):
         """
-        Combines the image data from each of the slots in a deterministic order, adds arrows if needed,
-        and returns the image
+        Combines the image data from each of the slots in a deterministic order and returns the image
 
         :return:    np.ndarray()
 
         """
+        # Create a black square to use as a blank canvas to add image slices to
         image = np.zeros((self._frame_height, self._frame_width))
+        # Go through each slot (one per channel/z-level combination) and assign image data to it
         for n, slot in enumerate(self._slots):
             top, bottom = self._get_slot_bounds(n)
             image[top:bottom, :] = slot[:, :]
@@ -111,17 +125,27 @@ class Movie(BaseMovie):
         return color_image
 
     def update_image(self, channel_name, z_level):
+        """
+        Gets image data for the given filter channel and z-level in the area of the catch channel. Then its updates
+        the slot of the current frame to use that image data.
+
+        :type channel_name: str
+        :type z_level:  int
+
+        """
         if channel_name not in self.__slots.keys() or z_level not in self.__slots[channel_name].keys():
             self._add_slot(channel_name, z_level)
         self.__slots[channel_name][z_level] = self.image_slice.image_data[:, :]
 
     @property
     def shape(self):
-        return self._frame_height, self._frame_width
+        """
+        numpy-style tuple that describes the size of an image.
 
-    def add_triangle(self, x):
-        trim = self._calculate_trim(x, self._frame_width)
-        self._triangles[x] = self._get_triangle("down", trim)
+        :return:    (int, int)
+
+        """
+        return self._frame_height, self._frame_width
 
     def _add_slot(self, channel_name, z_level):
         """
@@ -157,6 +181,12 @@ class Movie(BaseMovie):
 
     @property
     def _frame_height(self):
+        """
+        The height of the entire frame.
+
+        :return:    int
+
+        """
         slot_count = 0
         if self.__frame_height is None:
             for channel in self.__slots.values():
@@ -166,6 +196,12 @@ class Movie(BaseMovie):
 
     @property
     def _frame_width(self):
+        """
+        The width of the entire frame.
+
+        :return:    int
+
+        """
         return self._slot_width
 
     @property
@@ -173,40 +209,9 @@ class Movie(BaseMovie):
         """
         Yields slots in a deterministic order.
 
-        :return:    np.ndarray()
+        :returns:    np.ndarray()
 
         """
         for index, channel in sorted(self._channel_order.items()):
             for slot_index, slot in sorted(self.__slots[channel].items()):
                 yield slot
-
-    def _calculate_trim(self, x, width):
-        if x < 5:
-            return 5 - x
-        if x > (width - 5):
-            return x - width
-        return 0
-
-    def _get_triangle(self, pointing, trim=0):
-        assert pointing in ("up", "down")
-        if pointing == "down":
-            triangle = Movie.triangle
-        if pointing == "up":
-            triangle = np.flipud(Movie.triangle)
-        x_start, x_stop = self._get_triangle_boundaries(trim)
-        return np.copy(triangle[:, x_start:x_stop, :])
-
-    @staticmethod
-    def _get_triangle_boundaries(trim):
-        """
-        Finds the boundaries needed if the triangle goes partially out of the frame. The point will always be within the limits
-        of the frame as its location is determined by the kymograph annotation, which guarantees bounds won't be violated.
-
-        :param trim:    the number of pixels to trim from the edge. Positive numbers trim the left, negative trim the right
-        :type trim:     int
-        :return:        (int, int)
-
-        """
-        x_start = 0 if trim < 0 else trim
-        x_stop = Movie.triangle_width if trim >= 0 else Movie.triangle_width + trim
-        return x_start, x_stop

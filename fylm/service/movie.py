@@ -19,11 +19,15 @@ class MovieSet(BaseSetService):
     """
     Creates a movie for each catch channel, with every zoom level and fluorescence channel in each frame.
     This works by iterating over the ND2, extracting the image of each channel for all dimensions, and saving
-    a PNG file. When every frame has been extracted, we used mencoder to combine the still images into a movie
+    a PNG file. When every frame has been extracted, we use mencoder to combine the still images into a movie
     and then delete the PNGs.
 
     The videos end up losing some information so this is mostly just for debugging and for help with annotating
-    kymographs when weird things show up.
+    kymographs when weird things show up, as well as for figures, potentially.
+
+    Previously we had some functionality that would add orange arrows to point out the cell pole positions if the
+    annotations had been done. That was removed temporarily when this module was refactored but we intend to add it
+    back in soon.
 
     """
     def __init__(self, experiment):
@@ -39,6 +43,13 @@ class MovieSet(BaseSetService):
         self._annotation.kymograph_set = kymograph_set
 
     def save(self, movie_model_set, time_periods):
+        """
+        Runs the creation of AVIs of catch channels.
+
+        :param movie_model_set: fylm.model.movie.MovieSet()
+        :param time_periods: None or list of int
+
+        """
         self.load_existing_models(movie_model_set)
         if not time_periods:
             # make all movies if no time periods were specified
@@ -46,12 +57,21 @@ class MovieSet(BaseSetService):
             time_periods = self._experiment.time_periods
         else:
             log.info("Making movies for time periods: %s" % ", ".join(tp for tp in time_periods))
-        did_work = self.action(movie_model_set, time_periods)
+        did_work = self._action(movie_model_set, time_periods)
         if not did_work:
             log.info("All %s have been created." % self._name)
 
     @timer
-    def action(self, movie_model_set, time_periods):
+    def _action(self, movie_model_set, time_periods):
+        """
+        Acquires all the movie objects that need to be created, sets up some variables, and gets the movies made.
+
+        :param movie_model_set: fylm.model.movie.MovieSet()
+        :param time_periods: list of int
+
+        :return:    bool
+
+        """
         did_work = False
         movies = [movie for movie in movie_model_set.remaining]
         for time_period in time_periods:
@@ -63,6 +83,16 @@ class MovieSet(BaseSetService):
 
     @timer
     def _make_field_of_view_movie(self, movies, time_period, field_of_view):
+        """
+        Actually extracts the images from the ND2s, then calls the movie creation method when finished.
+
+        :type movies:  list of fylm.model.movie.Movie()
+        :type time_period: int
+        :type field_of_view:    int
+
+        :returns:   bool
+
+        """
         # movies contains movie objects from every field of view. We separate out the ones for the current field
         # of view and act only on them. We also update the time period as that's used in the output file name
         fov_movies = [movie for movie in movies if movie.field_of_view == field_of_view and movie.time_period == time_period]
@@ -127,7 +157,8 @@ class MovieSet(BaseSetService):
         fig, ax = plt.subplots()
         ax.imshow(frame, cmap=cm.gray)
 
-        # Remove whitespace and ticks from the image
+        # Remove whitespace and ticks from the image, since we're making a movie, not a plot.
+        # Matplotlib is expecting us to make a plot though, so removing all evidence of this is tricky.
         plt.gca().set_axis_off()
         plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
         plt.margins(0, 0)
@@ -137,34 +168,17 @@ class MovieSet(BaseSetService):
         # Add the frame number to the bottom right of the image in red text
         ax.annotate(str(frame_number + 1), xy=(1, 1), xytext=(frame.shape[1] - 9, frame.shape[0] - 5), color='r')
         log.debug("Creating %s" % base_path + "/" + image_filename)
+        # Write the frame to disk
         fig.savefig(base_path + "/" + image_filename, bbox_inches='tight', pad_inches=0)
+        # Closing the plot is required or memory goes nuts
         plt.close()
-
-    # def _get_cell_bounds(self, time_period, field_of_view, channel_number):
-    #     """
-    #     Gets the x-position (in pixels) of the old and new cell poles for each frame. Each index holds a tuple
-    #     of ints. If not available, the index holds None.
-    #
-    #     :return:    dict
-    #
-    #     """
-    #     self._annotation.time_period = time_period
-    #     self._annotation.field_of_view = field_of_view
-    #     self._annotation.channel_number = channel_number
-    #     try:
-    #         self._annotation_service.load_existing_models(self._annotation)
-    #         channel_group = self._annotation.get_model(field_of_view, channel_number)
-    #         bounds = channel_group.get_cell_bounds(time_period)
-    #     except (ValueError, IndexError, AttributeError):
-    #         # That annotation doesn't exist yet or it has no data
-    #         return {}
-    #     else:
-    #         return bounds
 
     @staticmethod
     def _get_channels(image_reader):
         """
         Creates an alphabetized list of filter channel names, starting with bright field (which in ND2s is called "")
+        Alphabetization is less important than just have a deterministic location for each channel, regardless of
+        which channels and zoom levels we have.
 
         :return:    list of str
 
@@ -180,8 +194,8 @@ class MovieSet(BaseSetService):
         """
         Cleans up the temporary still image files that were used to make a movie.
 
-        :param movie:
-        :param time_period:
+        :type movie:    fylm.model.movie.Movie()
+        :param time_period: int
 
         """
         try:
@@ -202,10 +216,10 @@ class MovieSet(BaseSetService):
         the image data for that channel, and instead use the same data from before. This will result in a movie that
         looks stuttered.
 
-        :param movie:
-        :param image_set:
-        :param channels:
-        :param z_levels:
+        :type movie:    fylm.model.movie.Movie()
+        :type image_set:    nd2reader.model.ImageSet()
+        :type channels: str
+        :type z_levels: int
 
         """
         for channel in channels:
