@@ -18,7 +18,8 @@ class FinalState(BaseTextFile):
     def __init__(self):
         super(FinalState, self).__init__()
         self._data = defaultdict(dict)
-        self._state_code = {"Ejected": "-1",
+        self._state_code = {"Active": "0",
+                            "Ejected": "-1",
                             "Empty": "0",
                             "Dies": "1",
                             "Survives": "2"}
