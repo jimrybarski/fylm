@@ -2,6 +2,7 @@ from fylm.model.base import BaseTextFile, BaseSet
 from fylm.model.coordinates import Coordinates
 from fylm.model.constants import Constants
 from fylm.service.errors import terminal_error
+from fylm.model.image_slice import ImageSlice
 import logging
 import re
 
@@ -63,6 +64,28 @@ class Location(BaseTextFile):
         for channel_number in range(Constants.NUM_CATCH_CHANNELS):
             if channel_number not in self._channels.keys():
                 self.skip_channel(channel_number)
+
+    def get_image_slice(self, channel_number):
+        """
+        Extracts the image data for a particular catch channel.
+
+        :type channel_number:   int
+
+        """
+        try:
+            notch, tube = self.get_channel_location(channel_number)
+        except ValueError:
+            return None
+        if notch.x < tube.x:
+            x = notch.x
+            fliplr = False
+        else:
+            x = tube.x
+            fliplr = True
+        y = tube.y
+        width = int(abs(notch.x - tube.x))
+        height = int(notch.y - tube.y)
+        return ImageSlice(x, y, width, height, fliplr=fliplr)
 
     @property
     def filename(self):
