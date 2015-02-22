@@ -32,7 +32,7 @@ class FluorescenceSet(BaseSetService):
         nd2_filename = self._experiment.get_nd2_from_time_period(fl_model.time_period)
         nd2 = nd2reader.Nd2(nd2_filename)
         channels = [channel.name for channel in nd2.channels if channel.name != ""]
-        fl_model.image_slice = self._location_set.
+        # fl_model.image_slice = self._location_set.
         # gets the first out-of-focus image from the first time_period in the stack
         for image_set in nd2.image_sets(fl_model.field_of_view, z_levels=[1]):
             for channel in channels:
