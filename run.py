@@ -93,16 +93,17 @@ try:
             method()
 
 except Exception:
-    log.exception("""
+    log.exception("Unhandled exception!")
+    log.critical("""
 
 
 
     ===================  Unhandled exception!  =======================
 
     Jim did not account for something and fylm_critic crashed!
-    Copy and paste the error below and email it to him.
-    Maybe in the future it will email him automatically.
+    Copy and paste the error above and email it to him.
 
     ==================================================================
+
 
     """)
