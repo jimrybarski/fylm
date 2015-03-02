@@ -35,9 +35,8 @@ class Experiment(object):
 
         return experiment
 
-    @staticmethod
-    def add_time_period_to_log(experiment, time_period):
-        if time_period in experiment.time_periods:
+    def add_time_period_to_log(self, experiment, time_period):
+        if time_period in self._read_time_period_log:
             return True
         with open(experiment.data_dir + "/experiment.txt", "a+") as f:
             f.write(str(time_period) + "\n")
@@ -82,12 +81,14 @@ class Experiment(object):
                 index = int(match.group("index"))
                 log.debug("time_period: %s" % index)
                 experiment.add_time_period(index)
-        if not self._read_time_period_log(experiment) and not found:
-            log.error("No ND2s available for this experiment!")
+        for time_period in self._read_time_period_log(experiment):
+            found = True
+            experiment.add_time_period(time_period)
+        if not found:
+            terminal_error("No ND2s found!")
 
     @staticmethod
     def _read_time_period_log(experiment):
-        found = False
         try:
             # opening in a+ mode will create the file if it doesn't exist, and we'll just get back no data
             with open(experiment.data_dir + "/experiment.txt", "a+") as f:
@@ -97,9 +98,7 @@ class Experiment(object):
         else:
             for time_period in data.split("\n"):
                 if time_period and int(time_period) > 0:
-                    experiment.add_time_period(int(time_period.strip()))
-                    found = True
-        return found
+                    yield int(time_period.strip())
 
     @staticmethod
     def _get_nd2_attributes(experiment):
