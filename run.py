@@ -44,6 +44,7 @@ try:
                         "kymograph")
 
     manual_activities = ("annotation",
+                         # "fluorescence",
                          "output",
                          "summary")
 
@@ -54,10 +55,14 @@ try:
                "registration": act.calculate_registration,
                "location": act.input_channel_locations,
                "kymograph": act.create_kymographs,
+
                "movies": act.make_movies,
+
                "annotation": act.annotate_kymographs,
+               # "fluorescence": act.quantify_fluorescence,
                "output": act.generate_output,
-               "summary": act.generate_summary}
+               "summary": act.generate_summary,
+               }
 
     action_args = {"movies": (args.movies,)}
 
@@ -88,4 +93,16 @@ try:
             method()
 
 except Exception:
-    log.exception("Unhandled exception!")
+    log.exception("""
+
+
+
+    ===================  Unhandled exception!  =======================
+
+    Jim did not account for something and fylm_critic crashed!
+    Copy and paste the error below and email it to him.
+    Maybe in the future it will email him automatically.
+
+    ==================================================================
+
+    """)

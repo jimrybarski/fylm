@@ -7,10 +7,11 @@ from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.service.base import BaseSetService
 from fylm.service.utilities import timer
 import logging
-import subprocess
-import os
 import matplotlib.pyplot as plt
 from matplotlib import cm
+import os
+import subprocess
+import time
 
 log = logging.getLogger(__name__)
 
@@ -139,12 +140,14 @@ class MovieSet(BaseSetService):
                    '-mf',
                    'w=%s:h=%s:fps=24:type=png' % movie.shape,
                    '-ovc', 'copy', '-oac', 'copy', '-o', '%s' % movie.base_path + "/" + movie.filename)
+
         DEVNULL = open(os.devnull, "w")
-        failure = subprocess.call(" ".join(command), shell=True, stdout=DEVNULL, stderr=subprocess.STDOUT)
-        if not failure:
-            # only delete images if everything went okay.
-            # Otherwise leave them around so we can debug the mencoder command
+        try:
+            log.debug("MOVIE COMMAND: %s" % " ".join(command))
+            subprocess.call(command, shell=False, stdout=DEVNULL, stderr=subprocess.STDOUT)
             self._delete_temp_images(movie, time_period)
+        finally:
+            DEVNULL.close()
 
     @staticmethod
     def _write_movie_frame(frame_number, frame, base_path, image_filename):
@@ -218,7 +221,7 @@ class MovieSet(BaseSetService):
 
         :type movie:    fylm.model.movie.Movie()
         :type image_set:    nd2reader.model.ImageSet()
-        :type channels: str
+        :type channels: list[str]
         :type z_levels: int
 
         """

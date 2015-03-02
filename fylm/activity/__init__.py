@@ -12,11 +12,12 @@ from fylm.service.annotation import AnnotationSet
 from fylm.model.annotation import KymographAnnotationSet
 from fylm.service.movie import MovieSet as MovieSetService
 from fylm.model.movie import MovieSet
-from fylm.model.output import OutputSet
 from fylm.service.output import OutputSet as OutputSetService
-from fylm.model.summary import SummarySet
+from fylm.model.output import OutputSet
 from fylm.service.summary import Summary as SummaryService
-from fylm.service.utilities import timer
+from fylm.model.summary import SummarySet
+from fylm.service.fluorescence import FluorescenceSet as FluorescenceService
+from fylm.model.fluorescence import FluorescenceSet
 
 
 class Activity(object):
@@ -40,6 +41,10 @@ class Activity(object):
 
     def input_channel_locations(self):
         self._calculate_and_save_text(LocationSet, LocationSetService)
+
+    def quantify_fluorescence(self):
+        if self._experiment.has_fluorescent_channels:
+            self._calculate_and_save_text(FluorescenceSet, FluorescenceService)
 
     def create_kymographs(self):
         """
