@@ -35,9 +35,12 @@ class Experiment(object):
 
         return experiment
 
-    @staticmethod
-    def add_time_period_to_log(experiment, time_period):
-        with open(experiment.data_dir + "/experiment.txt", "w+") as f:
+    def add_time_period_to_log(self, experiment, time_period):
+        if time_period in self._read_time_period_log(experiment):
+            log.debug("TP%s already in experiment.txt" % time_period)
+            return True
+        log.debug("TP%s must be added experiment.txt" % time_period)
+        with open(experiment.data_dir + "/experiment.txt", "a+") as f:
             f.write(str(time_period) + "\n")
 
     def _build_directories(self, experiment):
@@ -66,26 +69,34 @@ class Experiment(object):
             except OSError:
                 pass
 
+    def _add_time_period(self, experiment, time_period):
+        # notifies the experiment of the time period and records the time period in the log
+        experiment.add_time_period(time_period)
+        self.add_time_period_to_log(experiment, time_period)
+
     def _find_time_periods(self, experiment):
         """
         Finds the time_periods of all available ND2 files associated with the experiment.
 
         """
-        regex = re.compile(r"""FYLM-%s-0(?P<index>\d+)\.nd2""" % experiment.start_date.clean_date)
+        regex = re.compile(r"""FYLM-%s-0(?P<time_period>\d+)\.nd2""" % experiment.start_date.clean_date)
         found = False
         for filename in sorted(self._os.listdir(experiment.base_dir)):
             match = regex.match(filename)
             if match:
                 found = True
-                index = int(match.group("index"))
-                log.debug("time_period: %s" % index)
-                experiment.add_time_period(index)
-        if not self._read_time_period_log(experiment) and not found:
-            log.error("No ND2s available for this experiment!")
+                time_period = int(match.group("time_period"))
+                log.debug("time_period: %s" % time_period)
+                self._add_time_period(experiment, time_period)
+
+        for time_period in self._read_time_period_log(experiment):
+            found = True
+            self._add_time_period(experiment, time_period)
+        if not found:
+            terminal_error("No ND2s found!")
 
     @staticmethod
     def _read_time_period_log(experiment):
-        found = False
         try:
             # opening in a+ mode will create the file if it doesn't exist, and we'll just get back no data
             with open(experiment.data_dir + "/experiment.txt", "a+") as f:
@@ -95,9 +106,7 @@ class Experiment(object):
         else:
             for time_period in data.split("\n"):
                 if time_period and int(time_period) > 0:
-                    experiment.add_time_period(int(time_period.strip()))
-                    found = True
-        return found
+                    yield int(time_period.strip())
 
     @staticmethod
     def _get_nd2_attributes(experiment):
