@@ -56,7 +56,7 @@ class FluorescenceSet(BaseSetService):
                     image = image_set.get_image(channel_name, z_level=1)
                     image_slice.set_image(image)
                     mean, stddev, median, area, centroid = self._measure_fluorescence(image_set.time_index, image_slice, channel_annotation)
-                    fl_model.add(mean, stddev, median, area, centroid)
+                    fl_model.add(image_set.time_index, channel_name, mean, stddev, median, area, centroid)
 
     def _measure_fluorescence(self, time_index, image_slice, channel_annotation):
         try:

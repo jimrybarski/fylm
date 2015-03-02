@@ -1,3 +1,4 @@
+from collections import defaultdict
 from fylm.model.base import BaseTextFile, BaseSet
 import logging
 import re
@@ -19,8 +20,8 @@ class FluorescenceSet(BaseSet):
 class Fluorescence(BaseTextFile):
     def __init__(self):
         super(Fluorescence, self).__init__()
-        self._measurements = {}
-        self._line_regex = re.compile(r"""^(?P<index>\d+) (?P<mean>\d+\.\d+) (?P<stddev>\d+\.\d+) (?P<median>\d+\.\d+) (?P<area>\d+) (?P<centroid>\d+)""")
+        self._measurements = defaultdict(dict)
+        self._line_regex = re.compile(r"""^(?P<index>\d+) (?P<channel_name>[\w\-]+) (?P<mean>\d+\.\d+) (?P<stddev>\d+\.\d+) (?P<median>\d+\.\d+) (?P<area>\d+) (?P<centroid>\d+)""")
         self._channel = None
 
     @property
@@ -36,8 +37,8 @@ class Fluorescence(BaseTextFile):
         return "tp%s-fov%s-channel%s.png" % (self.time_period, self.field_of_view, self.channel_number)
 
     def lines(self):
-        for index, mean, stddev, median, area, centroid in self._ordered_data:
-            yield "%s %s %s %s %s %s" % (index, mean, stddev, median, area, centroid)
+        for index, channel_name, mean, stddev, median, area, centroid in self._ordered_data:
+            yield "%s %s %s %s %s %s %s" % (index, channel_name, mean, stddev, median, area, centroid)
 
     def _parse_line(self, line):
         match = self._line_regex.match(line)
@@ -54,15 +55,15 @@ class Fluorescence(BaseTextFile):
 
     @property
     def _ordered_data(self):
-        for index, (mean, stddev, median, area, centroid) in sorted(self._measurements.items()):
-            yield index, mean, stddev, median, area, centroid
+        for index, channel_data in sorted(self._measurements.items()):
+            for channel_name, (mean, stddev, median, area, centroid) in sorted(channel_data.items()):
+                yield index, channel_name, mean, stddev, median, area, centroid
 
     @property
     def data(self):
-        for index, mean, stddev, median, area, centroid in self._ordered_data:
+        for index, channel_name, mean, stddev, median, area, centroid in self._ordered_data:
             yield mean, stddev, median, area, centroid
 
-    def add(self, mean, stddev, median, area, centroid):
-        index = 1 if not self._measurements.keys() else max(self._measurements.keys()) + 1
-        log.debug("Fluorescence data: %s %s %s %s %s" % (mean, stddev, median, area, centroid))
-        self._measurements[index] = float(mean), float(stddev), float(median), int(area), int(centroid)
+    def add(self, index, channel_name, mean, stddev, median, area, centroid):
+        log.debug("Fluorescence data: %s %s %s %s %s %s %s" % (index, channel_name, mean, stddev, median, area, centroid))
+        self._measurements[index][channel_name] = float(mean), float(stddev), float(median), int(area), int(centroid)
