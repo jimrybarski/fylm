@@ -37,7 +37,9 @@ class Experiment(object):
 
     @staticmethod
     def add_time_period_to_log(experiment, time_period):
-        with open(experiment.data_dir + "/experiment.txt", "w+") as f:
+        if time_period in experiment.time_periods:
+            return True
+        with open(experiment.data_dir + "/experiment.txt", "a+") as f:
             f.write(str(time_period) + "\n")
 
     def _build_directories(self, experiment):
