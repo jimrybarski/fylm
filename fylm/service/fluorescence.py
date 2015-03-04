@@ -44,18 +44,28 @@ class FluorescenceSet(BaseSetService):
         nd2_filename = self._experiment.get_nd2_from_time_period(fl_model.time_period)
         nd2 = nd2reader.Nd2(nd2_filename)
         try:
-            location_model = [l for l in self._location_set.existing if l.field_of_view == fl_model.field_of_view][0]
+            # figure out where the channel is and get the pole coordinates for each frame
+            location_model = self._location_set.get_model(fl_model.field_of_view)
             image_slice = location_model.get_image_slice(fl_model.channel_number)
-            channels = [channel.name for channel in nd2.channels if channel.name != ""]
             channel_annotation = self._annotation_set.get_model(fl_model.field_of_view, fl_model.channel_number)
         except IndexError:
             pass
         else:
+            # image_set gives us access to every image for every filter channel for a single time index
             for image_set in nd2.image_sets(fl_model.field_of_view, z_levels=[1]):
-                for channel_name in channels:
+                # nd2 channel names are alphabetized
+                for channel_name in nd2.channel_names:
+                    if channel_name == "":
+                        # we skip the brightfield image since it never shows fluorescence
+                        continue
+                    # we grab the fluorescent image with the in-focus image. There are no out-of-focus fluorescent images
+                    # in our experiments, but we still need to designate this
                     image = image_set.get_image(channel_name, z_level=1)
+                    # extract the pixels just covering our catch channel
                     image_slice.set_image(image)
+                    # quantify the fluorescence data
                     mean, stddev, median, area, centroid = self._measure_fluorescence(image_set.time_index, image_slice, channel_annotation)
+                    # store the data in the model so it can be saved to disk later
                     fl_model.add(image_set.time_index, channel_name, mean, stddev, median, area, centroid)
 
     def _measure_fluorescence(self, time_index, image_slice, channel_annotation):

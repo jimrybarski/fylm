@@ -32,12 +32,14 @@ class LocationSet(BaseSet):
             model.base_path = self.base_path
             yield model
 
+    def get_model(self, field_of_view):
+        model = [model for model in self._get_current(field_of_view)]
+        return model[0] if model else None
+
 
 class Location(BaseTextFile):
     """
-    Models the output file that contains the translational adjustments needed for all images in a stack.
-
-    The first line of the file contains the locations of the top left and bottom right channel notches. All
+    Models the output file that contains the locations of the top left and bottom right channel notches. All
     subsequent lines contain information about a particular channel, numbered 1-28.
 
     All coordinates are given as (x,y) tuples using the scikit-image convention (x increases from left to right,
