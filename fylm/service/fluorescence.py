@@ -41,11 +41,12 @@ class FluorescenceSet(BaseSetService):
         """
         log.debug("Creating fluorescence file %s" % fl_model.filename)
 
-
         try:
             # figure out where the channel is and get the pole coordinates for each frame
             location_model = self._location_set.get_model(fl_model.field_of_view)
             image_slice = location_model.get_image_slice(fl_model.channel_number)
+            if not image_slice:
+                return True
             channel_annotation = self._annotation_set.get_model(fl_model.field_of_view, fl_model.channel_number)
             image_reader = ImageReader(self._experiment)
             image_reader.field_of_view = fl_model.field_of_view

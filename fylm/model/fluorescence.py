@@ -61,6 +61,7 @@ class Fluorescence(BaseTextFile):
     def filename(self):
         return "tp%s-fov%s-channel%s.txt" % (self.time_period, self.field_of_view, self.channel_number)
 
+    @property
     def lines(self):
         for index, channel_name, mean, stddev, median, area, centroid in self._ordered_data:
             yield "%s %s %s %s %s %s %s" % (index, channel_name, mean, stddev, median, area, centroid)
