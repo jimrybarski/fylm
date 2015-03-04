@@ -1,5 +1,8 @@
 from collections import defaultdict
 from fylm.model.base import BaseTextFile, BaseSet
+from fylm.model.constants import Constants
+from fylm.model.location import LocationSet
+from fylm.service.location import LocationSet as LocationService
 import logging
 import re
 
@@ -12,9 +15,31 @@ class FluorescenceSet(BaseSet):
 
     """
     def __init__(self, experiment):
-        super(FluorescenceSet).__init__(experiment, "fluorescence")
+        super(FluorescenceSet, self).__init__(experiment, "fluorescence")
         self._model = Fluorescence
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
+        self._location_set_model = LocationSet(experiment)
+        LocationService(experiment).load_existing_models(self._location_set_model)
+
+    @property
+    def _expected(self):
+        """
+        Yields instantiated children of BaseFile that represent the work we expect to have done.
+
+        """
+        assert self._model is not None
+        for field_of_view in self._fields_of_view:
+            for time_period in self._time_periods:
+                for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+                    for location_model in self._location_set_model.existing:
+                        if not location_model.get_channel_location(channel_number):
+                            continue
+                        model = self._model()
+                        model.time_period = time_period
+                        model.field_of_view = field_of_view
+                        model.base_path = self.base_path
+                        model.channel_number = channel_number
+                        yield model
 
 
 class Fluorescence(BaseTextFile):
@@ -34,7 +59,7 @@ class Fluorescence(BaseTextFile):
 
     @property
     def filename(self):
-        return "tp%s-fov%s-channel%s.png" % (self.time_period, self.field_of_view, self.channel_number)
+        return "tp%s-fov%s-channel%s.txt" % (self.time_period, self.field_of_view, self.channel_number)
 
     def lines(self):
         for index, channel_name, mean, stddev, median, area, centroid in self._ordered_data:
@@ -64,6 +89,6 @@ class Fluorescence(BaseTextFile):
         for index, channel_name, mean, stddev, median, area, centroid in self._ordered_data:
             yield mean, stddev, median, area, centroid
 
-    def add(self, index, channel_name, mean, stddev, median, area, centroid):
-        log.debug("Fluorescence data: %s %s %s %s %s %s %s" % (index, channel_name, mean, stddev, median, area, centroid))
-        self._measurements[index][channel_name] = float(mean), float(stddev), float(median), int(area), int(centroid)
+    def add(self, time_index, channel_name, mean, stddev, median, area, centroid):
+        log.debug("Fluorescence data: %s %s %s %s %s %s %s" % (time_index, channel_name, mean, stddev, median, area, centroid))
+        self._measurements[time_index][channel_name] = float(mean), float(stddev), float(median), int(area), int(centroid)

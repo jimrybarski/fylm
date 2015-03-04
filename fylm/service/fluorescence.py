@@ -1,7 +1,7 @@
 from fylm.service.base import BaseSetService
 from fylm.service.location import LocationSet as LocationService
 from fylm.model.location import LocationSet
-from fylm.service.annotation import AnnotationSet
+from fylm.service.annotation import AnnotationSet as AnnotationService
 from fylm.model.annotation import KymographAnnotationSet
 from fylm.service.kymograph import KymographSet as KymographService
 from fylm.model.kymograph import KymographSet
@@ -23,12 +23,12 @@ class FluorescenceSet(BaseSetService):
         super(FluorescenceSet, self).__init__()
         self._experiment = experiment
         self._annotation_set = KymographAnnotationSet(experiment)
-        AnnotationSet(experiment).load_existing_models(self._annotation_set)
         kymograph_set = KymographSet(experiment)
         KymographService(experiment).load_existing_models(kymograph_set)
         self._annotation_set.kymograph_set = kymograph_set
+        AnnotationService(experiment).load_existing_models(self._annotation_set)
         self._location_set = LocationSet(experiment)
-        LocationService(experiment).load_existing_models(experiment)
+        LocationService(experiment).load_existing_models(self._location_set)
 
         self._name = "fluorescence analyses"
 
