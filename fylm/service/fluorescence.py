@@ -7,7 +7,7 @@ from fylm.service.kymograph import KymographSet as KymographService
 from fylm.model.kymograph import KymographSet
 from fylm.service.utilities import timer
 import logging
-import nd2reader
+from fylm.service.image_reader import ImageReader
 import numpy as np
 from skimage import measure, draw
 
@@ -29,7 +29,6 @@ class FluorescenceSet(BaseSetService):
         AnnotationService(experiment).load_existing_models(self._annotation_set)
         self._location_set = LocationSet(experiment)
         LocationService(experiment).load_existing_models(self._location_set)
-
         self._name = "fluorescence analyses"
 
     @timer
@@ -41,20 +40,23 @@ class FluorescenceSet(BaseSetService):
 
         """
         log.debug("Creating fluorescence file %s" % fl_model.filename)
-        nd2_filename = self._experiment.get_nd2_from_time_period(fl_model.time_period)
-        nd2 = nd2reader.Nd2(nd2_filename)
+
+
         try:
             # figure out where the channel is and get the pole coordinates for each frame
             location_model = self._location_set.get_model(fl_model.field_of_view)
             image_slice = location_model.get_image_slice(fl_model.channel_number)
             channel_annotation = self._annotation_set.get_model(fl_model.field_of_view, fl_model.channel_number)
+            image_reader = ImageReader(self._experiment)
+            image_reader.field_of_view = fl_model.field_of_view
+            image_reader.time_period = fl_model.time_period
         except IndexError:
             pass
         else:
             # image_set gives us access to every image for every filter channel for a single time index
-            for image_set in nd2.image_sets(fl_model.field_of_view, z_levels=[1]):
-                # nd2 channel names are alphabetized
-                for channel_name in nd2.channel_names:
+            for image_set in image_reader:
+                # channel_names are alphabetized
+                for channel_name in image_reader.channel_names:
                     if channel_name == "":
                         # we skip the brightfield image since it never shows fluorescence
                         continue
