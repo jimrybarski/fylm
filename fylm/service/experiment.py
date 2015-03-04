@@ -87,11 +87,10 @@ class Experiment(object):
                 found = True
                 time_period = int(match.group("time_period"))
                 log.debug("time_period: %s" % time_period)
-                self._add_time_period(experiment, time_period)
-
+                experiment.add_time_period(experiment, time_period)
         for time_period in self._read_time_period_log(experiment):
             found = True
-            self._add_time_period(experiment, time_period)
+            experiment.add_time_period(time_period)
         if not found:
             terminal_error("No ND2s found!")
 
