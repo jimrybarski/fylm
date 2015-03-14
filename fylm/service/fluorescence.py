@@ -34,7 +34,7 @@ class FluorescenceSet(BaseSetService):
     @timer
     def save_action(self, fl_model):
         """
-        Calculates the rotation offset for a single field of view and time_period.
+        Calculates the fluorescence intensity for a catch channel.
 
         :type fl_model:   fylm.model.fluorescence.Fluorescence()
 
@@ -64,30 +64,35 @@ class FluorescenceSet(BaseSetService):
                     # we grab the fluorescent image with the in-focus image. There are no out-of-focus fluorescent images
                     # in our experiments, but we still need to designate this
                     image = image_set.get_image(channel_name, z_level=1)
+                    if image is None:
+                        # We don't have fluorescent data for this time index. This happens because we don't take fluorescent
+                        # images at the same frequency as bright field, to lower the amount of blue light that the cells
+                        # are exposed to.
+                        continue
+                    log.debug("Time index %s" % image_set.time_index)
                     # extract the pixels just covering our catch channel
                     image_slice.set_image(image)
                     # quantify the fluorescence data
-                    mean, stddev, median, area, centroid = self._measure_fluorescence(image_set.time_index, image_slice, channel_annotation)
+                    try:
+                        mean, stddev, median, area, centroid = self._measure_fluorescence(fl_model.time_period, image_slice, channel_annotation)
                     # store the data in the model so it can be saved to disk later
-                    fl_model.add(image_set.time_index, channel_name, mean, stddev, median, area, centroid)
+                    except (IndexError, ValueError):
+                        # We won't be able to get data unless the cell poles are defined, so here we silently ignore that.
+                        pass
+                    else:
+                        fl_model.add(image_set.time_index, channel_name, mean, stddev, median, area, centroid)
 
-    def _measure_fluorescence(self, time_index, image_slice, channel_annotation):
-        try:
-            mask = np.zeros((image_slice.height, image_slice.width))
-            old_pole, new_pole = channel_annotation.get_cell_bounds(time_index)
-            ellipse_minor_radius = int(0.80 * image_slice.height * 0.5)
-            ellipse_major_radius = int((new_pole - old_pole) / 2.0) * 0.8
-            centroid_y = int(image_slice.height / 2.0)
-            centroid_x = int((new_pole + old_pole) / 2.0)
-            rr, cc = draw.ellipse(centroid_y, centroid_x, ellipse_minor_radius, ellipse_major_radius)
-            mask[rr, cc] = 1
-            mean, stddev, median, area, centroid = self._calculate_cell_intensity_statistics(mask.astype("int"), image_slice.image_data)
-        except IndexError:
-            # We'll throw an exception anytime the cell pole locations aren't defined, in which case we want to throw out
-            # any fluorescence data since we can't tell if it's the elder sibling cell or not
-            return None, None, None, None, None
-        else:
-            return mean, stddev, median, area, centroid
+    def _measure_fluorescence(self, time_period, image_slice, channel_annotation):
+        mask = np.zeros((image_slice.height, image_slice.width))
+        old_pole, new_pole = channel_annotation.get_cell_bounds(time_period)
+        ellipse_minor_radius = int(0.80 * image_slice.height * 0.5)
+        ellipse_major_radius = int((new_pole - old_pole) / 2.0) * 0.8
+        centroid_y = int(image_slice.height / 2.0)
+        centroid_x = int((new_pole + old_pole) / 2.0)
+        rr, cc = draw.ellipse(centroid_y, centroid_x, ellipse_minor_radius, ellipse_major_radius)
+        mask[rr, cc] = 1
+        mean, stddev, median, area, centroid = self._calculate_cell_intensity_statistics(mask.astype("int"), image_slice.image_data)
+        return mean, stddev, median, area, centroid
 
     @staticmethod
     def _calculate_cell_intensity_statistics(mask, fluorescent_image_data):
