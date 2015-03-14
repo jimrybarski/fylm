@@ -10,6 +10,7 @@ import logging
 from fylm.service.image_reader import ImageReader
 import numpy as np
 from skimage import measure, draw
+import skimage.io
 
 log = logging.getLogger(__name__)
 
@@ -92,13 +93,16 @@ class FluorescenceSet(BaseSetService):
         rr, cc = draw.ellipse(centroid_y, centroid_x, ellipse_minor_radius, ellipse_major_radius)
         mask[rr, cc] = 1
         mean, stddev, median, area, centroid = self._calculate_cell_intensity_statistics(mask.astype("int"), image_slice.image_data)
+        log.debug(" ".join([mean, stddev, median, area, centroid]))
         return mean, stddev, median, area, centroid
 
     @staticmethod
     def _calculate_cell_intensity_statistics(mask, fluorescent_image_data):
-        assert fluorescent_image_data.dtype == "float64"
+        # assert fluorescent_image_data.dtype == "float64"
         assert np.max(mask) == 1  # If no cell was identified, raise an exception
         masked_cell = np.ma.array(fluorescent_image_data, mask=mask == 0)
+        skimage.io.imshow(masked_cell)
+        skimage.io.show()
         region_properties = list(measure.regionprops(mask))
         assert len(region_properties) == 1
         properties = region_properties[0]

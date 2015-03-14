@@ -1,8 +1,10 @@
 from collections import defaultdict
 from fylm.model.base import BaseTextFile, BaseSet
 from fylm.model.constants import Constants
-from fylm.model.location import LocationSet
-from fylm.service.location import LocationSet as LocationService
+from fylm.model.annotation import KymographAnnotationSet
+from fylm.service.annotation import KymographSetService
+from fylm.model.kymograph import KymographSet
+from fylm.service.kymograph import KymographSet as KymographService
 import logging
 import re
 
@@ -18,8 +20,11 @@ class FluorescenceSet(BaseSet):
         super(FluorescenceSet, self).__init__(experiment, "fluorescence")
         self._model = Fluorescence
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.txt""")
-        self._location_set_model = LocationSet(experiment)
-        LocationService(experiment).load_existing_models(self._location_set_model)
+        kymograph_set = KymographSet(experiment)
+        KymographService(experiment).load_existing_models(kymograph_set)
+        self._annotation_set_model = KymographAnnotationSet(experiment, ignore_kymographs=True)
+        self._annotation_set_model.kymograph_set = kymograph_set
+        KymographSetService(experiment).load_existing_models(self._annotation_set_model)
 
     @property
     def _expected(self):
@@ -28,18 +33,19 @@ class FluorescenceSet(BaseSet):
 
         """
         assert self._model is not None
-        for field_of_view in self._fields_of_view:
+        # It's only possible to quantify fluorescence data if we know where the cell bounds are
+        # In some cases, it might be possible to use image analysis to determine the cell borders without a list of cell bounds
+        # However, the majority of cells have very low contrast and are difficult to precisely locate
+        for annotation_model in self._annotation_set_model.existing:
             for time_period in self._time_periods:
-                for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
-                    for location_model in self._location_set_model.existing:
-                        if not location_model.get_channel_location(channel_number):
-                            continue
-                        model = self._model()
-                        model.time_period = time_period
-                        model.field_of_view = field_of_view
-                        model.base_path = self.base_path
-                        model.channel_number = channel_number
-                        yield model
+                if annotation_model.last_state in ("Empty", "Active"):
+                    continue
+                model = self._model()
+                model.time_period = time_period
+                model.field_of_view = annotation_model.field_of_view
+                model.base_path = self.base_path
+                model.channel_number = annotation_model.channel_number
+                yield model
 
 
 class Fluorescence(BaseTextFile):
