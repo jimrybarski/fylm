@@ -84,17 +84,16 @@ class FluorescenceSet(BaseSetService):
                         fl_model.add(image_set.time_index, channel_name, mean, stddev, median, area, centroid)
 
     def _measure_fluorescence(self, time_period, time_index, image_slice, channel_annotation):
-        log.debug("mf")
-        mask = np.zeros((image_slice.height, image_slice.width))
-        log.debug("mask")
+        mask = np.zeros((image_slice.height * 2, image_slice.width))
         old_pole, new_pole = channel_annotation.get_cell_bounds(time_period, time_index)
-        log.debug("%s,%s" % (old_pole, new_pole))
         ellipse_minor_radius = int(0.80 * image_slice.height * 0.5)
         ellipse_major_radius = int((new_pole - old_pole) / 2.0) * 0.8
         centroid_y = int(image_slice.height / 2.0)
         centroid_x = int((new_pole + old_pole) / 2.0)
         rr, cc = draw.ellipse(centroid_y, centroid_x, ellipse_minor_radius, ellipse_major_radius)
         mask[rr, cc] = 1
+        log.debug("mask shape %s %s" % mask.shape)
+        log.debug("image slice %s %s" % image_slice.image_data.shape)
         mean, stddev, median, area, centroid = self._calculate_cell_intensity_statistics(mask.astype("int"), image_slice.image_data)
         log.debug(" ".join([mean, stddev, median, area, centroid]))
         return mean, stddev, median, area, centroid
@@ -104,8 +103,11 @@ class FluorescenceSet(BaseSetService):
         # assert fluorescent_image_data.dtype == "float64"
         assert np.max(mask) == 1  # If no cell was identified, raise an exception
         masked_cell = np.ma.array(fluorescent_image_data, mask=mask == 0)
+        skimage.io.imshow(fluorescent_image_data)
+        skimage.io.show()
         skimage.io.imshow(masked_cell)
         skimage.io.show()
+
         region_properties = list(measure.regionprops(mask))
         assert len(region_properties) == 1
         properties = region_properties[0]
