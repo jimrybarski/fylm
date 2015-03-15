@@ -75,17 +75,20 @@ class FluorescenceSet(BaseSetService):
                     image_slice.set_image(image)
                     # quantify the fluorescence data
                     try:
-                        mean, stddev, median, area, centroid = self._measure_fluorescence(fl_model.time_period, image_slice, channel_annotation)
+                        mean, stddev, median, area, centroid = self._measure_fluorescence(fl_model.time_period, image_set.time_index, image_slice, channel_annotation)
                     # store the data in the model so it can be saved to disk later
-                    except (IndexError, ValueError):
+                    except (IndexError, ValueError, TypeError):
                         # We won't be able to get data unless the cell poles are defined, so here we silently ignore that.
                         pass
                     else:
                         fl_model.add(image_set.time_index, channel_name, mean, stddev, median, area, centroid)
 
-    def _measure_fluorescence(self, time_period, image_slice, channel_annotation):
+    def _measure_fluorescence(self, time_period, time_index, image_slice, channel_annotation):
+        log.debug("mf")
         mask = np.zeros((image_slice.height, image_slice.width))
-        old_pole, new_pole = channel_annotation.get_cell_bounds(time_period)
+        log.debug("mask")
+        old_pole, new_pole = channel_annotation.get_cell_bounds(time_period, time_index)
+        log.debug("%s,%s" % (old_pole, new_pole))
         ellipse_minor_radius = int(0.80 * image_slice.height * 0.5)
         ellipse_major_radius = int((new_pole - old_pole) / 2.0) * 0.8
         centroid_y = int(image_slice.height / 2.0)

@@ -4,6 +4,7 @@ from fylm.model.constants import Constants
 from fylm.model.coordinates import Coordinates
 from fylm.service.errors import terminal_error
 from skimage.draw import line
+import skimage.io
 import numpy as np
 import logging
 import re
@@ -75,6 +76,7 @@ class ChannelAnnotationGroup(BaseTextFile):
         self._last_state = "Active"
         self._last_state_time_period = 1  # the last time_period to be saved by a human
         self.kymographs = None
+        self._skeleton = None
 
     def add_line(self, annotation_line):
         if not self._lines or not self._lines[annotation_line.time_period]:
@@ -94,31 +96,34 @@ class ChannelAnnotationGroup(BaseTextFile):
     def is_finished(self):
         return self._last_state in ("Empty", "Dies", "Ejected", "Survives")
 
-    def _skeleton(self, time_period):
-        kymograph = self.get_image(time_period)
-        data = np.zeros(kymograph.shape)
-        for y_list, x_list in self.points(time_period):
-            data[y_list, x_list] = 1
-        return data
+    def skeleton(self, time_period):
+        if self._skeleton is None:
+            kymograph = self.get_image(time_period)
+            self._skeleton = np.zeros(kymograph.shape)
+            for y_list, x_list in self.points(time_period):
+                self._skeleton[y_list, x_list] = 1
+        return self._skeleton
 
-    def get_cell_bounds(self, time_period):
+    def get_cell_bounds(self, time_period, time_index):
         """
         Gets the two leftmost white pixels in the skeleton image, which ostensibly are the old pole and new pole of the
         elder sibling cell.
 
         """
-        bounds = {}
-        skeleton = self._skeleton(time_period)
-        for n, row in enumerate(skeleton):
-            # get a list of the indices of the non-zero values in this row
+        # get a list of the indices of the non-zero values in this row
+        try:
+            skeleton = self.skeleton(time_period)
+        except Exception as e:
+            print(e)
+        else:
+            row = skeleton[time_index]
             pole_locations = np.nonzero(row)[0]
-            if len(pole_locations) > 1:
-                bounds[n] = pole_locations[0], pole_locations[1]
+            if np.sum(pole_locations) > 1:
+                return pole_locations[0], pole_locations[1]
             else:
-                bounds[n] = None
-        return bounds
+                return None
 
-    def get_cell_lengths(self, time_period):
+    def get_cell_lengths(self, time_period, time_index):
         """
         If there are two pole locations (an old pole and a new pole) calculate the distance between them. This gives us
         the cell length at each time index.
@@ -127,13 +132,11 @@ class ChannelAnnotationGroup(BaseTextFile):
         :rtype:             dict
 
         """
-        lengths = {}
-        for time_index, bounds in self.get_cell_bounds(time_period).items():
-            if bounds:
-                lengths[time_index] = bounds[1] - bounds[0]
-            else:
-                lengths[time_index] = None
-        return lengths
+        bounds = self.get_cell_bounds(time_period, time_index)
+        if bounds:
+            return bounds[1] - bounds[0]
+        else:
+            return None
 
     def points(self, time_period):
         """
@@ -144,7 +147,9 @@ class ChannelAnnotationGroup(BaseTextFile):
         locations of the cell poles of the elder sibling cell.
 
         """
-        for index, annotation in sorted(self._lines[time_period].items()):
+        lines = self._lines[time_period]
+        sorted_lines = list(sorted(lines.items()))
+        for index, annotation in sorted_lines:
             for n, from_point in enumerate(annotation.coordinates[:-1]):
                 to_point = annotation.coordinates[n + 1]
                 y_list, x_list = line(int(from_point.y), int(from_point.x), int(to_point.y), int(to_point.x))
