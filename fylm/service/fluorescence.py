@@ -70,14 +70,13 @@ class FluorescenceSet(BaseSetService):
                         # images at the same frequency as bright field, to lower the amount of blue light that the cells
                         # are exposed to.
                         continue
-                    log.debug("Time index %s" % image_set.time_index)
                     # extract the pixels just covering our catch channel
                     image_slice.set_image(image)
                     # quantify the fluorescence data
                     try:
                         mean, stddev, median, area, centroid = self._measure_fluorescence(fl_model.time_period, image_set.time_index, image_slice, channel_annotation)
                     # store the data in the model so it can be saved to disk later
-                    except (IndexError, ValueError, TypeError):
+                    except (IndexError, ValueError, TypeError, ZeroDivisionError):
                         # We won't be able to get data unless the cell poles are defined, so here we silently ignore that.
                         pass
                     else:
@@ -86,16 +85,13 @@ class FluorescenceSet(BaseSetService):
     def _measure_fluorescence(self, time_period, time_index, image_slice, channel_annotation):
         mask = np.zeros((image_slice.height * 2, image_slice.width))
         old_pole, new_pole = channel_annotation.get_cell_bounds(time_period, time_index)
-        ellipse_minor_radius = int(0.80 * image_slice.height * 0.5)
+        ellipse_minor_radius = int(0.80 * image_slice.height)
         ellipse_major_radius = int((new_pole - old_pole) / 2.0) * 0.8
-        centroid_y = int(image_slice.height / 2.0)
+        centroid_y = int(image_slice.height)
         centroid_x = int((new_pole + old_pole) / 2.0)
         rr, cc = draw.ellipse(centroid_y, centroid_x, ellipse_minor_radius, ellipse_major_radius)
         mask[rr, cc] = 1
-        log.debug("mask shape %s %s" % mask.shape)
-        log.debug("image slice %s %s" % image_slice.image_data.shape)
         mean, stddev, median, area, centroid = self._calculate_cell_intensity_statistics(mask.astype("int"), image_slice.image_data)
-        log.debug(" ".join([mean, stddev, median, area, centroid]))
         return mean, stddev, median, area, centroid
 
     @staticmethod
@@ -103,13 +99,8 @@ class FluorescenceSet(BaseSetService):
         # assert fluorescent_image_data.dtype == "float64"
         assert np.max(mask) == 1  # If no cell was identified, raise an exception
         masked_cell = np.ma.array(fluorescent_image_data, mask=mask == 0)
-        skimage.io.imshow(fluorescent_image_data)
-        skimage.io.show()
-        skimage.io.imshow(masked_cell)
-        skimage.io.show()
-
         region_properties = list(measure.regionprops(mask))
         assert len(region_properties) == 1
         properties = region_properties[0]
         centroid = int(properties.centroid[1])
-        return np.ma.mean(masked_cell), np.ma.std(masked_cell), np.ma.median(masked_cell), np.ma.sum(mask), centroid
+        return np.ma.mean(masked_cell), np.ma.std(masked_cell), np.ma.median(masked_cell)[0], np.ma.sum(mask), centroid
