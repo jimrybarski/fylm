@@ -18,6 +18,8 @@ class Timestamps(BaseModel):
         self._nd2_metadata = experiment.nd2_metadata
         self._index = 0
         self._needed = None
+        self._current_time_period = None
+        self._last_timestamps = None
 
     @property
     def time_periods_needed(self):
@@ -37,31 +39,21 @@ class Timestamps(BaseModel):
         return "timestamps"
 
     def extract_data(self, time_period, image_set):
+        if time_period != self._current_time_period:
+            self._update_last_timestamp(time_period)
         row = self._table.row
         image = [i for i in image_set][0]
         if image.channel == "" and image.z_level == 0:
             row['time_period'] = time_period
             row['field_of_view'] = image_set.field_of_view
             row['time_index'] = self._index
-            row['timestamp'] = image.timestamp
-
-            self._table.add(image.timestamp + last_timestamp)
+            row['timestamp'] = image.timestamp + self._last_timestamps[image_set.field_of_view]
+            row.append()
             self._index += 1
 
-    # def add(self, timestamp):
-    #     index = 1 if not self._timestamps.keys() else max(self._timestamps.keys()) + 1
-    #     self._timestamps[index] = float(timestamp)
-
-    # @property
-    # def last(self):
-    #     """
-    #     Finds the last timestamp for this file.
-    #
-    #     """
-    #     try:
-    #         last = max(self._timestamps.keys())
-    #     except ValueError as e:
-    #         log.error("Tried to get last timestamp, but there are none.")
-    #         raise e
-    #     else:
-    #         return self._timestamps[last]
+    def _update_last_timestamp(self, time_period):
+        if time_period - 1 in self.time_periods_needed:
+            raise ValueError("Attempted to get last timestamps from unfinished time period! Probably iterated over nd2s out of order")
+        for field_of_view in xrange(self._nd2_metadata.fields_of_view):
+            self._last_timestamps[field_of_view] = max([r['timestamp'] for r in self._table.iterrows() if r['time_period'] == time_period - 1 and r['field_of_view'] == field_of_view])
+        log.debug("Updated last timestamps: %s" % self._last_timestamps)

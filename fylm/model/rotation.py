@@ -1,4 +1,11 @@
-class Rotation(object):
+from tables import IsDescription, UInt8Col, UInt16Col, Float64Col
+from fylm.model.base import BaseModel
+import logging
+
+log = logging.getLogger(__name__)
+
+
+class Rotation(BaseModel):
     """
     Models the output file that contains the rotational adjustment required for all images in a stack.
 
