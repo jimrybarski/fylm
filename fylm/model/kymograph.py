@@ -7,6 +7,7 @@ import re
 
 log = logging.getLogger(__name__)
 
+# h5.create_array(group, 'image2', image2)
 
 class KymographSet(BaseSet):
     """

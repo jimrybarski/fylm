@@ -1,32 +1,9 @@
 from fylm.service.errors import terminal_error
 import logging
-import re
-
+import nd2reader
+import os
 
 log = logging.getLogger(__name__)
-
-
-class StartDate(object):
-    def __init__(self, start_date):
-        self._raw_date = start_date
-
-    @property
-    def is_valid(self):
-        try:
-            regex = re.compile(r"""^(?P<year>\d\d)(?P<month>\d\d)(?P<day>\d\d)$""")
-            match = regex.match(self.clean_date)
-            year_ok = 14 <= int(match.group("year")) <= 38  # we'd better cure aging by 2038
-            month_ok = 1 <= int(match.group("month")) <= 12
-            day_ok = 1 <= int(match.group("day")) <= 31
-        except Exception as e:
-            log.error(str(e))
-            return False
-        else:
-            return year_ok and month_ok and day_ok
-
-    @property
-    def clean_date(self):
-        return self._raw_date.strip("\n\r\t ")
 
 
 class Experiment(object):
@@ -37,37 +14,19 @@ class Experiment(object):
         day (though ideally four) the start date for an experiment acts as a unique ID.
 
         """
-        self._start_date = None
         self._base_dir = None
-        self.has_fluorescent_channels = False
-        self._time_periods = set()
-        self.field_of_view_count = None
-        self._version = None
+        self.start_date = None
 
-    @property
-    def version(self):
-        return self._version
+    def load(self, start_date, base_dir):
+        self.start_date = start_date
+        # set the base directory
+        if not os.path.isdir(base_dir):
+            terminal_error("Base directory does not exist: %s" % base_dir)
+        self.base_dir = base_dir
+        log.debug("Experiment base directory: %s" % self.base_dir)
 
-    @version.setter
-    def version(self, value):
-        version_regex = re.compile(r"""\d+\.\d+\.\d+""")
-        if version_regex.match(value):
-            self._version = value
-        else:
-            log.critical("Change the value in the VERSION file in the root directory of fylm_critic to 'x.y.z'.")
-            terminal_error("Invalid version number! %s" % value)
-
-    @property
-    def start_date(self):
-        return self._start_date
-
-    @start_date.setter
-    def start_date(self, value):
-        """
-        :type value:    str
-
-        """
-        self._start_date = StartDate(value)
+        # set the time_periods
+        self._get_nd2_attributes()
 
     @property
     def base_dir(self):
@@ -82,10 +41,6 @@ class Experiment(object):
 
         """
         self._base_dir = value.rstrip("/")
-
-    @property
-    def data_dir(self):
-        return self.base_dir + "/" + self.start_date.clean_date
 
     @property
     def _nd2_base_filename(self):
@@ -106,27 +61,47 @@ class Experiment(object):
         # pads time_period with leading zeros to create 3-digit number
         return self._nd2_base_filename + "%03d.nd2" % time_period
 
-    def add_time_period(self, number):
+    def _find_time_periods(self, experiment):
         """
-        Registers the existence of an ND2 file with a given index.
-
-        :param number:  the series number (e.g. the 7 in FYLM-140909-007.nd2)
-        :type number:   int
+        Finds the time_periods of all available ND2 files associated with the experiment.
 
         """
-        assert number > 0
-        self._time_periods.add(number)
+        regex = re.compile(r"""FYLM-%s-0(?P<time_period>\d+)\.nd2""" % experiment.start_date.clean_date)
+        found = False
+        for filename in sorted(self._os.listdir(experiment.base_dir)):
+            match = regex.match(filename)
+            if match:
+                found = True
+                time_period = int(match.group("time_period"))
+                log.debug("time_period: %s" % time_period)
+                experiment.add_time_period(time_period)
+        for time_period in self._read_time_period_log(experiment):
+            found = True
+            experiment.add_time_period(time_period)
+        if not found:
+            terminal_error("No ND2s found!")
 
-    @property
-    def time_periods(self):
-        for time_period in sorted(self._time_periods):
-            yield time_period
+    def _get_nd2_attributes(self):
+        """
+        Determine how many fields of view there are, and whether the ND2s have fluorescent channels.
 
-    @property
-    def time_period_count(self):
-        return len(self._time_periods)
+        :type experiment:   model.experiment.Experiment()
 
-    @property
-    def fields_of_view(self):
-        for i in range(self.field_of_view_count):
-            yield i
+        """
+        for nd2_filename in self.nd2s:
+            try:
+                nd2 = nd2reader.Nd2(nd2_filename)
+            except IOError:
+                pass
+            else:
+                self.field_of_view_count = nd2.field_of_view_count
+                for channel in nd2.channels:
+                    if channel.name != "":
+                        log.info("Experiment has fluorescent channels.")
+                        experiment.has_fluorescent_channels = True
+                        break
+                else:
+                    log.info("Experiment does not have fluorescent channels.")
+                break
+        else:
+            terminal_error("Could not get the field of view count. Maybe all the ND2s are missing?")
