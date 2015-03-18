@@ -12,7 +12,7 @@ def timer(f):
     def timed(*args, **kw):
         ts = time.time()
         result = f(*args, **kw)
-        log.info('Process took: %.2f sec' % (time.time() - ts))
+        log.info('%s took: %.2f sec' % (f.__name__, time.time() - ts))
         return result
     return timed
 

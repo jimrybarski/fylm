@@ -126,7 +126,6 @@ class MovieSet(BaseSetService):
             self._create_movie_from_frames(movie, time_period)
         return True
 
-    @timer
     def _create_movie_from_frames(self, movie, time_period):
         """
         Makes a movie in chronological order using images with a given filename pattern.
