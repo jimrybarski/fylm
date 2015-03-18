@@ -18,4 +18,3 @@ class Overseer(object):
 
     def add_work_unit(self, work_unit):
         self._work_units.append(work_unit)
-
