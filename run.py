@@ -27,10 +27,6 @@ try:
     parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
     args = parser.parse_args(namespace=Args())
 
-
-overseer = Overseer()
-
-
 except Exception:
     log.exception("Unhandled exception!")
     log.critical("""
