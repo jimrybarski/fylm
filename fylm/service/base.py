@@ -47,8 +47,6 @@ class BaseSetService(BaseService):
         did_work = False
         remaining = list(model_set.remaining)
         for model in remaining:
-            log.debug("Remaining: %s %s %s" % (model.time_period, model.field_of_view, model.channel_number))
-        for model in remaining:
             did_work = True
             writer = FileInteractor(model)
             self.save_action(model)

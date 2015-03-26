@@ -161,7 +161,13 @@ class Location(BaseTextFile):
         for channel_number, locations in self._ordered_channels:
             try:
                 notch, tube = locations
-                yield "%s %s %s %s %s" % (channel_number, notch.x, notch.y, tube.x, tube.y)
+                # We double the length here on the fly so we can see outside the tube
+                # This also lets you see where you really put the tube location so it's
+                # totally transparent. Works whether the catch channel is on the right
+                # or the left
+                adjusted_length = 2 * (notch.x - tube.x)
+                new_tube_x = notch.x - adjusted_length
+                yield "%s %s %s %s %s" % (channel_number, notch.x, notch.y, new_tube_x, tube.y)
             except ValueError:
                 # the human declared this channel invalid
                 yield "%s skipped" % channel_number
