@@ -45,6 +45,7 @@ class KymographSet(BaseSetService):
         if not did_work:
             log.info("All %s have been created." % self._name)
 
+
     @timer
     def action(self, location_model, available_kymographs):
         did_work = False
