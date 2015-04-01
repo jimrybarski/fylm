@@ -1,6 +1,4 @@
 import argparse
-from fylm.model.overseer import Overseer
-from fylm.model.workunit import WorkUnit
 from fylm.model.timestamp import Timestamps
 import logging
 
