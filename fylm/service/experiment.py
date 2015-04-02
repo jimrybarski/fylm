@@ -1,6 +1,7 @@
 from fylm.model.experiment import Experiment as ExperimentModel
 from fylm.service.errors import terminal_error
 import logging
+import json
 import os
 import re
 import nd2reader
@@ -29,19 +30,35 @@ class Experiment(object):
         log.debug("Experiment base directory: %s" % experiment.base_dir)
 
         # set the time_periods
+        # experiment log as Python dict
+        # {'time_periods': [1, 2, 3],
+        #  'field_of_view_count': 8,
+        #  'has_fluorescent_channels': True}
         self._find_time_periods(experiment)
         self._build_directories(experiment)
         self._get_nd2_attributes(experiment)
-
         return experiment
 
+    def _load_experiment_log(self, experiment):
+        with open(experiment.data_dir + "/experiment.txt", "a+") as f:
+            try:
+                experiment_log = json.load(f)
+            except ValueError:
+                experiment_log = {}
+            return experiment_log
+
+    def _save_experiment_log(self, experiment, experiment_log):
+        with open(experiment.data_dir + "/experiment.txt", "w+") as f:
+            json.dump(experiment_log, f)
+
     def add_time_period_to_log(self, experiment, time_period):
-        if time_period in self._read_time_period_log(experiment):
+        experiment_log = self._load_experiment_log(experiment)
+        if time_period in experiment_log['time_periods']:
             log.debug("TP%s already in experiment.txt" % time_period)
             return True
         log.debug("TP%s must be added experiment.txt" % time_period)
-        with open(experiment.data_dir + "/experiment.txt", "a+") as f:
-            f.write(str(time_period) + "\n")
+        experiment_log['time_periods'].append(time_period)
+        self._save_experiment_log(experiment, experiment_log)
 
     def _build_directories(self, experiment):
         """
@@ -69,11 +86,6 @@ class Experiment(object):
             except OSError:
                 pass
 
-    def _add_time_period(self, experiment, time_period):
-        # notifies the experiment of the time period and records the time period in the log
-        experiment.add_time_period(time_period)
-        self.add_time_period_to_log(experiment, time_period)
-
     def _find_time_periods(self, experiment):
         """
         Finds the time_periods of all available ND2 files associated with the experiment.
@@ -88,33 +100,21 @@ class Experiment(object):
                 time_period = int(match.group("time_period"))
                 log.debug("time_period: %s" % time_period)
                 experiment.add_time_period(time_period)
-        for time_period in self._read_time_period_log(experiment):
+        experiment_log = self._load_experiment_log(experiment)
+        for time_period in experiment_log['time_periods']:
             found = True
             experiment.add_time_period(time_period)
         if not found:
             terminal_error("No ND2s found!")
 
-    @staticmethod
-    def _read_time_period_log(experiment):
-        try:
-            # opening in a+ mode will create the file if it doesn't exist, and we'll just get back no data
-            with open(experiment.data_dir + "/experiment.txt", "a+") as f:
-                data = f.read(-1)
-        except OSError:
-            log.debug("No experiment log file found. Perfectly normal.")
-        else:
-            for time_period in data.split("\n"):
-                if time_period and int(time_period) > 0:
-                    yield int(time_period.strip())
-
-    @staticmethod
-    def _get_nd2_attributes(experiment):
+    def _get_nd2_attributes(self, experiment):
         """
         Determine how many fields of view there are, and whether the ND2s have fluorescent channels.
 
         :type experiment:   model.experiment.Experiment()
 
         """
+        experiment_log = self._load_experiment_log(experiment)
         for nd2_filename in experiment.nd2s:
             try:
                 nd2 = nd2reader.Nd2(nd2_filename)
@@ -122,13 +122,21 @@ class Experiment(object):
                 pass
             else:
                 experiment.field_of_view_count = nd2.field_of_view_count
+                experiment_log['field_of_view_count'] = nd2.field_of_view_count
+                experiment_log['has_fluorescent_channels'] = False
                 for channel in nd2.channels:
                     if channel.name != "":
                         log.info("Experiment has fluorescent channels.")
                         experiment.has_fluorescent_channels = True
+                        experiment_log['has_fluorescent_channels'] = True
                         break
                 else:
                     log.info("Experiment does not have fluorescent channels.")
+                self._save_experiment_log(experiment, experiment_log)
                 break
         else:
-            terminal_error("Could not get the field of view count. Maybe all the ND2s are missing?")
+
+            if 'field_of_view_count' not in experiment_log.keys() or 'has_fluorescent_channels' not in experiment_log.keys():
+                terminal_error("No ND2s found and no attributes saved. It seems like you haven't even started this experiment.")
+            experiment.field_of_view_count = int(experiment_log['field_of_view_count'])
+            experiment.has_fluorescent_channels = experiment_log['has_fluorescent_channels']
