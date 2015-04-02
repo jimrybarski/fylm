@@ -44,7 +44,7 @@ class Experiment(object):
             try:
                 experiment_log = json.load(f)
             except ValueError:
-                experiment_log = {}
+                experiment_log = {'time_periods': []}
             return experiment_log
 
     def _save_experiment_log(self, experiment, experiment_log):
