@@ -1,8 +1,6 @@
-FYLM Critic
+![alt tag](https://raw.github.com/jimrybarski/fylm/dev/fylmcritic.png)
 ====
 Extracts data from Fission Yeast Lifespan Microdissector images.
-
-![alt tag](https://raw.github.com/jimrybarski/fylm/dev/fylmcritic.png)
 
 ### Installation
 
