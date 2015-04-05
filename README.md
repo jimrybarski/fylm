@@ -2,6 +2,8 @@ FYLM Critic
 ====
 Extracts data from Fission Yeast Lifespan Microdissector images.
 
+![alt tag](https://raw.github.com/jimrybarski/fylm/dev/fylmcritic.png)
+
 ### Installation
 
 fylm_critic has only been run on Ubuntu 14.04. Use other operating systems only if you really
