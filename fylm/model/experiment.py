@@ -1,4 +1,3 @@
-from datetime import datetime
 from fylm.service.errors import terminal_error
 import logging
 import re
@@ -58,14 +57,8 @@ class Experiment(object):
         return self._exact_start_time
 
     @start_unix_timestamp.setter
-    def start_unix_timestamp(self, date):
-        """
-
-        :param date:     the datetime stored in the ND2 metadata
-        :type date:      datetime.datetime()
-
-        """
-        self._exact_start_time = time.mktime(tuple(date.utctimetuple())) - time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0))
+    def start_unix_timestamp(self, unix_timestamp):
+        self._exact_start_time = int(unix_timestamp)
 
     @property
     def version(self):

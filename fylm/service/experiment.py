@@ -5,6 +5,7 @@ import json
 import os
 import re
 import nd2reader
+import time
 
 log = logging.getLogger(__name__)
 
@@ -122,8 +123,12 @@ class Experiment(object):
                 pass
             else:
                 if nd2_filename.endswith("001.nd2"):
-                    experiment.start_unix_timestamp = nd2.absolute_start
-                    experiment_log['start_unix_timestamp'] = experiment.start_unix_timestamp
+                    start_timestamp = self._utc_timestamp(experiment.start_unix_timestamp)
+
+                    # Setting timestamp here for the first time. Is this right?
+
+                    experiment.start_unix_timestamp = start_timestamp
+                    experiment_log['start_unix_timestamp'] = start_timestamp
                 experiment.field_of_view_count = nd2.field_of_view_count
                 experiment_log['field_of_view_count'] = nd2.field_of_view_count
                 experiment_log['has_fluorescent_channels'] = False
@@ -138,8 +143,14 @@ class Experiment(object):
                 self._save_experiment_log(experiment, experiment_log)
                 break
         else:
-
             if 'field_of_view_count' not in experiment_log.keys() or 'has_fluorescent_channels' not in experiment_log.keys():
                 terminal_error("No ND2s found and no attributes saved. It seems like you haven't even started this experiment.")
             experiment.field_of_view_count = int(experiment_log['field_of_view_count'])
             experiment.has_fluorescent_channels = experiment_log['has_fluorescent_channels']
+            experiment.start_unix_timestamp = experiment_log['start_unix_timestamp']
+
+    def _utc_timestamp(self, date):
+
+        # We're converting stuff here. Is it good?
+
+        return time.mktime(tuple(date.utctimetuple())) - time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0))
