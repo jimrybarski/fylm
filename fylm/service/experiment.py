@@ -121,6 +121,9 @@ class Experiment(object):
             except IOError:
                 pass
             else:
+                if nd2_filename.endswith("001.nd2"):
+                    experiment.start_unix_timestamp = nd2.absolute_start
+                    experiment_log['start_unix_timestamp'] = experiment.start_unix_timestamp
                 experiment.field_of_view_count = nd2.field_of_view_count
                 experiment_log['field_of_view_count'] = nd2.field_of_view_count
                 experiment_log['has_fluorescent_channels'] = False

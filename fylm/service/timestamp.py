@@ -4,6 +4,7 @@ from fylm.service.base import BaseSetService
 from fylm.service.utilities import timer
 import logging
 import nd2reader
+import time
 
 log = logging.getLogger(__name__)
 
@@ -23,6 +24,10 @@ class TimestampSet(BaseSetService):
         """
         Writes missing timestamp files.
 
+        So the first ND2 starts at 2015-11-13 16:53:12.
+        The second ND2 starts at 2015-11-14 17:01:43.
+
+
         :type timestamps_model: fylm.model.Timestamps()
 
         """
@@ -30,14 +35,14 @@ class TimestampSet(BaseSetService):
             previous_model = Timestamps()
             previous_model.base_path = timestamps_model.base_path
             previous_model.time_period = timestamps_model.time_period - 1
-            previous_model.field_of_view = timestamps_model.field_of_view
+            previous_model.field_of_view = 8
             reader = Reader()
             reader.read(previous_model)
             last_timestamp = previous_model.last
         else:
             last_timestamp = 0.0
         log.info("Creating timestamps for time_period:%s, Field of View:%s" % (timestamps_model.time_period,
-                                                                             timestamps_model.field_of_view))
+                                                                               timestamps_model.field_of_view))
         nd2_filename = self._experiment.get_nd2_from_time_period(timestamps_model.time_period)
         nd2 = nd2reader.Nd2(nd2_filename)
         # subtract 1 from the field of view since nd2reader uses 0-based indexing, but we

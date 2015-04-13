@@ -1,6 +1,8 @@
+from datetime import datetime
 from fylm.service.errors import terminal_error
 import logging
 import re
+import time
 
 
 log = logging.getLogger(__name__)
@@ -38,11 +40,32 @@ class Experiment(object):
 
         """
         self._start_date = None
+        self._exact_start_time = None
         self._base_dir = None
         self.has_fluorescent_channels = False
         self._time_periods = set()
         self.field_of_view_count = None
         self._version = None
+
+    @property
+    def start_unix_timestamp(self):
+        """
+        The Unix timestamp of the exact moment when the acquisition began.
+
+        :return:    int
+
+        """
+        return self._exact_start_time
+
+    @start_unix_timestamp.setter
+    def start_unix_timestamp(self, date):
+        """
+
+        :param date:     the datetime stored in the ND2 metadata
+        :type date:      datetime.datetime()
+
+        """
+        self._exact_start_time = time.mktime(tuple(date.utctimetuple())) - time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0))
 
     @property
     def version(self):
