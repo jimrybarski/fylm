@@ -1,6 +1,7 @@
 from fylm.service.errors import terminal_error
 import logging
 import re
+import time
 
 
 log = logging.getLogger(__name__)
@@ -38,11 +39,24 @@ class Experiment(object):
 
         """
         self._start_date = None
+        self._exact_start_times = {}
         self._base_dir = None
         self.has_fluorescent_channels = False
         self._time_periods = set()
         self.field_of_view_count = None
         self._version = None
+
+    def exact_start_time(self, time_period):
+        """
+        The Unix timestamp of the exact moment when the acquisition began.
+
+        :return:    int
+
+        """
+        return self._exact_start_times[str(time_period)]
+
+    def set_time_period_start_time(self, time_period, absolute_unix_timestamp):
+        self._exact_start_times[str(time_period)] = int(absolute_unix_timestamp)
 
     @property
     def version(self):

@@ -5,6 +5,7 @@ import json
 import os
 import re
 import nd2reader
+import time
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class Experiment(object):
             try:
                 experiment_log = json.load(f)
             except ValueError:
-                experiment_log = {'time_periods': []}
+                experiment_log = {'time_periods': [], 'start_unix_timestamps': {}}
             return experiment_log
 
     def _save_experiment_log(self, experiment, experiment_log):
@@ -109,18 +110,26 @@ class Experiment(object):
 
     def _get_nd2_attributes(self, experiment):
         """
-        Determine how many fields of view there are, and whether the ND2s have fluorescent channels.
+        Determine several attributes of the ND2s used in this experiment.
 
         :type experiment:   model.experiment.Experiment()
 
         """
         experiment_log = self._load_experiment_log(experiment)
-        for nd2_filename in experiment.nd2s:
+        found_an_nd2 = False
+        for n, nd2_filename in enumerate(experiment.nd2s):
             try:
                 nd2 = nd2reader.Nd2(nd2_filename)
             except IOError:
                 pass
             else:
+                # We need to know the absolute time that an experiment began so we can figure out the gap between
+                # different files (as that could be any amount of time).
+                timestamp = self._utc_timestamp(nd2.absolute_start)
+                time_period = n + 1
+                experiment.set_time_period_start_time(time_period, timestamp)
+                experiment_log['start_unix_timestamps'][str(time_period)] = timestamp
+
                 experiment.field_of_view_count = nd2.field_of_view_count
                 experiment_log['field_of_view_count'] = nd2.field_of_view_count
                 experiment_log['has_fluorescent_channels'] = False
@@ -133,10 +142,16 @@ class Experiment(object):
                 else:
                     log.info("Experiment does not have fluorescent channels.")
                 self._save_experiment_log(experiment, experiment_log)
-                break
-        else:
+                found_an_nd2 = True
 
+        if not found_an_nd2:
+            # There are no ND2s so we load all the information we need from the log.
             if 'field_of_view_count' not in experiment_log.keys() or 'has_fluorescent_channels' not in experiment_log.keys():
                 terminal_error("No ND2s found and no attributes saved. It seems like you haven't even started this experiment.")
             experiment.field_of_view_count = int(experiment_log['field_of_view_count'])
             experiment.has_fluorescent_channels = experiment_log['has_fluorescent_channels']
+            for time_period, timestamp in experiment_log['start_unix_timestamps'].items():
+                experiment.set_time_period_start_time(time_period, timestamp)
+
+    def _utc_timestamp(self, date):
+        return time.mktime(tuple(date.utctimetuple())) - time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0))
