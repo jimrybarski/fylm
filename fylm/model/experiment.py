@@ -53,10 +53,10 @@ class Experiment(object):
         :return:    int
 
         """
-        return self._exact_start_times[time_period]
+        return self._exact_start_times[str(time_period)]
 
     def set_time_period_start_time(self, time_period, absolute_unix_timestamp):
-        self._exact_start_times[int(time_period)] = int(absolute_unix_timestamp)
+        self._exact_start_times[str(time_period)] = int(absolute_unix_timestamp)
 
     @property
     def version(self):

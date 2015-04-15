@@ -125,12 +125,10 @@ class Experiment(object):
             else:
                 # We need to know the absolute time that an experiment began so we can figure out the gap between
                 # different files (as that could be any amount of time).
-                log.debug("ABSTART %s" % nd2.absolute_start)
-
                 timestamp = self._utc_timestamp(nd2.absolute_start)
                 time_period = n + 1
                 experiment.set_time_period_start_time(time_period, timestamp)
-                experiment_log['start_unix_timestamps'][time_period] = timestamp
+                experiment_log['start_unix_timestamps'][str(time_period)] = timestamp
 
                 experiment.field_of_view_count = nd2.field_of_view_count
                 experiment_log['field_of_view_count'] = nd2.field_of_view_count
@@ -156,7 +154,4 @@ class Experiment(object):
                 experiment.set_time_period_start_time(time_period, timestamp)
 
     def _utc_timestamp(self, date):
-
-        # We're converting stuff here. Is it good?
-
         return time.mktime(tuple(date.utctimetuple())) - time.mktime((1970, 1, 1, 0, 0, 0, 0, 0, 0))
