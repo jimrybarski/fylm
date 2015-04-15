@@ -31,16 +31,10 @@ class TimestampSet(BaseSetService):
         :type timestamps_model: fylm.model.Timestamps()
 
         """
-        if timestamps_model.time_period > 1:
-            previous_model = Timestamps()
-            previous_model.base_path = timestamps_model.base_path
-            previous_model.time_period = timestamps_model.time_period - 1
-            previous_model.field_of_view = 8
-            reader = Reader()
-            reader.read(previous_model)
-            last_timestamp = previous_model.last
-        else:
-            last_timestamp = 0.0
+        # ND2 timestamps are relative to the beginning of acquisition of a single time period. So to get the true timestamp
+        # we need to look at the datetime that each ND2 began and compare it to the first ND2. This will be zero for the
+        # first one.
+        timestamp_offset = self._experiment.exact_start_time(timestamps_model.time_period) - self._experiment.exact_start_time(1)
         log.info("Creating timestamps for time_period:%s, Field of View:%s" % (timestamps_model.time_period,
                                                                                timestamps_model.field_of_view))
         nd2_filename = self._experiment.get_nd2_from_time_period(timestamps_model.time_period)
@@ -51,4 +45,4 @@ class TimestampSet(BaseSetService):
                                         channels=[""],
                                         z_levels=[0]):
             image = [i for i in image_set][0]
-            timestamps_model.add(image.timestamp + last_timestamp)
+            timestamps_model.add(image.timestamp + timestamp_offset)

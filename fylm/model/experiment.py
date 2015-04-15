@@ -39,26 +39,24 @@ class Experiment(object):
 
         """
         self._start_date = None
-        self._exact_start_time = None
+        self._exact_start_times = {}
         self._base_dir = None
         self.has_fluorescent_channels = False
         self._time_periods = set()
         self.field_of_view_count = None
         self._version = None
 
-    @property
-    def start_unix_timestamp(self):
+    def exact_start_time(self, time_period):
         """
         The Unix timestamp of the exact moment when the acquisition began.
 
         :return:    int
 
         """
-        return self._exact_start_time
+        return self._exact_start_times[time_period]
 
-    @start_unix_timestamp.setter
-    def start_unix_timestamp(self, unix_timestamp):
-        self._exact_start_time = int(unix_timestamp)
+    def set_time_period_start_time(self, time_period, absolute_unix_timestamp):
+        self._exact_start_times[int(time_period)] = int(absolute_unix_timestamp)
 
     @property
     def version(self):
