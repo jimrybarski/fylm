@@ -124,6 +124,8 @@ class Experiment(object):
             else:
                 # We need to know the absolute time that an experiment began so we can figure out the gap between
                 # different files (as that could be any amount of time).
+                log.debug("ABSTART %s" % nd2.absolute_start)
+
                 timestamp = self._utc_timestamp(nd2.absolute_start)
                 time_period = n + 1
                 experiment.set_time_period_start_time(time_period, timestamp)
