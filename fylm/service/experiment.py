@@ -116,6 +116,7 @@ class Experiment(object):
 
         """
         experiment_log = self._load_experiment_log(experiment)
+        found_an_nd2 = False
         for n, nd2_filename in enumerate(experiment.nd2s):
             try:
                 nd2 = nd2reader.Nd2(nd2_filename)
@@ -143,8 +144,9 @@ class Experiment(object):
                 else:
                     log.info("Experiment does not have fluorescent channels.")
                 self._save_experiment_log(experiment, experiment_log)
-                break
-        else:
+                found_an_nd2 = True
+
+        if not found_an_nd2:
             # There are no ND2s so we load all the information we need from the log.
             if 'field_of_view_count' not in experiment_log.keys() or 'has_fluorescent_channels' not in experiment_log.keys():
                 terminal_error("No ND2s found and no attributes saved. It seems like you haven't even started this experiment.")
