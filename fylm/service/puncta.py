@@ -123,3 +123,6 @@ class PunctaSet(BaseSetService):
         if image is not None:
             puncta.image_slice.set_image(image)
             puncta.update_image(image_set.timestamp)
+            log.debug("added image for puncta fov %s chan %s at %s" % (puncta.field_of_view,
+                                                                       puncta.channel_number,
+                                                                       image_set.timestamp))
