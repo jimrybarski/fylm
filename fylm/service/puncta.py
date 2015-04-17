@@ -1,106 +1,125 @@
-from fylm.service.base import BaseSetService
-from fylm.service.location import LocationSet as LocationService
 from fylm.model.location import LocationSet
-from fylm.service.annotation import AnnotationSet as AnnotationService
-from fylm.model.annotation import KymographAnnotationSet
-from fylm.service.kymograph import KymographSet as KymographService
-from fylm.model.kymograph import KymographSet
-from fylm.service.utilities import timer
-import logging
 from fylm.service.image_reader import ImageReader
-import numpy as np
-from skimage import measure, draw
-import skimage.io
+from fylm.service.annotation import AnnotationSet as AnnotationSetService
+from fylm.model.annotation import KymographAnnotationSet
+from fylm.model.kymograph import KymographSet
+from fylm.service.kymograph import KymographSet as KymographSetService
+from fylm.service.base import BaseSetService
+from fylm.service.utilities import timer
+from fylm.model.constants import Constants
+import logging
+import matplotlib.pyplot as plt
+from matplotlib import cm
+import os
+import subprocess
 
 log = logging.getLogger(__name__)
 
 
-class FluorescenceSet(BaseSetService):
+class PunctaModel(object):
+    def __init__(self):
+        self._frames = []
+        self.image_slice = None
+        self.time_period = None
+        self.field_of_view = None
+        self.catch_channel_number = None
+        self._timestamps = []
+
+    def update_image(self, timestamp):
+        self._frames.append(self.image_slice.image_data)
+        self._timestamps.append(timestamp)
+
+    @property
+    def data(self):
+        return self._frames
+
+
+class PunctaSet(BaseSetService):
     """
-    Determines the rotational skew of an image.
+    Creates a movie for each catch channel, with every zoom level and fluorescence channel in each frame.
+    This works by iterating over the ND2, extracting the image of each channel for all dimensions, and saving
+    a PNG file. When every frame has been extracted, we use mencoder to combine the still images into a movie
+    and then delete the PNGs.
+
+    The videos end up losing some information so this is mostly just for debugging and for help with annotating
+    kymographs when weird things show up, as well as for figures, potentially.
+
+    Previously we had some functionality that would add orange arrows to point out the cell pole positions if the
+    annotations had been done. That was removed temporarily when this module was refactored but we intend to add it
+    back in soon.
 
     """
     def __init__(self, experiment):
-        super(FluorescenceSet, self).__init__()
+        super(PunctaSet, self).__init__()
+        self._name = "puncta"
         self._experiment = experiment
-        self._annotation_set = KymographAnnotationSet(experiment)
-        kymograph_set = KymographSet(experiment)
-        KymographService(experiment).load_existing_models(kymograph_set)
-        self._annotation_set.kymograph_set = kymograph_set
-        AnnotationService(experiment).load_existing_models(self._annotation_set)
         self._location_set = LocationSet(experiment)
-        LocationService(experiment).load_existing_models(self._location_set)
-        self._name = "fluorescence analyses"
+        self._annotation_service = AnnotationSetService(experiment)
+        self._annotation = KymographAnnotationSet(experiment)
+        kymograph_service = KymographSetService(experiment)
+        kymograph_set = KymographSet(experiment)
+        kymograph_service.load_existing_models(kymograph_set)
+        self._annotation.kymograph_set = kymograph_set
+
+    def save(self):
+        """
+        Tracks puncta in fluorescent channels.
+
+        """
+        self._action(self._experiment.time_periods)
 
     @timer
-    def save_action(self, fl_model):
+    def _action(self, time_periods):
         """
-        Calculates the fluorescence intensity for a catch channel.
+        Acquires all the movie objects that need to be created, sets up some variables, and gets the movies made.
 
-        :type fl_model:   fylm.model.fluorescence.Fluorescence()
+        :param time_periods: list of int
+
+        :return:    bool
 
         """
-        log.debug("Creating fluorescence file %s" % fl_model.filename)
+        for field_of_view in self._experiment.fields_of_view:
+            log.info("Making movies for fov: %s" % field_of_view)
+            self._analyze_puncta(time_periods, field_of_view)
 
-        try:
-            # figure out where the channel is and get the pole coordinates for each frame
-            location_model = self._location_set.get_model(fl_model.field_of_view)
-            image_slice = location_model.get_image_slice(fl_model.channel_number)
-            if not image_slice:
-                return True
-            channel_annotation = self._annotation_set.get_model(fl_model.field_of_view, fl_model.channel_number)
-            image_reader = ImageReader(self._experiment)
-            image_reader.field_of_view = fl_model.field_of_view
-            image_reader.time_period = fl_model.time_period
-        except IndexError:
-            pass
-        else:
-            # image_set gives us access to every image for every filter channel for a single time index
-            for image_set in image_reader:
-                # channel_names are alphabetized
-                for channel_name in image_reader.channel_names:
-                    if channel_name == "":
-                        # we skip the brightfield image since it never shows fluorescence
-                        continue
-                    # we grab the fluorescent image with the in-focus image. There are no out-of-focus fluorescent images
-                    # in our experiments, but we still need to designate this
-                    image = image_set.get_image(channel_name, z_level=1)
-                    if image is None:
-                        # We don't have fluorescent data for this time index. This happens because we don't take fluorescent
-                        # images at the same frequency as bright field, to lower the amount of blue light that the cells
-                        # are exposed to.
-                        continue
-                    # extract the pixels just covering our catch channel
-                    image_slice.set_image(image)
-                    # quantify the fluorescence data
-                    try:
-                        mean, stddev, median, area, centroid = self._measure_fluorescence(fl_model.time_period, image_set.time_index, image_slice, channel_annotation)
-                    # store the data in the model so it can be saved to disk later
-                    except (IndexError, ValueError, TypeError, ZeroDivisionError):
-                        # We won't be able to get data unless the cell poles are defined, so here we silently ignore that.
-                        pass
-                    else:
-                        fl_model.add(image_set.time_index, channel_name, mean, stddev, median, area, centroid)
+    @timer
+    def _analyze_puncta(self, time_periods, field_of_view):
+        """
+        Actually extracts the images from the ND2s, then calls the movie creation method when finished.
 
-    def _measure_fluorescence(self, time_period, time_index, image_slice, channel_annotation):
-        mask = np.zeros((image_slice.height * 2, image_slice.width))
-        old_pole, new_pole = channel_annotation.get_cell_bounds(time_period, time_index)
-        ellipse_minor_radius = int(0.80 * image_slice.height)
-        ellipse_major_radius = int((new_pole - old_pole) / 2.0) * 0.8
-        centroid_y = int(image_slice.height)
-        centroid_x = int((new_pole + old_pole) / 2.0)
-        rr, cc = draw.ellipse(centroid_y, centroid_x, ellipse_minor_radius, ellipse_major_radius)
-        mask[rr, cc] = 1
-        mean, stddev, median, area, centroid = self._calculate_cell_intensity_statistics(mask.astype("int"), image_slice.image_data)
-        return mean, stddev, median, area, centroid
+        :type field_of_view:    int
+
+        :returns:   bool
+
+        """
+        punctas = []
+        for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
+            for location_model in self._location_set.existing:
+                image_slice = location_model.get_image_slice(channel_number)
+                if location_model.get_channel_location(channel_number) and image_slice:
+                    puncta = PunctaModel()
+                    puncta.image_slice = image_slice
+                    puncta.field_of_view = location_model.field_of_view
+                    puncta.catch_channel_number = channel_number
+                    log.debug("New puncta obj: fov %s channel %s" % (field_of_view, channel_number))
+                    punctas.append(puncta)
+
+        # Make ImageReader only show us the relevant images
+        image_reader = ImageReader(self._experiment)
+        image_reader.field_of_view = field_of_view
+
+        # Iterate over the images, extract the movie frames, and save them to disk
+        for time_period in xrange(time_periods):
+            log.debug("Puncta Time period %s" % time_period)
+            image_reader.time_period = time_period
+            for n, image_set in enumerate(image_reader):
+                log.debug("image #%s" % n)
+                for puncta in punctas:
+                    self._update_image_data(puncta, image_set)
 
     @staticmethod
-    def _calculate_cell_intensity_statistics(mask, fluorescent_image_data):
-        # assert fluorescent_image_data.dtype == "float64"
-        assert np.max(mask) == 1  # If no cell was identified, raise an exception
-        masked_cell = np.ma.array(fluorescent_image_data, mask=mask == 0)
-        region_properties = list(measure.regionprops(mask))
-        assert len(region_properties) == 1
-        properties = region_properties[0]
-        centroid = int(properties.centroid[1])
-        return np.ma.mean(masked_cell), np.ma.std(masked_cell), np.ma.median(masked_cell)[0], np.ma.sum(mask), centroid1
+    def _update_image_data(puncta, image_set):
+        image = image_set.get_image("GFP", 1)
+        if image is not None:
+            puncta.image_slice.set_image(image)
+            puncta.update_image(image_set.timestamp)
