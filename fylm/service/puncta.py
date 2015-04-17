@@ -120,6 +120,9 @@ class PunctaSet(BaseSetService):
             t1 = tp.filter_stubs(t, 50)
             log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t['particle'].nunique()))
             log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t1['particle'].nunique()))
+            # TODO: Filter out puncta outside of cell bounds!
+            # TODO: Write results to disk!
+            # TODO: Add CLI flag to do just this!
 
     @staticmethod
     def _update_image_data(puncta, image_set):
