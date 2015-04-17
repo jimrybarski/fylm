@@ -8,10 +8,7 @@ from fylm.service.base import BaseSetService
 from fylm.service.utilities import timer
 from fylm.model.constants import Constants
 import logging
-import matplotlib.pyplot as plt
-from matplotlib import cm
-import os
-import subprocess
+import trackpy as tp
 
 log = logging.getLogger(__name__)
 
@@ -116,6 +113,13 @@ class PunctaSet(BaseSetService):
                 log.debug("image #%s" % n)
                 for puncta in punctas:
                     self._update_image_data(puncta, image_set)
+
+        for puncta in punctas:
+            f = tp.batch(puncta.data, 3, minmass=500)
+            t = tp.link_df(f, 5, memory=3)
+            t1 = tp.filter_stubs(t, 50)
+            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t['particle'].nunique()))
+            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t1['particle'].nunique()))
 
     @staticmethod
     def _update_image_data(puncta, image_set):
