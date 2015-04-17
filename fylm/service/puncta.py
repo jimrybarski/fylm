@@ -10,6 +10,7 @@ from fylm.service.utilities import timer
 from fylm.model.constants import Constants
 import logging
 import trackpy as tp
+import skimage.io
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +66,6 @@ class PunctaSet(BaseSetService):
         Tracks puncta in fluorescent channels.
 
         """
-        log.debug("Yeah son doing some puncta analysis what what")
         self._action(self._experiment.time_periods)
 
     @timer
@@ -96,7 +96,7 @@ class PunctaSet(BaseSetService):
         for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
             for location_model in self._location_set.existing:
                 image_slice = location_model.get_image_slice(channel_number)
-                if location_model.get_channel_location(channel_number) and image_slice:
+                if location_model.get_channel_location(channel_number) and image_slice and location_model.field_of_view == field_of_view:
                     puncta = PunctaModel()
                     puncta.image_slice = image_slice
                     puncta.field_of_view = location_model.field_of_view
@@ -108,33 +108,36 @@ class PunctaSet(BaseSetService):
         image_reader.field_of_view = field_of_view
 
         # Iterate over the images, extract the movie frames, and save them to disk
-        for time_period in time_periods:
-            for puncta in punctas:
+        for puncta in punctas:
+            for time_period in [1]:
                 image_reader.time_period = time_period
                 for name in image_reader.channel_names:
                     log.debug(name)
 
                 image_reader.time_period = time_period
-                print(float(len(image_reader)))
-
                 for n, image_set in enumerate(image_reader):
-
                     log.debug("FOV %s: %0.2f%%" % (image_reader.field_of_view, 100.0 * float(n) / float(len(image_reader))))
                     if puncta.field_of_view == image_reader.field_of_view:
                         self._update_image_data(puncta, image_set)
 
-        log.debug("\n\n\n")
-        log.debug("******** TRACKPY TIME ***********")
-        log.debug("\n\n\n")
-        for puncta in punctas:
-            f = tp.batch(puncta.data, 3, minmass=500)
-            t = tp.link_df(f, 5, memory=3)
+            log.debug(puncta.data)
+            log.debug("pd len: %s" % len(puncta.data))
+            log.debug("\n\n\n")
+            log.debug("******** TRACKPY TIME ***********")
+            log.debug("\n\n\n")
+            f = tp.batch(puncta.data, 3, minmass=100)
+            t = tp.link_df(f, 10, memory=3)
             t1 = tp.filter_stubs(t, 50)
-            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t['particle'].nunique()))
-            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t1['particle'].nunique()))
+            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t['particle'].nunique()))
+            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t1['particle'].nunique()))
+            print(t.head())
+            tp.mass_size(t.groupby('particle').mean())
+            print(t1.head())
+            tp.mass_size(t1.groupby('particle').mean())
 
             # TODO: Filter out puncta outside of cell bounds!
             # TODO: Write results to disk!
+            exit()
 
 
     @staticmethod
@@ -143,6 +146,3 @@ class PunctaSet(BaseSetService):
         if image is not None:
             puncta.image_slice.set_image(image)
             puncta.update_image(image_set.timestamp)
-            #log.debug("added image for puncta fov %s chan %s at %s" % (puncta.field_of_view,
-            #                                                           puncta.catch_channel_number,
-            #                                                           image_set.timestamp))
