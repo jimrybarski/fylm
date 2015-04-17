@@ -62,6 +62,7 @@ try:
                # "fluorescence": act.quantify_fluorescence,
                "output": act.generate_output,
                "summary": act.generate_summary,
+               "puncta": act.analyze_puncta,
                }
 
     action_args = {"movies": (args.movies,)}

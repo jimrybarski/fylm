@@ -1,4 +1,5 @@
 from fylm.model.location import LocationSet
+from fylm.service.location import LocationSet as LocationService
 from fylm.service.image_reader import ImageReader
 from fylm.service.annotation import AnnotationSet as AnnotationSetService
 from fylm.model.annotation import KymographAnnotationSet
@@ -51,6 +52,7 @@ class PunctaSet(BaseSetService):
         self._name = "puncta"
         self._experiment = experiment
         self._location_set = LocationSet(experiment)
+        LocationService(self._experiment).load_existing_models(self._location_set)
         self._annotation_service = AnnotationSetService(experiment)
         self._annotation = KymographAnnotationSet(experiment)
         kymograph_service = KymographSetService(experiment)
@@ -63,6 +65,7 @@ class PunctaSet(BaseSetService):
         Tracks puncta in fluorescent channels.
 
         """
+        log.debug("Yeah son doing some puncta analysis what what")
         self._action(self._experiment.time_periods)
 
     @timer
@@ -75,9 +78,9 @@ class PunctaSet(BaseSetService):
         :return:    bool
 
         """
-        for field_of_view in self._experiment.fields_of_view:
-            log.info("Making movies for fov: %s" % field_of_view)
-            self._analyze_puncta(time_periods, field_of_view)
+        # for field_of_view in self._experiment.fields_of_view:
+        #     self._analyze_puncta(time_periods, field_of_view)
+        self._analyze_puncta(time_periods, 0)
 
     @timer
     def _analyze_puncta(self, time_periods, field_of_view):
@@ -98,7 +101,6 @@ class PunctaSet(BaseSetService):
                     puncta.image_slice = image_slice
                     puncta.field_of_view = location_model.field_of_view
                     puncta.catch_channel_number = channel_number
-                    log.debug("New puncta obj: fov %s channel %s" % (field_of_view, channel_number))
                     punctas.append(puncta)
 
         # Make ImageReader only show us the relevant images
@@ -106,23 +108,34 @@ class PunctaSet(BaseSetService):
         image_reader.field_of_view = field_of_view
 
         # Iterate over the images, extract the movie frames, and save them to disk
-        for time_period in xrange(time_periods):
-            log.debug("Puncta Time period %s" % time_period)
-            image_reader.time_period = time_period
-            for n, image_set in enumerate(image_reader):
-                log.debug("image #%s" % n)
-                for puncta in punctas:
-                    self._update_image_data(puncta, image_set)
+        for time_period in time_periods:
+            for puncta in punctas:
+                image_reader.time_period = time_period
+                for name in image_reader.channel_names:
+                    log.debug(name)
 
+                image_reader.time_period = time_period
+                print(float(len(image_reader)))
+
+                for n, image_set in enumerate(image_reader):
+
+                    log.debug("FOV %s: %0.2f%%" % (image_reader.field_of_view, 100.0 * float(n) / float(len(image_reader))))
+                    if puncta.field_of_view == image_reader.field_of_view:
+                        self._update_image_data(puncta, image_set)
+
+        log.debug("\n\n\n")
+        log.debug("******** TRACKPY TIME ***********")
+        log.debug("\n\n\n")
         for puncta in punctas:
             f = tp.batch(puncta.data, 3, minmass=500)
             t = tp.link_df(f, 5, memory=3)
             t1 = tp.filter_stubs(t, 50)
             log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t['particle'].nunique()))
             log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.channel_number, t1['particle'].nunique()))
+
             # TODO: Filter out puncta outside of cell bounds!
             # TODO: Write results to disk!
-            # TODO: Add CLI flag to do just this!
+
 
     @staticmethod
     def _update_image_data(puncta, image_set):
@@ -130,6 +143,6 @@ class PunctaSet(BaseSetService):
         if image is not None:
             puncta.image_slice.set_image(image)
             puncta.update_image(image_set.timestamp)
-            log.debug("added image for puncta fov %s chan %s at %s" % (puncta.field_of_view,
-                                                                       puncta.channel_number,
-                                                                       image_set.timestamp))
+            #log.debug("added image for puncta fov %s chan %s at %s" % (puncta.field_of_view,
+            #                                                           puncta.catch_channel_number,
+            #                                                           image_set.timestamp))

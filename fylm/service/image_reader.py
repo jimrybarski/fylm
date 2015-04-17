@@ -62,7 +62,7 @@ class ImageReader(object):
 
     @property
     def channel_names(self):
-        return self._nd2.channel_names
+        return self.nd2.channel_names
 
     @property
     def field_of_view(self):
