@@ -61,83 +61,63 @@ class PunctaSet(BaseSetService):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
 
-    def save(self):
+    def save(self, time_period, field_of_view, channel_number):
         """
-        Tracks puncta in fluorescent channels.
-
-        """
-        self._action(self._experiment.time_periods)
-
-    @timer
-    def _action(self, time_periods):
-        """
-        Acquires all the movie objects that need to be created, sets up some variables, and gets the movies made.
-
-        :param time_periods: list of int
-
-        :return:    bool
+        Analyzes puncta.
 
         """
-        # for field_of_view in self._experiment.fields_of_view:
-        #     self._analyze_puncta(time_periods, field_of_view)
-        self._analyze_puncta(time_periods, 0)
-
-    @timer
-    def _analyze_puncta(self, time_periods, field_of_view):
-        """
-        Actually extracts the images from the ND2s, then calls the movie creation method when finished.
-
-        :type field_of_view:    int
-
-        :returns:   bool
-
-        """
-        punctas = []
-        for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
-            for location_model in self._location_set.existing:
+        for location_model in self._location_set.existing:
+            if location_model.field_of_view == field_of_view:
                 image_slice = location_model.get_image_slice(channel_number)
-                if location_model.get_channel_location(channel_number) and image_slice and location_model.field_of_view == field_of_view:
+                if location_model.get_channel_location(channel_number) and image_slice:
                     puncta = PunctaModel()
                     puncta.image_slice = image_slice
                     puncta.field_of_view = location_model.field_of_view
                     puncta.catch_channel_number = channel_number
-                    punctas.append(puncta)
+                    break
+        else:
+            log.error("No data for that fov/channel!")
+            exit()
 
-        # Make ImageReader only show us the relevant images
         image_reader = ImageReader(self._experiment)
         image_reader.field_of_view = field_of_view
+        image_reader.time_period = time_period
 
-        # Iterate over the images, extract the movie frames, and save them to disk
-        for puncta in punctas:
-            for time_period in [1]:
-                image_reader.time_period = time_period
-                for name in image_reader.channel_names:
-                    log.debug(name)
+        for n, image_set in enumerate(image_reader):
+            log.debug("FOV %s: %0.2f%%" % (image_reader.field_of_view, 100.0 * float(n) / float(len(image_reader))))
+            self._update_image_data(puncta, image_set)
+            if n > 5:
+                break
 
-                image_reader.time_period = time_period
-                for n, image_set in enumerate(image_reader):
-                    log.debug("FOV %s: %0.2f%%" % (image_reader.field_of_view, 100.0 * float(n) / float(len(image_reader))))
-                    if puncta.field_of_view == image_reader.field_of_view:
-                        self._update_image_data(puncta, image_set)
+        log.debug("\n\n******** TRACKPY TIME ***********\n\n")
+        diameter = 3
+        minmass = 100
+        test_frames = [int(n) for n in xrange(0, len(puncta.data), 2)]
+        log.debug("test frames: %s" % test_frames)
 
-            log.debug(puncta.data)
-            log.debug("pd len: %s" % len(puncta.data))
-            log.debug("\n\n\n")
-            log.debug("******** TRACKPY TIME ***********")
-            log.debug("\n\n\n")
-            f = tp.batch(puncta.data, 3, minmass=100)
-            t = tp.link_df(f, 10, memory=3)
-            t1 = tp.filter_stubs(t, 50)
-            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t['particle'].nunique()))
-            log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t1['particle'].nunique()))
-            print(t.head())
-            tp.mass_size(t.groupby('particle').mean())
-            print(t1.head())
-            tp.mass_size(t1.groupby('particle').mean())
+        while True:
+            for frame in test_frames:
+                image = puncta.data[frame]
+                f = tp.locate(image, diameter, minmass)
+                tp.annotate(f[(f['mass'] > 1.0) & (f['ecc'] < 0.5)], image)
+                print(f.keys())
+            # t = tp.link_df(f, 50, memory=1)
+            # t1 = tp.filter_stubs(t, 50)
+            # log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t['particle'].nunique()))
+            # log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t1['particle'].nunique()))
+            # tp.mass_size(t1.groupby('particle').mean())
 
-            # TODO: Filter out puncta outside of cell bounds!
-            # TODO: Write results to disk!
-            exit()
+            try_again = raw_input("OK? Enter=yes, anything else=no")
+            if not try_again:
+                break
+            diameter = int(raw_input("diameter:"))
+            minmass = int(raw_input("minmass:"))
+
+        log.debug("DONE")
+        # run analysis on every frame
+        f = tp.batch(puncta.data, diameter, minmass=minmass)
+        # dump to csv here
+        print(f)
 
 
     @staticmethod
