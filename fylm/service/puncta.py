@@ -90,34 +90,29 @@ class PunctaSet(BaseSetService):
                 break
 
         log.debug("\n\n******** TRACKPY TIME ***********\n\n")
-        diameter = 3
-        minmass = 100
+        minintensity = 1.0
+        ecc_upper_limit = 0.5
+        minsize = 5
         test_frames = [int(n) for n in xrange(0, len(puncta.data), 2)]
         log.debug("test frames: %s" % test_frames)
 
         while True:
-            for frame in test_frames:
+            for n, frame in enumerate(test_frames):
                 image = puncta.data[frame]
-                f = tp.locate(image, diameter, minmass)
-                tp.annotate(f[(f['mass'] > 1.0) & (f['ecc'] < 0.5)], image)
-                print(f.keys())
-            # t = tp.link_df(f, 50, memory=1)
-            # t1 = tp.filter_stubs(t, 50)
-            # log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t['particle'].nunique()))
-            # log.debug("puncta %s-%s before: %s" % (puncta.field_of_view, puncta.catch_channel_number, t1['particle'].nunique()))
-            # tp.mass_size(t1.groupby('particle').mean())
+                f = tp.locate(image, 15, 1.0)
+                tp.annotate(f[(f['mass'] > minintensity) & (f['ecc'] < ecc_upper_limit) & (f['size'] > minsize)], image)
 
-            try_again = raw_input("OK? Enter=yes, anything else=no")
-            if not try_again:
+            done = raw_input("OK? Enter=no, anything else=yes: ")
+            log.debug("done: %s" % done)
+            if done:
                 break
-            diameter = int(raw_input("diameter:"))
-            minmass = int(raw_input("minmass:"))
+            minintensity = float(raw_input("min intensity (%s): " % minintensity) or minintensity)
+            ecc_upper_limit = float(raw_input("ecc_upper_limit (%s): " % ecc_upper_limit) or ecc_upper_limit)
+            minsize = int(raw_input("min diameter (%s): " % minsize) or minsize)
 
-        log.debug("DONE")
-        # run analysis on every frame
-        f = tp.batch(puncta.data, diameter, minmass=minmass)
-        # dump to csv here
-        print(f)
+        batch = tp.batch(puncta.data, minsize, minintensity)
+        for item in batch.iteritems():
+            print(item[(item['mass'] > minintensity) & (item['ecc'] < ecc_upper_limit) & (item['size'] > minsize)])
 
 
     @staticmethod
