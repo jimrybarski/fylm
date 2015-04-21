@@ -53,7 +53,7 @@ class Output(BaseTextFile):
             # TODO: load fluorescence data here
             for time_index, timestamp in self.timestamp_set.get_data(self.field_of_view, time_period):
                 if self.annotation:
-                    length = self.annotation.get_cell_lengths(time_period, time_index)
+                    length = self.annotation.get_cell_lengths(time_period, time_index - 1)  # fixes off-by-one error
                 else:
                     length = None
                 yield "%s\t%s" % (timestamp, length if length is not None else "NaN")
