@@ -61,7 +61,7 @@ class PunctaSet(BaseSetService):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
 
-    def save(self, time_period, field_of_view, channel_number):
+    def get_batch(self, time_period, field_of_view, channel_number):
         """
         Analyzes puncta.
 
@@ -111,8 +111,27 @@ class PunctaSet(BaseSetService):
             minsize = int(raw_input("min diameter (%s): " % minsize) or minsize)
 
         batch = tp.batch(puncta.data, minsize, minintensity)
-        for item in batch.iteritems():
-            print(item[(item['mass'] > minintensity) & (item['ecc'] < ecc_upper_limit) & (item['size'] > minsize)])
+        return batch
+
+        # for item in batch.iteritems():
+        #     annotation = self._annotation.get_model(field_of_view, channel_number)
+        #     try:
+        #         left, right = annotation.get_cell_bounds(time_period, item['frame'])
+        #     except TypeError:
+        #         # no cell bounds so we can't tell if puncta are in the cell or not
+        #         # in fact there might not be a cell, or it could be dead
+        #         continue
+        #     else:
+        #         print(item[(item['mass'] > minintensity) & (item['ecc'] < ecc_upper_limit) & (item['size'] > minsize)
+        #               & (right >= item['x'] >= left)])
+
+                # THESE MIGHT BE WRONG DEPENDING ON WHAT ITEM IS
+                # percentile_position = (item['x'] - left) / (right - left)
+                # distribution of puncta brightness in space (Do puncta of a certain brightness tend to be found in a certain location?)
+                # distribution of puncta size in space (Do puncta of a certain size tend to be found in a certain location?)
+                # total puncta count over time (Is there a relationship between puncta and aging?)
+                # number of puncta at death (manual)
+                # number of puncta immediately after division
 
 
     @staticmethod
