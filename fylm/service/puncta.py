@@ -6,11 +6,8 @@ from fylm.model.annotation import KymographAnnotationSet
 from fylm.model.kymograph import KymographSet
 from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.service.base import BaseSetService
-from fylm.service.utilities import timer
-from fylm.model.constants import Constants
 import logging
 import trackpy as tp
-import skimage.io
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +58,13 @@ class PunctaSet(BaseSetService):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
 
-    def get_batch(self, time_period, field_of_view, channel_number):
+    def list_channels(self):
+        for location_model in self._location_set.existing:
+            next(location_model.data)
+            for channel_number, locations in location_model.data:
+                print("fov %s channel %s" % (location_model.field_of_view, channel_number))
+
+    def get_data_and_batch(self, field_of_view, channel_number):
         """
         Analyzes puncta.
 
@@ -77,41 +80,37 @@ class PunctaSet(BaseSetService):
                     break
         else:
             log.error("No data for that fov/channel!")
-            exit()
+            return False
 
         image_reader = ImageReader(self._experiment)
         image_reader.field_of_view = field_of_view
-        image_reader.time_period = time_period
 
-        for n, image_set in enumerate(image_reader):
-            log.debug("FOV %s: %0.2f%%" % (image_reader.field_of_view, 100.0 * float(n) / float(len(image_reader))))
-            self._update_image_data(puncta, image_set)
-            if n > 5:
-                break
+        for time_period in self._experiment.time_periods:
+            image_reader.time_period = time_period
+            for n, image_set in enumerate(image_reader):
+                log.debug("TP:%s FOV:%s CH:%s %0.2f%%" % (time_period,
+                                                          image_reader.field_of_view,
+                                                          puncta.catch_channel_number,
+                                                          100.0 * float(n) / float(len(image_reader))))
+                self._update_image_data(puncta, image_set)
+                if n > 8:
+                    break
 
-        log.debug("\n\n******** TRACKPY TIME ***********\n\n")
-        minintensity = 1.0
-        ecc_upper_limit = 0.5
-        minsize = 5
-        test_frames = [int(n) for n in xrange(0, len(puncta.data), 2)]
-        log.debug("test frames: %s" % test_frames)
+        # while True:
+        #     for n, frame in enumerate(test_frames):
+        #         image = puncta.data[frame]
+        #         f = tp.locate(image, 15, 1.0)
+        #         tp.annotate(f[(f['mass'] > minintensity) & (f['ecc'] < ecc_upper_limit) & (f['size'] > minsize)], image)
+        #
+        #     done = raw_input("OK? Enter=no, anything else=yes: ")
+        #     log.debug("done: %s" % done)
+        #     if done:
+        #         break
+        #     minintensity = float(raw_input("min intensity (%s): " % minintensity) or minintensity)
+        #     ecc_upper_limit = float(raw_input("ecc_upper_limit (%s): " % ecc_upper_limit) or ecc_upper_limit)
+        #     minsize = int(raw_input("min diameter (%s): " % minsize) or minsize)
 
-        while True:
-            for n, frame in enumerate(test_frames):
-                image = puncta.data[frame]
-                f = tp.locate(image, 15, 1.0)
-                tp.annotate(f[(f['mass'] > minintensity) & (f['ecc'] < ecc_upper_limit) & (f['size'] > minsize)], image)
-
-            done = raw_input("OK? Enter=no, anything else=yes: ")
-            log.debug("done: %s" % done)
-            if done:
-                break
-            minintensity = float(raw_input("min intensity (%s): " % minintensity) or minintensity)
-            ecc_upper_limit = float(raw_input("ecc_upper_limit (%s): " % ecc_upper_limit) or ecc_upper_limit)
-            minsize = int(raw_input("min diameter (%s): " % minsize) or minsize)
-
-        batch = tp.batch(puncta.data, minsize, minintensity)
-        return batch
+        return puncta.data, tp.batch(puncta.data, 3, 0.01)
 
         # for item in batch.iteritems():
         #     annotation = self._annotation.get_model(field_of_view, channel_number)
@@ -125,13 +124,16 @@ class PunctaSet(BaseSetService):
         #         print(item[(item['mass'] > minintensity) & (item['ecc'] < ecc_upper_limit) & (item['size'] > minsize)
         #               & (right >= item['x'] >= left)])
 
-                # THESE MIGHT BE WRONG DEPENDING ON WHAT ITEM IS
-                # percentile_position = (item['x'] - left) / (right - left)
-                # distribution of puncta brightness in space (Do puncta of a certain brightness tend to be found in a certain location?)
-                # distribution of puncta size in space (Do puncta of a certain size tend to be found in a certain location?)
-                # total puncta count over time (Is there a relationship between puncta and aging?)
-                # number of puncta at death (manual)
-                # number of puncta immediately after division
+        # THESE MIGHT BE WRONG DEPENDING ON WHAT ITEM IS
+        # percentile_position = (item['x'] - left) / (right - left)
+        # distribution of puncta brightness in space (Do puncta of a certain brightness tend to be found in a certain location?)
+        # distribution of puncta size in space (Do puncta of a certain size tend to be found in a certain location?)
+        # total puncta count over time (Is there a relationship between puncta and aging?)
+        # number of puncta at death (manual)
+        # number of puncta immediately after division
+
+    def look(self, puncta_data, frame):
+        tp.annotate(puncta_data, puncta_data[frame])
 
 
     @staticmethod
