@@ -93,8 +93,6 @@ class PunctaSet(BaseSetService):
                                                           puncta.catch_channel_number,
                                                           100.0 * float(n) / float(len(image_reader))))
                 self._update_image_data(puncta, image_set)
-                if n > 8:
-                    break
 
         # while True:
         #     for n, frame in enumerate(test_frames):
