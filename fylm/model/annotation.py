@@ -97,11 +97,10 @@ class ChannelAnnotationGroup(BaseTextFile):
         return self._last_state in ("Empty", "Dies", "Ejected", "Survives")
 
     def skeleton(self, time_period):
-        if self._skeleton is None:
-            kymograph = self.get_image(time_period)
-            self._skeleton = np.zeros(kymograph.shape)
-            for y_list, x_list in self.points(time_period):
-                self._skeleton[y_list, x_list] = 1
+        kymograph = self.get_image(time_period)
+        self._skeleton = np.zeros(kymograph.shape)
+        for y_list, x_list in self.points(time_period):
+            self._skeleton[y_list, x_list] = 1
         return self._skeleton
 
     def get_cell_bounds(self, time_period, time_index):
@@ -118,7 +117,7 @@ class ChannelAnnotationGroup(BaseTextFile):
         else:
             row = skeleton[time_index]
             pole_locations = np.nonzero(row)[0]
-            if np.sum(pole_locations) > 1:
+            if pole_locations.shape[0] > 1:
                 return pole_locations[0], pole_locations[1]
             else:
                 return None
