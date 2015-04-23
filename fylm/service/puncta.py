@@ -12,7 +12,7 @@ import trackpy as tp
 log = logging.getLogger(__name__)
 
 
-class PunctaModel(object):
+class PunctaDataModel(object):
     def __init__(self):
         self._frames = []
         self.image_slice = None
@@ -20,14 +20,51 @@ class PunctaModel(object):
         self.field_of_view = None
         self.catch_channel_number = None
         self._timestamps = []
+        self.annotation = None
+        self.diameter = 3
+        self.intensity = .5
+        self.ecc = 0.2
+        self.minsize = 100
 
-    def update_image(self, timestamp):
+    def update_image(self, image, timestamp):
+        self.image_slice.set_image(image)
         self._frames.append(self.image_slice.image_data)
         self._timestamps.append(timestamp)
 
+    def look(self, frame):
+        bounds = self.get_cell_bounds(frame)
+        if not bounds:
+            log.info("No cell bounds for that frame, cell is missing or dead at that point.")
+            return False
+        left, right = bounds
+        log.debug("l,r %s %s" % (left, right))
+        f = tp.locate(self._frames[frame], self.diameter, minmass=3)
+        log.debug(f)
+        log.debug("first f: %s" % len(f))
+        f = f[(f['mass'] > self.intensity)]
+        # log.debug("second f: %s" % len(f))
+        # f = f[(f['ecc'] < self.ecc)]
+        # log.debug("third f: %s" % len(f))
+        # f = f[(f['size'] > self.minsize)]
+        log.debug("fourth f: %s" % len(f))
+        f = f[(f['x'] < right)]
+        log.debug("fifth f: %s" % len(f))
+        f = f[(f['x'] > left)]
+        log.debug("sixth f: %s" % len(f))
+
+        tp.annotate(f, self._frames[frame])
+
+    def get_cell_bounds(self, frame):
+        try:
+            left, right = self.annotation.get_cell_bounds(self.time_period, frame)
+        except TypeError:
+            return None
+        else:
+            return left, right
+
     @property
-    def data(self):
-        return self._frames
+    def batch(self):
+        return tp.batch(self._frames, self.diameter, self.intensity)
 
 
 class PunctaSet(BaseSetService):
@@ -57,6 +94,7 @@ class PunctaSet(BaseSetService):
         kymograph_set = KymographSet(experiment)
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
+        self._annotation_service.load_existing_models(self._annotation)
 
     def list_channels(self):
         for location_model in self._location_set.existing:
@@ -64,7 +102,7 @@ class PunctaSet(BaseSetService):
             for channel_number, locations in location_model.data:
                 print("fov %s channel %s" % (location_model.field_of_view, channel_number))
 
-    def get_data_and_batch(self, field_of_view, channel_number):
+    def get_puncta_data(self, time_period, field_of_view, channel_number):
         """
         Analyzes puncta.
 
@@ -73,7 +111,7 @@ class PunctaSet(BaseSetService):
             if location_model.field_of_view == field_of_view:
                 image_slice = location_model.get_image_slice(channel_number)
                 if location_model.get_channel_location(channel_number) and image_slice:
-                    puncta = PunctaModel()
+                    puncta = PunctaDataModel()
                     puncta.image_slice = image_slice
                     puncta.field_of_view = location_model.field_of_view
                     puncta.catch_channel_number = channel_number
@@ -82,17 +120,25 @@ class PunctaSet(BaseSetService):
             log.error("No data for that fov/channel!")
             return False
 
+        puncta.annotation = self._annotation.get_model(field_of_view, channel_number)
+        puncta.time_period = time_period
+        if puncta.annotation is None:
+            log.error("PD IS NONE")
+            return None
+
         image_reader = ImageReader(self._experiment)
         image_reader.field_of_view = field_of_view
 
-        for time_period in self._experiment.time_periods:
-            image_reader.time_period = time_period
-            for n, image_set in enumerate(image_reader):
-                log.debug("TP:%s FOV:%s CH:%s %0.2f%%" % (time_period,
-                                                          image_reader.field_of_view,
-                                                          puncta.catch_channel_number,
-                                                          100.0 * float(n) / float(len(image_reader))))
-                self._update_image_data(puncta, image_set)
+        # for time_period in self._experiment.time_periods:
+        image_reader.time_period = time_period
+        for n, image_set in enumerate(image_reader):
+            log.debug("TP:%s FOV:%s CH:%s %0.2f%%" % (time_period,
+                                                      image_reader.field_of_view,
+                                                      puncta.catch_channel_number,
+                                                      100.0 * float(n) / float(len(image_reader))))
+            self._update_image_data(puncta, image_set)
+            if n > 50:
+                break
 
         # while True:
         #     for n, frame in enumerate(test_frames):
@@ -108,7 +154,7 @@ class PunctaSet(BaseSetService):
         #     ecc_upper_limit = float(raw_input("ecc_upper_limit (%s): " % ecc_upper_limit) or ecc_upper_limit)
         #     minsize = int(raw_input("min diameter (%s): " % minsize) or minsize)
 
-        return puncta.data, tp.batch(puncta.data, 3, 0.01)
+        return puncta
 
         # for item in batch.iteritems():
         #     annotation = self._annotation.get_model(field_of_view, channel_number)
@@ -119,8 +165,7 @@ class PunctaSet(BaseSetService):
         #         # in fact there might not be a cell, or it could be dead
         #         continue
         #     else:
-        #         print(item[(item['mass'] > minintensity) & (item['ecc'] < ecc_upper_limit) & (item['size'] > minsize)
-        #               & (right >= item['x'] >= left)])
+        #         print()
 
         # THESE MIGHT BE WRONG DEPENDING ON WHAT ITEM IS
         # percentile_position = (item['x'] - left) / (right - left)
@@ -130,13 +175,8 @@ class PunctaSet(BaseSetService):
         # number of puncta at death (manual)
         # number of puncta immediately after division
 
-    def look(self, puncta_data, frame):
-        tp.annotate(puncta_data, puncta_data[frame])
-
-
     @staticmethod
     def _update_image_data(puncta, image_set):
         image = image_set.get_image("GFP", 1)
         if image is not None:
-            puncta.image_slice.set_image(image)
-            puncta.update_image(image_set.timestamp)
+            puncta.update_image(image, image_set.timestamp)
