@@ -23,37 +23,33 @@ class PunctaDataModel(object):
         self._timestamps = []
         self.annotation = None
         self.diameter = 3
-        self.intensity = .5
+        self.intensity = 30
         self.ecc = 0.2
-        self.minsize = 100
 
     def update_image(self, image, timestamp):
         self.image_slice.set_image(image)
         self._frames.append(self.image_slice.image_data)
         self._timestamps.append(timestamp)
 
-    def look(self, frame):
+    def analyze(self, frame, look=True):
         bounds = self.get_cell_bounds(frame * 2)
         if not bounds:
             log.info("No cell bounds for that frame, cell is missing or dead at that point.")
             return False
         left, right = bounds
-        log.debug("l,r %s %s" % (left, right))
+        # We hardcode minmass here instead of using self.intensity so that we can see how many puncta total could
+        # possibly be found. This helps us figure out if our criteria are too strict.
         f = tp.locate(self._frames[frame], self.diameter, minmass=3)
-        log.debug(f)
-        log.debug("first f: %s" % len(f))
-        f = f[(f['mass'] > self.intensity)]
-        # log.debug("second f: %s" % len(f))
-        # f = f[(f['ecc'] < self.ecc)]
-        # log.debug("third f: %s" % len(f))
-        # f = f[(f['size'] > self.minsize)]
-        log.debug("fourth f: %s" % len(f))
+        log.debug("Total puncta found: %s" % len(f))
         f = f[(f['x'] < right)]
-        log.debug("fifth f: %s" % len(f))
         f = f[(f['x'] > left)]
-        log.debug("sixth f: %s" % len(f))
-
-        tp.annotate(f, self._frames[frame])
+        log.debug(f)
+        log.debug("Puncta in cell bounds: %s" % len(f))
+        f = f[(f['mass'] > self.intensity)]
+        log.debug("Puncta with intensity > %s: %s" % (self.intensity, len(f)))
+        if look:
+            tp.annotate(f, self._frames[frame])
+        return f
 
     def get_cell_bounds(self, frame):
         try:
@@ -65,7 +61,16 @@ class PunctaDataModel(object):
 
     @property
     def batch(self):
-        return tp.batch(self._frames, self.diameter, self.intensity)
+        for n, frame in enumerate(self._frames):
+            bounds = self.get_cell_bounds(n * 2)
+            if not bounds:
+                continue
+            left, right = bounds
+            # We hardcode minmass here instead of using self.intensity so that we can see how many puncta total could
+            # possibly be found. This helps us figure out if our criteria are too strict.
+            f = tp.locate(self._frames[frame], self.diameter, minmass=3)
+            # Add frame number to each row
+            # Add puncta proportional position to each row
 
 
 class PunctaSet(BaseSetService):
