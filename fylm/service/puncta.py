@@ -8,6 +8,7 @@ from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.service.base import BaseSetService
 import logging
 import trackpy as tp
+import skimage.io
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class PunctaDataModel(object):
         self._timestamps.append(timestamp)
 
     def look(self, frame):
-        bounds = self.get_cell_bounds(frame)
+        bounds = self.get_cell_bounds(frame * 2)
         if not bounds:
             log.info("No cell bounds for that frame, cell is missing or dead at that point.")
             return False
