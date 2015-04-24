@@ -124,7 +124,7 @@ class PunctaSet(BaseSetService):
             for channel_number, locations in location_model.data:
                 print("fov %s channel %s" % (location_model.field_of_view, channel_number))
 
-    def get_puncta_data(self, field_of_view, channel_number):
+    def get_puncta_data(self, field_of_view, channel_number, tp=None):
         """
         Analyzes puncta.
 
@@ -151,15 +151,17 @@ class PunctaSet(BaseSetService):
         image_reader = ImageReader(self._experiment)
         image_reader.field_of_view = field_of_view
 
-        for time_period in self._experiment.time_periods:
+        time_periods = self._experiment.time_periods if tp is None else tp
+
+        for time_period in time_periods:
             puncta.time_period = time_period
             image_reader.time_period = time_period
             for n, image_set in enumerate(image_reader):
-                log.debug("TP:%s FOV:%s CH:%s %0.2f%%" % (time_period,
-                                                          image_reader.field_of_view,
-                                                          puncta.catch_channel_number,
-                                                          100.0 * float(n) / float(len(image_reader))))
-
+                log.debug("TP:%s FOV:%s CH:%s TIME: %s --- %0.2f%%" % (time_period,
+                                                                       image_reader.field_of_view,
+                                                                       puncta.catch_channel_number,
+                                                                       image_set.timestamp,
+                                                                       100.0 * float(n) / float(len(image_reader))))
                 self._update_image_data(puncta, image_set)
         return puncta
 
