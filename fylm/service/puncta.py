@@ -6,12 +6,16 @@ from fylm.model.annotation import KymographAnnotationSet
 from fylm.model.kymograph import KymographSet
 from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.service.base import BaseSetService
+from fylm.service.timestamp import TimestampSet as TimestampService
+from fylm.model.timestamp import TimestampSet
 import logging
 import trackpy as tp
 import skimage.io
 from pandas import DataFrame
+from itertools import izip
 
 log = logging.getLogger(__name__)
+
 
 
 class PunctaDataModel(object):
@@ -41,14 +45,11 @@ class PunctaDataModel(object):
         # We hardcode minmass here instead of using self.intensity so that we can see how many puncta total could
         # possibly be found. This helps us figure out if our criteria are too strict.
         f = tp.locate(self._frames[frame], self.diameter, minmass=3)
-        log.debug("Total puncta found: %s" % len(f))
         f = f[(f['x'] < right)]
         f = f[(f['x'] > left)]
-        log.debug(f)
-        log.debug("Puncta in cell bounds: %s" % len(f))
         f = f[(f['mass'] > self.intensity)]
-        log.debug("Puncta with intensity > %s: %s" % (self.intensity, len(f)))
         if look:
+            log.debug(f)
             tp.annotate(f, self._frames[frame])
         return f
 
@@ -114,6 +115,8 @@ class PunctaSet(BaseSetService):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
         self._annotation_service.load_existing_models(self._annotation)
+        self._timestamps = TimestampSet(experiment)
+        TimestampService(experiment).load_existing_models(self._timestamps)
 
     def list_channels(self):
         for location_model in self._location_set.existing:
@@ -156,6 +159,7 @@ class PunctaSet(BaseSetService):
                                                           image_reader.field_of_view,
                                                           puncta.catch_channel_number,
                                                           100.0 * float(n) / float(len(image_reader))))
+
                 self._update_image_data(puncta, image_set)
         return puncta
 
