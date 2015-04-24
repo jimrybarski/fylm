@@ -9,6 +9,7 @@ from fylm.service.base import BaseSetService
 import logging
 import trackpy as tp
 import skimage.io
+from pandas import DataFrame
 
 log = logging.getLogger(__name__)
 
@@ -61,6 +62,7 @@ class PunctaDataModel(object):
 
     @property
     def batch(self):
+        b = DataFrame()
         for n, frame in enumerate(self._frames):
             bounds = self.get_cell_bounds(n * 2)
             if not bounds:
@@ -68,9 +70,20 @@ class PunctaDataModel(object):
             left, right = bounds
             # We hardcode minmass here instead of using self.intensity so that we can see how many puncta total could
             # possibly be found. This helps us figure out if our criteria are too strict.
-            f = tp.locate(self._frames[frame], self.diameter, minmass=3)
-            # Add frame number to each row
-            # Add puncta proportional position to each row
+            f = tp.locate(frame, self.diameter, minmass=self.intensity)
+            f = f[(f['x'] < right)]
+            f = f[(f['x'] > left)]
+            f['timestamp'] = self._timestamps[n]
+            print(f)
+            b = b.append(f)
+        # tdf = DataFrame(self._timestamps, columns=['timestamp'])
+        # b = b.merge(tdf, left_index=True, right_index=True)
+        return b
+
+    @property
+    def counts(self):
+        batch = self.batch
+        return batch.groupby('timestamp').size()
 
 
 class PunctaSet(BaseSetService):
@@ -108,7 +121,7 @@ class PunctaSet(BaseSetService):
             for channel_number, locations in location_model.data:
                 print("fov %s channel %s" % (location_model.field_of_view, channel_number))
 
-    def get_puncta_data(self, time_period, field_of_view, channel_number):
+    def get_puncta_data(self, field_of_view, channel_number):
         """
         Analyzes puncta.
 
@@ -127,7 +140,7 @@ class PunctaSet(BaseSetService):
             return False
 
         puncta.annotation = self._annotation.get_model(field_of_view, channel_number)
-        puncta.time_period = time_period
+
         if puncta.annotation is None:
             log.error("PD IS NONE")
             return None
@@ -135,51 +148,16 @@ class PunctaSet(BaseSetService):
         image_reader = ImageReader(self._experiment)
         image_reader.field_of_view = field_of_view
 
-        # for time_period in self._experiment.time_periods:
-        image_reader.time_period = time_period
-        for n, image_set in enumerate(image_reader):
-            log.debug("TP:%s FOV:%s CH:%s %0.2f%%" % (time_period,
-                                                      image_reader.field_of_view,
-                                                      puncta.catch_channel_number,
-                                                      100.0 * float(n) / float(len(image_reader))))
-            self._update_image_data(puncta, image_set)
-            if n > 50:
-                break
-
-        # while True:
-        #     for n, frame in enumerate(test_frames):
-        #         image = puncta.data[frame]
-        #         f = tp.locate(image, 15, 1.0)
-        #         tp.annotate(f[(f['mass'] > minintensity) & (f['ecc'] < ecc_upper_limit) & (f['size'] > minsize)], image)
-        #
-        #     done = raw_input("OK? Enter=no, anything else=yes: ")
-        #     log.debug("done: %s" % done)
-        #     if done:
-        #         break
-        #     minintensity = float(raw_input("min intensity (%s): " % minintensity) or minintensity)
-        #     ecc_upper_limit = float(raw_input("ecc_upper_limit (%s): " % ecc_upper_limit) or ecc_upper_limit)
-        #     minsize = int(raw_input("min diameter (%s): " % minsize) or minsize)
-
+        for time_period in self._experiment.time_periods:
+            puncta.time_period = time_period
+            image_reader.time_period = time_period
+            for n, image_set in enumerate(image_reader):
+                log.debug("TP:%s FOV:%s CH:%s %0.2f%%" % (time_period,
+                                                          image_reader.field_of_view,
+                                                          puncta.catch_channel_number,
+                                                          100.0 * float(n) / float(len(image_reader))))
+                self._update_image_data(puncta, image_set)
         return puncta
-
-        # for item in batch.iteritems():
-        #     annotation = self._annotation.get_model(field_of_view, channel_number)
-        #     try:
-        #         left, right = annotation.get_cell_bounds(time_period, item['frame'])
-        #     except TypeError:
-        #         # no cell bounds so we can't tell if puncta are in the cell or not
-        #         # in fact there might not be a cell, or it could be dead
-        #         continue
-        #     else:
-        #         print()
-
-        # THESE MIGHT BE WRONG DEPENDING ON WHAT ITEM IS
-        # percentile_position = (item['x'] - left) / (right - left)
-        # distribution of puncta brightness in space (Do puncta of a certain brightness tend to be found in a certain location?)
-        # distribution of puncta size in space (Do puncta of a certain size tend to be found in a certain location?)
-        # total puncta count over time (Is there a relationship between puncta and aging?)
-        # number of puncta at death (manual)
-        # number of puncta immediately after division
 
     @staticmethod
     def _update_image_data(puncta, image_set):
