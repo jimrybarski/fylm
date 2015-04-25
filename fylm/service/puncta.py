@@ -10,12 +10,9 @@ from fylm.service.timestamp import TimestampSet as TimestampService
 from fylm.model.timestamp import TimestampSet
 import logging
 import trackpy as tp
-import skimage.io
-from pandas import DataFrame
-from itertools import izip
+import pandas
 
 log = logging.getLogger(__name__)
-
 
 
 class PunctaDataModel(object):
@@ -30,6 +27,7 @@ class PunctaDataModel(object):
         self.diameter = 3
         self.intensity = 30
         self.ecc = 0.2
+        self.experiment = None
 
     def update_image(self, image, timestamp):
         self.image_slice.set_image(image)
@@ -61,30 +59,38 @@ class PunctaDataModel(object):
         else:
             return left, right
 
-    @property
-    def batch(self):
-        b = DataFrame()
-        for n, frame in enumerate(self._frames):
-            bounds = self.get_cell_bounds(n * 2)
-            if not bounds:
-                continue
-            left, right = bounds
-            # We hardcode minmass here instead of using self.intensity so that we can see how many puncta total could
-            # possibly be found. This helps us figure out if our criteria are too strict.
-            f = tp.locate(frame, self.diameter, minmass=self.intensity)
-            f = f[(f['x'] < right)]
-            f = f[(f['x'] > left)]
-            f['timestamp'] = self._timestamps[n]
-            print(f)
-            b = b.append(f)
-        # tdf = DataFrame(self._timestamps, columns=['timestamp'])
-        # b = b.merge(tdf, left_index=True, right_index=True)
-        return b
-
-    @property
-    def counts(self):
-        batch = self.batch
-        return batch.groupby('timestamp').size()
+    def dump(self):
+        b = pandas.DataFrame()
+        image_reader = ImageReader(self.experiment)
+        image_reader.field_of_view = self.field_of_view
+        last_n = 0
+        for time_period in self.experiment.time_periods:
+            image_reader.time_period = time_period
+            for n, image_set in enumerate(image_reader):
+                total_n = last_n + n + time_period
+                log.debug("total n: %s" % total_n)
+                bounds = self.get_cell_bounds(total_n * 2)
+                log.debug("TP:%s FOV:%s CH:%s TIME: %s --- %0.2f%%" % (time_period,
+                                                                       image_reader.field_of_view,
+                                                                       self.catch_channel_number,
+                                                                       image_set.timestamp,
+                                                                       100.0 * float(n) / float(len(image_reader))))
+                if not bounds:
+                    continue
+                left, right = bounds
+                image = image_set.get_image("GFP", 1)
+                if image is not None:
+                    # We hardcode minmass here instead of using self.intensity so that we can see how many puncta total could
+                    # possibly be found. This helps us figure out if our criteria are too strict.
+                    f = tp.locate(image, self.diameter, minmass=self.intensity)
+                    f = f[(f['x'] < right)]
+                    f = f[(f['x'] > left)]
+                    f['timestamp'] = self._timestamps[total_n]
+                    log.debug(f)
+                    b = b.append(f)
+        b.to_csv("/tmp/fov%s-c%s-all.csv" % (self.field_of_view, self.catch_channel_number))
+        counts = b.groupby('timestamp').size()
+        counts.to_csv("/tmp/fov%s-c%s-counts.csv" % (self.field_of_view, self.catch_channel_number))
 
 
 class PunctaSet(BaseSetService):
@@ -148,12 +154,11 @@ class PunctaSet(BaseSetService):
             log.error("PD IS NONE")
             return None
 
+        puncta.experiment = self._experiment
         image_reader = ImageReader(self._experiment)
         image_reader.field_of_view = field_of_view
 
-        time_periods = self._experiment.time_periods if tp is None else tp
-
-        for time_period in time_periods:
+        for time_period in [1]:
             puncta.time_period = time_period
             image_reader.time_period = time_period
             for n, image_set in enumerate(image_reader):
@@ -163,6 +168,7 @@ class PunctaSet(BaseSetService):
                                                                        image_set.timestamp,
                                                                        100.0 * float(n) / float(len(image_reader))))
                 self._update_image_data(puncta, image_set)
+
         return puncta
 
     @staticmethod
