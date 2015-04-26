@@ -11,6 +11,7 @@ from fylm.model.timestamp import TimestampSet
 import logging
 import trackpy as tp
 import pandas
+import skimage.io
 
 log = logging.getLogger(__name__)
 
@@ -61,15 +62,18 @@ class PunctaDataModel(object):
 
     def dump(self):
         b = pandas.DataFrame()
+        b_everything = pandas.DataFrame()
         image_reader = ImageReader(self.experiment)
         image_reader.field_of_view = self.field_of_view
         last_n = 0
-        for time_period in self.experiment.time_periods:
+        for time_period in [1,2]:
+            self.time_period = time_period
+
             image_reader.time_period = time_period
             for n, image_set in enumerate(image_reader):
                 total_n = last_n + n + time_period
                 log.debug("total n: %s" % total_n)
-                bounds = self.get_cell_bounds(total_n * 2)
+                bounds = self.get_cell_bounds(total_n)
                 log.debug("TP:%s FOV:%s CH:%s TIME: %s --- %0.2f%%" % (time_period,
                                                                        image_reader.field_of_view,
                                                                        self.catch_channel_number,
@@ -78,17 +82,26 @@ class PunctaDataModel(object):
                 if not bounds:
                     continue
                 left, right = bounds
+                log.debug("bounds: %s %s " % (left, right))
                 image = image_set.get_image("GFP", 1)
                 if image is not None:
+                    self.image_slice.set_image(image)
                     # We hardcode minmass here instead of using self.intensity so that we can see how many puncta total could
                     # possibly be found. This helps us figure out if our criteria are too strict.
-                    f = tp.locate(image, self.diameter, minmass=self.intensity)
-                    f = f[(f['x'] < right)]
+                    everything = tp.locate(self.image_slice.image_data, self.diameter, minmass=3)
+                    everything['timestamp'] = image_set.timestamp
+                    f = everything[(everything['x'] < right)]
                     f = f[(f['x'] > left)]
-                    f['timestamp'] = self._timestamps[total_n]
+                    f = f[(f['mass'] > self.intensity)]
+
+                    everything['left'] = left
+                    everything['right'] = right
                     log.debug(f)
+                    log.debug(everything)
+                    b_everything = b_everything.append(everything)
                     b = b.append(f)
-        b.to_csv("/tmp/fov%s-c%s-all.csv" % (self.field_of_view, self.catch_channel_number))
+        b.to_csv("/tmp/fov%s-c%s-chosen.csv" % (self.field_of_view, self.catch_channel_number))
+        b_everything.to_csv("/tmp/fov%s-c%s-everything.csv" % (self.field_of_view, self.catch_channel_number))
         counts = b.groupby('timestamp').size()
         counts.to_csv("/tmp/fov%s-c%s-counts.csv" % (self.field_of_view, self.catch_channel_number))
 
@@ -130,7 +143,7 @@ class PunctaSet(BaseSetService):
             for channel_number, locations in location_model.data:
                 print("fov %s channel %s" % (location_model.field_of_view, channel_number))
 
-    def get_puncta_data(self, field_of_view, channel_number, tp=None):
+    def get_puncta_data(self, field_of_view, channel_number, preview=False, tp=None):
         """
         Analyzes puncta.
 
@@ -157,16 +170,16 @@ class PunctaSet(BaseSetService):
         puncta.experiment = self._experiment
         image_reader = ImageReader(self._experiment)
         image_reader.field_of_view = field_of_view
+        image_reader.time_period = 1
 
-        for time_period in [1]:
-            puncta.time_period = time_period
-            image_reader.time_period = time_period
+        puncta.time_period = 1
+
+        if preview:
             for n, image_set in enumerate(image_reader):
-                log.debug("TP:%s FOV:%s CH:%s TIME: %s --- %0.2f%%" % (time_period,
-                                                                       image_reader.field_of_view,
-                                                                       puncta.catch_channel_number,
-                                                                       image_set.timestamp,
-                                                                       100.0 * float(n) / float(len(image_reader))))
+                log.debug("FOV:%s CH:%s TIME: %s --- %0.2f%%" % (image_reader.field_of_view,
+                                                                 puncta.catch_channel_number,
+                                                                 image_set.timestamp,
+                                                                 100.0 * float(n) / float(len(image_reader))))
                 self._update_image_data(puncta, image_set)
 
         return puncta
