@@ -11,7 +11,11 @@ from fylm.model.timestamp import TimestampSet
 import logging
 import trackpy as tp
 import pandas
-import skimage.io
+import matplotlib.pyplot as plt
+from matplotlib import cm
+import os
+import subprocess
+
 
 log = logging.getLogger(__name__)
 
@@ -65,15 +69,11 @@ class PunctaDataModel(object):
         b_everything = pandas.DataFrame()
         image_reader = ImageReader(self.experiment)
         image_reader.field_of_view = self.field_of_view
-        last_n = 0
-        for time_period in [1,2]:
+        for time_period in [1, 2]:
             self.time_period = time_period
-
             image_reader.time_period = time_period
             for n, image_set in enumerate(image_reader):
-                total_n = last_n + n + time_period
-                log.debug("total n: %s" % total_n)
-                bounds = self.get_cell_bounds(total_n)
+                bounds = self.get_cell_bounds(n)
                 log.debug("TP:%s FOV:%s CH:%s TIME: %s --- %0.2f%%" % (time_period,
                                                                        image_reader.field_of_view,
                                                                        self.catch_channel_number,
@@ -93,6 +93,26 @@ class PunctaDataModel(object):
                     f = everything[(everything['x'] < right)]
                     f = f[(f['x'] > left)]
                     f = f[(f['mass'] > self.intensity)]
+                    fig, ax = plt.subplots()
+                    ax.imshow(self.image_slice.image_data, cmap=cm.gray)
+                    # Remove whitespace and ticks from the image, since we're making a movie, not a plot.
+                    # Matplotlib is expecting us to make a plot though, so removing all evidence of this is tricky.
+                    plt.gca().set_axis_off()
+                    plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+                    plt.margins(0, 0)
+                    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+                    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+
+                    for row in f.iterrows():
+                        plt.plot(row[1].x, row[1].y, marker='o', color='r')
+                    image_filename = "/tmp/%s-%03d.png" % (time_period, n)
+
+                    # Add the frame number to the bottom right of the image in red text
+                    ax.annotate(str(n + 1), xy=(1, 1), xytext=(self.image_slice.image_data.shape[1] - 9, self.image_slice.image_data.shape[0] - 5), color='r')
+
+                    fig.savefig(image_filename, bbox_inches='tight', pad_inches=0)
+                    # Closing the plot is required or memory goes nuts
+                    plt.close()
 
                     everything['left'] = left
                     everything['right'] = right
@@ -104,6 +124,38 @@ class PunctaDataModel(object):
         b_everything.to_csv("/tmp/fov%s-c%s-everything.csv" % (self.field_of_view, self.catch_channel_number))
         counts = b.groupby('timestamp').size()
         counts.to_csv("/tmp/fov%s-c%s-counts.csv" % (self.field_of_view, self.catch_channel_number))
+        self._create_movie_from_frames(self.image_slice.image_data.shape, self.field_of_view, self.catch_channel_number)
+
+    def _create_movie_from_frames(self, shape, fov, channel):
+        """
+        Makes a movie in chronological order using images with a given filename pattern.
+
+        """
+        command = ("/usr/bin/mencoder",
+                   'mf:///tmp/*-*.png',
+                   '-mf',
+                   'w=%s:h=%s:fps=24:type=png' % shape,
+                   '-ovc', 'copy', '-oac', 'copy', '-o', '%s' % "/tmp/puncta-%s-%s.avi" % (fov, channel))
+
+        DEVNULL = open(os.devnull, "w")
+        try:
+            log.debug("MOVIE COMMAND: %s" % " ".join(command))
+            subprocess.call(command, shell=False, stdout=DEVNULL, stderr=subprocess.STDOUT)
+            self._delete_temp_images()
+        finally:
+            DEVNULL.close()
+
+    def _delete_temp_images(self):
+        """
+        Cleans up the temporary still image files that were used to make a movie.
+
+        """
+        try:
+            for filename in os.listdir("/tmp"):
+                if filename.endswith(".png"):
+                    os.remove("/tmp/" + filename)
+        except OSError:
+            log.exception("Error deleting %s" % "/tmp/" + filename)
 
 
 class PunctaSet(BaseSetService):
