@@ -64,7 +64,7 @@ class PunctaDataModel(object):
         else:
             return left, right
 
-    def dump(self):
+    def dump(self, dies_tp, dies_frame):
         b = pandas.DataFrame()
         b_everything = pandas.DataFrame()
         image_reader = ImageReader(self.experiment)
@@ -73,6 +73,8 @@ class PunctaDataModel(object):
             self.time_period = time_period
             image_reader.time_period = time_period
             for n, image_set in enumerate(image_reader):
+                if n > dies_frame and self.time_period == dies_tp:
+                    break
                 bounds = self.get_cell_bounds(n)
                 log.debug("TP:%s FOV:%s CH:%s TIME: %s --- %0.2f%%" % (time_period,
                                                                        image_reader.field_of_view,
