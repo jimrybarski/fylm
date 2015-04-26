@@ -69,11 +69,12 @@ class PunctaDataModel(object):
         b_everything = pandas.DataFrame()
         image_reader = ImageReader(self.experiment)
         image_reader.field_of_view = self.field_of_view
-        for time_period in [1, 2]:
+        for time_period in self.experiment.time_periods:
             self.time_period = time_period
             image_reader.time_period = time_period
             for n, image_set in enumerate(image_reader):
-                if n > dies_frame and self.time_period == dies_tp:
+                if (n > (dies_frame + 50) or (self.time_period > dies_tp and n > 50)) and self.time_period == dies_tp:
+                    log.debug("The cell died! Quitting!")
                     break
                 bounds = self.get_cell_bounds(n)
                 log.debug("TP:%s FOV:%s CH:%s TIME: %s --- %0.2f%%" % (time_period,
