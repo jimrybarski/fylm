@@ -30,7 +30,7 @@ class PunctaDataModel(object):
         self._timestamps = []
         self.annotation = None
         self.diameter = 3
-        self.intensity = 30
+        self.intensity = 25
         self.ecc = 0.2
         self.experiment = None
 
@@ -123,10 +123,10 @@ class PunctaDataModel(object):
                     log.debug(everything)
                     b_everything = b_everything.append(everything)
                     b = b.append(f)
-        b.to_csv("/tmp/fov%s-c%s-chosen.csv" % (self.field_of_view, self.catch_channel_number))
-        b_everything.to_csv("/tmp/fov%s-c%s-everything.csv" % (self.field_of_view, self.catch_channel_number))
+        b.to_csv("/tmp/fov%s-ch%s-chosen.csv" % (self.field_of_view, self.catch_channel_number))
+        b_everything.to_csv("/tmp/fov%s-ch%s-everything.csv" % (self.field_of_view, self.catch_channel_number))
         counts = b.groupby('timestamp').size()
-        counts.to_csv("/tmp/fov%s-c%s-counts.csv" % (self.field_of_view, self.catch_channel_number))
+        counts.to_csv("/tmp/fov%s-ch%s-counts.csv" % (self.field_of_view, self.catch_channel_number))
         self._create_movie_from_frames(self.image_slice.image_data.shape, self.field_of_view, self.catch_channel_number)
 
     def _create_movie_from_frames(self, shape, fov, channel):
@@ -138,7 +138,7 @@ class PunctaDataModel(object):
                    'mf:///tmp/*-*.png',
                    '-mf',
                    'w=%s:h=%s:fps=24:type=png' % shape,
-                   '-ovc', 'copy', '-oac', 'copy', '-o', '%s' % "/tmp/puncta-%s-%s.avi" % (fov, channel))
+                   '-ovc', 'copy', '-oac', 'copy', '-o', '%s' % "/tmp/puncta-fov%s-ch%s.avi" % (fov, channel))
 
         DEVNULL = open(os.devnull, "w")
         try:
