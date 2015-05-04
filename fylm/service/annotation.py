@@ -22,7 +22,7 @@ class AnnotationSet(BaseSetService):
     def save(self, annotation_model_set):
         annotation_model_set.kymograph_set = self._kymograph_set
         self.load_existing_models(annotation_model_set)
-        if annotation_model_set.work_remains:
+        if annotation_model_set.work_remains or self._experiment.review_annotations:
             # There are annotations that need to be done still
             KymographAnnotator(annotation_model_set)
         else:

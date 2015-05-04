@@ -1,7 +1,6 @@
 from collections import defaultdict
 from fylm.model.base import BaseMovie, BaseSet
 from fylm.model.constants import Constants
-from fylm.model.image_slice import ImageSlice
 from fylm.model.location import LocationSet
 from fylm.service.location import LocationSet as LocationService
 import logging
@@ -31,7 +30,7 @@ class MovieSet(BaseSet):
         for time_period in self._time_periods:
             for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
                 for location_model in self._location_set_model.existing:
-                    image_slice = self._get_image_slice(location_model, channel_number)
+                    image_slice = location_model.get_image_slice(channel_number)
                     if location_model.get_channel_location(channel_number) and image_slice:
                         model = self._model()
                         model.base_path = self.base_path
@@ -40,30 +39,6 @@ class MovieSet(BaseSet):
                         model.field_of_view = location_model.field_of_view
                         model.catch_channel_number = channel_number
                         yield model
-
-    @staticmethod
-    def _get_image_slice(location_model, channel_number):
-        """
-        Extracts the image data for a particular catch channel.
-
-        :type location_model:   fylm.model.location.Location()
-        :type channel_number:   int
-
-        """
-        try:
-            notch, tube = location_model.get_channel_location(channel_number)
-        except ValueError:
-            return None
-        if notch.x < tube.x:
-            x = notch.x
-            fliplr = False
-        else:
-            x = tube.x
-            fliplr = True
-        y = tube.y
-        width = int(abs(notch.x - tube.x))
-        height = int(notch.y - tube.y)
-        return ImageSlice(x, y, width, height, fliplr=fliplr)
 
 
 class Movie(BaseMovie):

@@ -15,6 +15,7 @@ class KymographSet(BaseSet):
     """
     def __init__(self, experiment):
         super(KymographSet, self).__init__(experiment, "kymograph")
+        self._experiment = experiment
         self._model = Kymograph
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.png""")
 
@@ -31,7 +32,6 @@ class KymographSet(BaseSet):
         Yields instantiated children of BaseFile that represent the work we expect to have done.
 
         """
-        # TODO: This is wrong! We should only expect files if there are location and annotation files available for a channel
         assert self._model is not None
         for field_of_view in self._fields_of_view:
             for time_period in self._time_periods:
@@ -42,6 +42,16 @@ class KymographSet(BaseSet):
                     model.channel_number = channel_number
                     model.base_path = self.base_path
                     yield model
+
+    @property
+    def remaining(self):
+        """
+        Yields a child of BaseFile that represents work needing to be done.
+
+        """
+        for model in self._expected:
+            if model.filename not in self._current_filenames or self._experiment.review_annotations:
+                yield model
 
 
 class Kymograph(BaseImage):

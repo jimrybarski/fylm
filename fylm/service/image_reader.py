@@ -61,6 +61,10 @@ class ImageReader(object):
         return Image(raw_image.data, rotation_offset, dx, dy, timestamp)
 
     @property
+    def channel_names(self):
+        return self.nd2.channel_names
+
+    @property
     def field_of_view(self):
         return self._field_of_view
 

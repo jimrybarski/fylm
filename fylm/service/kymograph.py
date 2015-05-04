@@ -4,6 +4,7 @@ from fylm.service.experiment import Experiment as ExperimentService
 from fylm.service.image_reader import ImageReader
 from fylm.service.location import LocationSet as LocationSetService
 from fylm.service.utilities import timer
+from fylm.service.reader import Reader
 import logging
 import numpy as np
 from skimage import exposure
@@ -70,24 +71,26 @@ class KymographSet(BaseSetService):
                 # skip this time_period
                 continue
 
-            for time_index, image_set in enumerate(image_reader):
-                log.debug("Adding lines for kymographs from time index %s" % time_index)
-                image = image_set.get_image(channel="", z_level=0)
+            if not self._experiment.review_annotations:
+                for time_index, image_set in enumerate(image_reader):
+                    log.debug("Adding lines for kymographs from time index %s" % time_index)
+                    image = image_set.get_image(channel="", z_level=0)
 
+                    for kymograph_model in available_kymographs:
+                        if kymograph_model.time_period == time_period:
+                            kymograph_model.set_image(image)
+                            kymograph_model.add_line(time_index)
                 for kymograph_model in available_kymographs:
                     if kymograph_model.time_period == time_period:
-                        kymograph_model.set_image(image)
-                        kymograph_model.add_line(time_index)
-            for kymograph_model in available_kymographs:
-                if kymograph_model.time_period == time_period:
-                    log.debug("Saving kymograph %s" % kymograph_model.channel_number)
-                    # we stretch the image contrast to give it a better spread over the available space
-                    # this prevents some information loss and makes the image more distinct
-                    lower_percentile, upper_percentile = np.percentile(kymograph_model.data, (5, 95))
-                    rescaled_image = exposure.rescale_intensity(kymograph_model.data, in_range=(lower_percentile,
-                                                                                                upper_percentile))
-                    skimage.io.imsave(kymograph_model.path, rescaled_image)
-                    kymograph_model.free_memory()
+                        log.debug("Saving kymograph %s" % kymograph_model.channel_number)
+                        # we stretch the image contrast to give it a better spread over the available space
+                        # this prevents some information loss and makes the image more distinct
+                        lower_percentile, upper_percentile = np.percentile(kymograph_model.data, (5, 95))
+                        rescaled_image = exposure.rescale_intensity(kymograph_model.data, in_range=(lower_percentile,
+                                                                                                    upper_percentile))
+                        skimage.io.imsave(kymograph_model.path, rescaled_image)
+                        kymograph_model.free_memory()
+
             if did_work:
                 # log the completion of this time period's extraction
                 ExperimentService().add_time_period_to_log(self._experiment, time_period)

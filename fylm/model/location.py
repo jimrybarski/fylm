@@ -2,6 +2,7 @@ from fylm.model.base import BaseTextFile, BaseSet
 from fylm.model.coordinates import Coordinates
 from fylm.model.constants import Constants
 from fylm.service.errors import terminal_error
+from fylm.model.image_slice import ImageSlice
 import logging
 import re
 
@@ -31,12 +32,14 @@ class LocationSet(BaseSet):
             model.base_path = self.base_path
             yield model
 
+    def get_model(self, field_of_view):
+        model = [model for model in self._get_current(field_of_view)]
+        return model[0] if model else None
+
 
 class Location(BaseTextFile):
     """
-    Models the output file that contains the translational adjustments needed for all images in a stack.
-
-    The first line of the file contains the locations of the top left and bottom right channel notches. All
+    Models the output file that contains the locations of the top left and bottom right channel notches. All
     subsequent lines contain information about a particular channel, numbered 1-28.
 
     All coordinates are given as (x,y) tuples using the scikit-image convention (x increases from left to right,
@@ -63,6 +66,28 @@ class Location(BaseTextFile):
         for channel_number in range(Constants.NUM_CATCH_CHANNELS):
             if channel_number not in self._channels.keys():
                 self.skip_channel(channel_number)
+
+    def get_image_slice(self, channel_number):
+        """
+        Extracts the image data for a particular catch channel.
+
+        :type channel_number:   int
+
+        """
+        try:
+            notch, tube = self.get_channel_location(channel_number)
+        except ValueError:
+            return None
+        if notch.x < tube.x:
+            x = notch.x
+            fliplr = False
+        else:
+            x = tube.x
+            fliplr = True
+        y = tube.y
+        width = int(abs(notch.x - tube.x))
+        height = int(notch.y - tube.y)
+        return ImageSlice(x, y, width, height, fliplr=fliplr)
 
     @property
     def filename(self):
@@ -136,7 +161,13 @@ class Location(BaseTextFile):
         for channel_number, locations in self._ordered_channels:
             try:
                 notch, tube = locations
-                yield "%s %s %s %s %s" % (channel_number, notch.x, notch.y, tube.x, tube.y)
+                # We double the length here on the fly so we can see outside the tube
+                # This also lets you see where you really put the tube location so it's
+                # totally transparent. Works whether the catch channel is on the right
+                # or the left
+                adjusted_length = 2 * (notch.x - tube.x)
+                new_tube_x = notch.x - adjusted_length
+                yield "%s %s %s %s %s" % (channel_number, notch.x, notch.y, new_tube_x, tube.y)
             except ValueError:
                 # the human declared this channel invalid
                 yield "%s skipped" % channel_number

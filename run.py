@@ -27,14 +27,15 @@ try:
     parser.add_argument('dir', help='The directory where the ND2 files are located (and where results are stored)')
     parser.add_argument('--skip', nargs="+", default=[], help='Steps to skip (useful mostly for debugging)')
     parser.add_argument('--action', help='Do an optional action')
-    parser.add_argument('-t', '--timepoint', type=int, help='Specifies a timepoint (needed only for some steps)')
-    parser.add_argument('-f', '--fov', type=int, help='Specifies a field of view (needed only for some steps)')
-    parser.add_argument('-c', '--channel', type=int, help='Specifies a channel (needed only for some steps)')
+    parser.add_argument('-t', '--timeperiod', default=1, type=int, help='Specifies a time period (needed only for some steps)')
+    parser.add_argument('-f', '--fov', type=int, default=0, help='Specifies a field of view (needed only for some steps)')
+    parser.add_argument('-c', '--channel', type=int, default=0, help='Specifies a catch channel (needed only for some steps)')
     parser.add_argument('--movies', nargs="*", default=False, help='Make movies for space-separated time periods')
     parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
+    parser.add_argument('-r', "--review", action='store_true', help="Review all annotations regardless of whether they've been completed")
     args = parser.parse_args(namespace=Args())
 
-    experiment = ExperimentService().get_experiment(args.date, args.dir, version)
+    experiment = ExperimentService().get_experiment(args.date, args.dir, version, args.review)
 
     # These are the actions that need to be run to completion for each experiment.
     first_activities = ("rotation",
@@ -62,9 +63,11 @@ try:
                # "fluorescence": act.quantify_fluorescence,
                "output": act.generate_output,
                "summary": act.generate_summary,
+               "puncta": act.analyze_puncta,
                }
 
-    action_args = {"movies": (args.movies,)}
+    action_args = {"movies": (args.movies,),
+                   "puncta": (int(args.timeperiod), int(args.fov), int(args.channel))}
 
     # Now run whatever methods are needed
     if not args.action:
@@ -93,16 +96,17 @@ try:
             method()
 
 except Exception:
-    log.exception("""
+    log.exception("Unhandled exception!")
+    log.critical("""
 
 
 
     ===================  Unhandled exception!  =======================
 
     Jim did not account for something and fylm_critic crashed!
-    Copy and paste the error below and email it to him.
-    Maybe in the future it will email him automatically.
+    Copy and paste the error above and email it to him.
 
     ==================================================================
+
 
     """)
