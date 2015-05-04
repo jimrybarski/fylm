@@ -1,7 +1,6 @@
 from fylm.service.errors import terminal_error
 import logging
 import re
-import time
 
 
 log = logging.getLogger(__name__)
@@ -45,6 +44,7 @@ class Experiment(object):
         self._time_periods = set()
         self.field_of_view_count = None
         self._version = None
+        self.review_annotations = False
 
     def exact_start_time(self, time_period):
         """

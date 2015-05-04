@@ -244,6 +244,7 @@ class KymographAnnotationSet(BaseSet):
         super(KymographAnnotationSet, self).__init__(experiment, "annotation")
         self._model = ChannelAnnotationGroup
         self.kymograph_set = None
+        self._experiment = experiment
         self._unfinished = None
         self._current_time_period = 1
         self._current_model_pointer = 0
@@ -327,7 +328,7 @@ class KymographAnnotationSet(BaseSet):
             for model in self.remaining:
                 self._unfinished.append(model)
             for model in self.existing:
-                if not model.is_finished:
+                if not model.is_finished or self._experiment.review_annotations:
                     self._unfinished.append(model)
         return sorted(self._unfinished, key=lambda x: (x.field_of_view, x.channel_number))
 

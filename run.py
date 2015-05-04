@@ -32,9 +32,10 @@ try:
     parser.add_argument('-c', '--channel', type=int, default=0, help='Specifies a catch channel (needed only for some steps)')
     parser.add_argument('--movies', nargs="*", default=False, help='Make movies for space-separated time periods')
     parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
+    parser.add_argument('-r', "--review", action='store_true', help="Review all annotations regardless of whether they've been completed")
     args = parser.parse_args(namespace=Args())
 
-    experiment = ExperimentService().get_experiment(args.date, args.dir, version)
+    experiment = ExperimentService().get_experiment(args.date, args.dir, version, args.review)
 
     # These are the actions that need to be run to completion for each experiment.
     first_activities = ("rotation",
