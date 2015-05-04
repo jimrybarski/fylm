@@ -68,3 +68,6 @@ class Timestamps(BaseTextFile):
             raise e
         else:
             return self._timestamps[last]
+
+    def lookup(self, time_index):
+        return self._timestamps.get(time_index)

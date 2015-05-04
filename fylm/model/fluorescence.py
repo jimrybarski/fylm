@@ -1,6 +1,5 @@
 from collections import defaultdict
 from fylm.model.base import BaseTextFile, BaseSet
-from fylm.model.constants import Constants
 from fylm.model.annotation import KymographAnnotationSet
 from fylm.service.annotation import KymographSetService
 from fylm.model.kymograph import KymographSet

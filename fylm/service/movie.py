@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 import os
 import subprocess
-import time
 
 log = logging.getLogger(__name__)
 

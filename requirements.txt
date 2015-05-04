@@ -1,6 +1,11 @@
 six
-Cython
-numpy
-scipy
+setuptools
 matplotlib
 Pillow
+pandas
+pyyaml
+numba
+tables
+pyfftw
+pims
+trackpy
