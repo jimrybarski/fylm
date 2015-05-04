@@ -14,9 +14,10 @@ class Experiment(object):
     def __init__(self):
         self._os = os
 
-    def get_experiment(self, experiment_start_date, base_dir, version):
+    def get_experiment(self, experiment_start_date, base_dir, version, review):
         experiment = ExperimentModel()
         experiment.version = version
+        experiment.review_annotations = review
 
         # set start date
         experiment.start_date = experiment_start_date
