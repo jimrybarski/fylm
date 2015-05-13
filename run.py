@@ -64,7 +64,7 @@ try:
                "puncta": act.analyze_puncta,
                }
 
-    action_args = {"movies": (int(args.fov)),
+    action_args = {"movies": (int(args.fov),),
                    "puncta": (int(args.timeperiod), int(args.fov), int(args.channel))}
 
     # Now run whatever methods are needed
