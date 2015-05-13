@@ -42,21 +42,16 @@ class MovieSet(BaseSetService):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
 
-    def save(self, movie_model_set, time_periods):
+    def save(self, movie_model_set):
         """
         Runs the creation of AVIs of catch channels.
 
         :param movie_model_set: fylm.model.movie.MovieSet()
-        :param time_periods: None or list of int
 
         """
         self.load_existing_models(movie_model_set)
-        if not time_periods:
-            # make all movies if no time periods were specified
-            log.warn("Making movies for every time period! This could take a long time!")
-            time_periods = self._experiment.time_periods
-        else:
-            log.info("Making movies for time periods: %s" % ", ".join(tp for tp in time_periods))
+        time_periods = self._experiment.time_periods
+
         did_work = self._action(movie_model_set, time_periods)
         if not did_work:
             log.info("All %s have been created." % self._name)

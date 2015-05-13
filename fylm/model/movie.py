@@ -17,9 +17,10 @@ class MovieSet(BaseSet):
     Models the collection of movies of catch channels.
 
     """
-    def __init__(self, experiment):
+    def __init__(self, experiment, field_of_view):
         super(MovieSet, self).__init__(experiment, "movie")
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.avi""")
+        self._field_of_view = field_of_view
         self._location_set_model = LocationSet(experiment)
         LocationService(experiment).load_existing_models(self._location_set_model)
         self._model = Movie
@@ -30,6 +31,8 @@ class MovieSet(BaseSet):
         for time_period in self._time_periods:
             for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
                 for location_model in self._location_set_model.existing:
+                    if location_model.field_of_view != self._field_of_view:
+                        continue
                     image_slice = location_model.get_image_slice(channel_number)
                     if location_model.get_channel_location(channel_number) and image_slice:
                         model = self._model()
