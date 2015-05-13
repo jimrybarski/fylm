@@ -79,5 +79,6 @@ class Activity(object):
         self._calculate_and_save_text(SummarySet, SummaryService)
 
     def analyze_puncta(self, time_period, fov, channel):
-        p = PunctaSet(self._experiment)
-        p.save(time_period, fov, channel)
+        pass
+    #     p = PunctaSet(self._experiment)
+    #     p.save(time_period, fov, channel)
