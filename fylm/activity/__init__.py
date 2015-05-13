@@ -18,7 +18,6 @@ from fylm.service.summary import Summary as SummaryService
 from fylm.model.summary import SummarySet
 from fylm.service.fluorescence import FluorescenceSet as FluorescenceService
 from fylm.model.fluorescence import FluorescenceSet
-from fylm.service.puncta import PunctaSet
 
 
 class Activity(object):
