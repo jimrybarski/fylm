@@ -30,7 +30,7 @@ try:
     parser.add_argument('-t', '--timeperiod', default=1, type=int, help='Specifies a time period (needed only for some steps)')
     parser.add_argument('-f', '--fov', type=int, default=0, help='Specifies a field of view (needed only for some steps)')
     parser.add_argument('-c', '--channel', type=int, default=0, help='Specifies a catch channel (needed only for some steps)')
-    parser.add_argument('--movies', nargs="*", default=False, help='Make movies for space-separated time periods')
+    parser.add_argument('--movies', action='store_true', help='Make movies for space-separated time periods')
     parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
     parser.add_argument('-r', "--review", action='store_true', help="Review all annotations regardless of whether they've been completed")
     args = parser.parse_args(namespace=Args())
@@ -56,9 +56,7 @@ try:
                "registration": act.calculate_registration,
                "location": act.input_channel_locations,
                "kymograph": act.create_kymographs,
-
                "movies": act.make_movies,
-
                "annotation": act.annotate_kymographs,
                # "fluorescence": act.quantify_fluorescence,
                "output": act.generate_output,
@@ -66,7 +64,7 @@ try:
                "puncta": act.analyze_puncta,
                }
 
-    action_args = {"movies": (args.movies,),
+    action_args = {"movies": (int(args.fov)),
                    "puncta": (int(args.timeperiod), int(args.fov), int(args.channel))}
 
     # Now run whatever methods are needed
@@ -77,9 +75,9 @@ try:
                 actions[activity]()
 
         # movies get special treatment since they're almost always needed but take a very long time to produce
-        if args.movies is not False:
+        if args.movies:
             # args.movies will be either None (make all movies) or a list (make specified movies)
-            actions["movies"](args.movies)
+            actions["movies"](*action_args['movies'])
 
         for activity in manual_activities:
             if activity not in args.skip:
