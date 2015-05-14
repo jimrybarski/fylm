@@ -64,8 +64,7 @@ try:
                "puncta": act.analyze_puncta,
                }
 
-    action_args = {"movies": (int(args.fov),),
-                   "puncta": (int(args.timeperiod), int(args.fov), int(args.channel))}
+    action_args = {"puncta": (int(args.timeperiod), int(args.fov), int(args.channel))}
 
     # Now run whatever methods are needed
     if not args.action:
@@ -77,7 +76,7 @@ try:
         # movies get special treatment since they're almost always needed but take a very long time to produce
         if args.movies:
             # args.movies will be either None (make all movies) or a list (make specified movies)
-            actions["movies"](*action_args['movies'])
+            actions["movies"](int(args.fov))
 
         for activity in manual_activities:
             if activity not in args.skip:

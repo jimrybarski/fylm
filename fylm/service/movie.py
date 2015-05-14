@@ -7,10 +7,11 @@ from fylm.service.kymograph import KymographSet as KymographSetService
 from fylm.service.base import BaseSetService
 from fylm.service.utilities import timer
 import logging
-import matplotlib.pyplot as plt
-from matplotlib import cm
 import os
+from skimage import img_as_uint
 import subprocess
+import numpy as np
+import skimage.io
 
 log = logging.getLogger(__name__)
 
@@ -108,17 +109,39 @@ class MovieSet(BaseSetService):
         for n, image_set in enumerate(image_reader):
             for movie in fov_movies:
                 self._update_image_data(movie, image_set, channels, z_levels)
-                image_filename = "tp%s-fov%s-channel%s-%03d.png" % (time_period,
-                                                                    field_of_view,
-                                                                    movie.catch_channel_number,
-                                                                    n)
-                self._write_movie_frame(n, movie.get_next_frame(), movie.base_path, image_filename)
+                for channel in channels:
+                    image = image_set.get_image(channel, 1)
+                    if image is not None:
+                        movie.image_slice.set_image(image)
+                        image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.png" % (time_period,
+                                                                                     field_of_view,
+                                                                                     movie.catch_channel_number,
+                                                                                     channel,
+                                                                                     int(image_set.timestamp))
+                        self._write_movie_frame(movie.image_slice.image_data, movie.base_path, image_filename)
+                cell_bounds = movie.annotation.get_cell_bounds(time_period, n)
+                self._make_cell_bounds_image(cell_bounds, movie.image_slice.image_data, time_period, field_of_view, movie.catch_channel_number, int(image_set.timestamp), movie.base_path)
+
+    def _make_cell_bounds_image(self, bounds, image_data, time_period, field_of_view, catch_channel_number, timestamp, base_path):
+        height, width = image_data.shape
+        image = np.zeros((height, width))
+        if bounds is not None:
+            left, right = bounds
+            vertical_center = height / 2
+            image[vertical_center, left] = 1
+            image[vertical_center, right] = 1
+        image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.png" % (time_period,
+                                                                     field_of_view,
+                                                                     catch_channel_number,
+                                                                     "annotation",
+                                                                     timestamp)
+        self._write_movie_frame(image, base_path, image_filename)
 
         # We've finished making the frames of the movie.
         # Now we use mencoder to combine them into a single .avi file
-        for movie in fov_movies:
-            self._create_movie_from_frames(movie, time_period)
-        return True
+        # for movie in fov_movies:
+        #     self._create_movie_from_frames(movie, time_period)
+        # return True
 
     def _create_movie_from_frames(self, movie, time_period):
         """
@@ -143,31 +166,34 @@ class MovieSet(BaseSetService):
             DEVNULL.close()
 
     @staticmethod
-    def _write_movie_frame(frame_number, frame, base_path, image_filename):
+    def _write_movie_frame(frame, base_path, image_filename):
         """
         Takes a movie frame, adds the frame number to the bottom right of the image, and saves it to disk.
 
         """
         # We have to set up a Matplotlib plot so we can add text.
         # scikit-image unfortunately has no text annotation methods.
-        fig, ax = plt.subplots()
-        ax.imshow(frame, cmap=cm.gray)
-
-        # Remove whitespace and ticks from the image, since we're making a movie, not a plot.
-        # Matplotlib is expecting us to make a plot though, so removing all evidence of this is tricky.
-        plt.gca().set_axis_off()
-        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
-        plt.margins(0, 0)
-        plt.gca().xaxis.set_major_locator(plt.NullLocator())
-        plt.gca().yaxis.set_major_locator(plt.NullLocator())
+        # fig, ax = plt.subplots()
+        # ax.imshow(frame, cmap=cm.gray)
+        #
+        # # Remove whitespace and ticks from the image, since we're making a movie, not a plot.
+        # # Matplotlib is expecting us to make a plot though, so removing all evidence of this is tricky.
+        # plt.gca().set_axis_off()
+        # plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
+        # plt.margins(0, 0)
+        # plt.gca().xaxis.set_major_locator(plt.NullLocator())
+        # plt.gca().yaxis.set_major_locator(plt.NullLocator())
 
         # Add the frame number to the bottom right of the image in red text
-        ax.annotate(str(frame_number + 1), xy=(1, 1), xytext=(frame.shape[1] - 9, frame.shape[0] - 5), color='r')
-        log.debug("Creating %s" % base_path + "/" + image_filename)
+        # ax.annotate(str(frame_number + 1), xy=(1, 1), xytext=(frame.shape[1] - 9, frame.shape[0] - 5), color='r')
+        log.info("Creating %s" % base_path + "/" + image_filename)
         # Write the frame to disk
-        fig.savefig(base_path + "/" + image_filename, bbox_inches='tight', pad_inches=0)
+        # fig.savefig(base_path + "/" + image_filename, bbox_inches='tight', pad_inches=0)
         # Closing the plot is required or memory goes nuts
-        plt.close()
+        # plt.close()
+        img = img_as_uint(frame)
+        log.info("Imgd: %s" % img.dtype)
+        skimage.io.imsave(base_path + "/" + image_filename, img, plugin='freeimage')
 
     @staticmethod
     def _get_channels(image_reader):
