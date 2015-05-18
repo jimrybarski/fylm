@@ -18,7 +18,9 @@ RUN apt-get update && apt-get install -y \
   python-tk \
   mencoder \ 
   libhdf5-dev \
-  libfftw3-dev
+  libfftw3-dev \
+  libfreeimage3 \
+  libfreeimage-dev
 
 COPY . /opt/
 RUN pip install Cython

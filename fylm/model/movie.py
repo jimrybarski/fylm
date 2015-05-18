@@ -3,6 +3,10 @@ from fylm.model.base import BaseMovie, BaseSet
 from fylm.model.constants import Constants
 from fylm.model.location import LocationSet
 from fylm.service.location import LocationSet as LocationService
+from fylm.service.annotation import KymographSetService
+from fylm.model.annotation import KymographAnnotationSet
+from fylm.model.kymograph import KymographSet
+from fylm.service.kymograph import KymographSet as KymographService
 import logging
 import numpy as np
 import re
@@ -17,11 +21,17 @@ class MovieSet(BaseSet):
     Models the collection of movies of catch channels.
 
     """
-    def __init__(self, experiment):
+    def __init__(self, experiment, field_of_view):
         super(MovieSet, self).__init__(experiment, "movie")
         self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.avi""")
+        self._field_of_view = field_of_view
         self._location_set_model = LocationSet(experiment)
         LocationService(experiment).load_existing_models(self._location_set_model)
+        kymograph_set = KymographSet(experiment)
+        KymographService(experiment).load_existing_models(kymograph_set)
+        self._annotation_set_model = KymographAnnotationSet(experiment, ignore_kymographs=True)
+        self._annotation_set_model.kymograph_set = kymograph_set
+        KymographSetService(experiment).load_existing_models(self._annotation_set_model)
         self._model = Movie
 
     @property
@@ -30,14 +40,18 @@ class MovieSet(BaseSet):
         for time_period in self._time_periods:
             for channel_number in xrange(Constants.NUM_CATCH_CHANNELS):
                 for location_model in self._location_set_model.existing:
+                    if location_model.field_of_view != self._field_of_view:
+                        continue
                     image_slice = location_model.get_image_slice(channel_number)
-                    if location_model.get_channel_location(channel_number) and image_slice:
+                    annotation = self._annotation_set_model.get_model(location_model.field_of_view, channel_number)
+                    if location_model.get_channel_location(channel_number) and image_slice and annotation:
                         model = self._model()
                         model.base_path = self.base_path
                         model.image_slice = image_slice
                         model.time_period = time_period
                         model.field_of_view = location_model.field_of_view
                         model.catch_channel_number = channel_number
+                        model.annotation = annotation
                         yield model
 
 
@@ -56,6 +70,7 @@ class Movie(BaseMovie):
         self.image_slice = None
         self.__slots = defaultdict(dict)
         self._triangles = {}
+        self.annotation = None
 
     @property
     def filename(self):
