@@ -18,6 +18,7 @@ from fylm.service.summary import Summary as SummaryService
 from fylm.model.summary import SummarySet
 from fylm.service.fluorescence import FluorescenceSet as FluorescenceService
 from fylm.model.fluorescence import FluorescenceSet
+# from fylm.service.puncta import PunctaSet
 
 
 class Activity(object):
@@ -72,7 +73,9 @@ class Activity(object):
     def generate_summary(self):
         self._calculate_and_save_text(SummarySet, SummaryService)
 
-    def analyze_puncta(self, time_period, fov, channel):
+    # def analyze_puncta(self, time_period, fov, channel):
+    #     p = PunctaSet(self._experiment)
+    #     p.save(time_period, fov, channel)    def analyze_puncta(self, time_period, fov, channel):
         pass
     #     p = PunctaSet(self._experiment)
     #     p.save(time_period, fov, channel)

@@ -61,10 +61,10 @@ try:
                # "fluorescence": act.quantify_fluorescence,
                "output": act.generate_output,
                "summary": act.generate_summary,
-               "puncta": act.analyze_puncta,
+
                }
 
-    action_args = {"puncta": (int(args.timeperiod), int(args.fov), int(args.channel))}
+    action_args = {"movies": (args.movies,)}
 
     # Now run whatever methods are needed
     if not args.action:
