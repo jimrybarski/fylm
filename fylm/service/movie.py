@@ -112,7 +112,7 @@ class MovieSet(BaseSetService):
                 for channel in channels:
                     image = image_set.get_image(channel, 1)
                     if image is not None:
-                        movie.image_slice.set_image(image)
+                        movie.image_slice.set_image(image, y_margin=int(movie.image_slice.height / 2))
                         image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.png" % (time_period,
                                                                                      field_of_view,
                                                                                      movie.catch_channel_number,
