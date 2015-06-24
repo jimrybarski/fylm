@@ -31,13 +31,8 @@ class Experiment(object):
         experiment.base_dir = base_dir
         log.debug("Experiment base directory: %s" % experiment.base_dir)
 
-        # set the time_periods
-        # experiment log as Python dict
-        # {'time_periods': [1, 2, 3],
-        #  'field_of_view_count': 8,
-        #  'has_fluorescent_channels': True}
-        self._find_time_periods(experiment)
         self._build_directories(experiment)
+        self._find_time_periods(experiment)
         self._get_nd2_attributes(experiment)
         return experiment
 
