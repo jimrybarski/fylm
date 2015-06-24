@@ -60,8 +60,7 @@ try:
                "annotation": act.annotate_kymographs,
                # "fluorescence": act.quantify_fluorescence,
                "output": act.generate_output,
-               "summary": act.generate_summary,
-
+               "summary": act.generate_summary
                }
 
     action_args = {"movies": (args.movies,)}
