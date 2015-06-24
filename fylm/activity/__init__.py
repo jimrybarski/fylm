@@ -44,7 +44,10 @@ class Activity(object):
 
     def quantify_fluorescence(self):
         if self._experiment.has_fluorescent_channels:
+            print("YYYYYYYYYYYESSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS FLUORESCENCE")
             self._calculate_and_save_text(FluorescenceSet, FluorescenceService)
+        else:
+            print("NNNNNNNNNNOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
 
     def create_kymographs(self):
         """
