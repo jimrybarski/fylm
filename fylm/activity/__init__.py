@@ -64,6 +64,7 @@ class Activity(object):
     def make_movies(self, field_of_view):
         movie_service = MovieSetService(self._experiment)
         movie_set = MovieSet(self._experiment, field_of_view)
+        movie_service.find_current(movie_set)
         movie_service.save(movie_set)
 
     def generate_output(self):
