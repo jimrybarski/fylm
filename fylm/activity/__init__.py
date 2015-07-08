@@ -66,6 +66,7 @@ class Activity(object):
         movie_set = MovieSet(self._experiment, field_of_view)
         movie_service.find_current(movie_set)
         movie_service.save(movie_set)
+        exit()
 
     def generate_output(self):
         self._calculate_and_save_text(OutputSet, OutputSetService)
