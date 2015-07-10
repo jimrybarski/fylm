@@ -110,7 +110,7 @@ class MovieSet(BaseSetService):
             for movie in fov_movies:
                 self._update_image_data(movie, image_set, channels, z_levels)
                 for channel in channels:
-                    image = image_set.get_image(channel, 0)
+                    image = image_set.get_image(channel, 1)
                     if image is not None:
                         movie.image_slice.set_image(image, y_margin=int(movie.image_slice.height / 2))
                         image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.png" % (time_period,
