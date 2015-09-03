@@ -10,7 +10,6 @@ import logging
 from fylm.service.image_reader import ImageReader
 import numpy as np
 from skimage import measure, draw
-import skimage.io
 
 log = logging.getLogger(__name__)
 

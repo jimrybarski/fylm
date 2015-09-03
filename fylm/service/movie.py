@@ -119,8 +119,19 @@ class MovieSet(BaseSetService):
                                                                                      channel,
                                                                                      int(image_set.timestamp))
                         self._write_movie_frame(movie.image_slice.image_data, movie.base_path, image_filename)
-                cell_bounds = movie.annotation.get_cell_bounds(time_period, n)
-                self._make_cell_bounds_image(cell_bounds, movie.image_slice.image_data, time_period, field_of_view, movie.catch_channel_number, int(image_set.timestamp), movie.base_path)
+                try:
+                    cell_bounds = movie.annotation.get_cell_bounds(time_period, n)
+                    self._make_cell_bounds_image(cell_bounds, movie.image_slice.image_data, time_period, field_of_view, movie.catch_channel_number, int(image_set.timestamp), movie.base_path)
+                except:
+                    # haha worst program ever, skipping this so we can make movies that aren't annotated yet
+                    # since we might want to get those to help annotate weird kymographs
+                    pass
+
+        # We've finished making the frames of the movie.
+        # Now we use mencoder to combine them into a single .avi file
+        # for movie in fov_movies:
+        #     self._create_movie_from_frames(movie, time_period)
+        # return True
 
     def _make_cell_bounds_image(self, bounds, image_data, time_period, field_of_view, catch_channel_number, timestamp, base_path):
         height, width = image_data.shape
@@ -136,12 +147,6 @@ class MovieSet(BaseSetService):
                                                                      "annotation",
                                                                      timestamp)
         self._write_movie_frame(image, base_path, image_filename)
-
-        # We've finished making the frames of the movie.
-        # Now we use mencoder to combine them into a single .avi file
-        # for movie in fov_movies:
-        #     self._create_movie_from_frames(movie, time_period)
-        # return True
 
     def _create_movie_from_frames(self, movie, time_period):
         """
@@ -192,7 +197,6 @@ class MovieSet(BaseSetService):
         # Closing the plot is required or memory goes nuts
         # plt.close()
         img = img_as_uint(frame)
-        log.info("Imgd: %s" % img.dtype)
         skimage.io.imsave(base_path + "/" + image_filename, img, plugin='freeimage')
 
     @staticmethod

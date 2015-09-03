@@ -25,6 +25,12 @@ class FluorescenceSet(BaseSet):
         self._annotation_set_model.kymograph_set = kymograph_set
         KymographSetService(experiment).load_existing_models(self._annotation_set_model)
 
+    def get_model(self, field_of_view, time_period):
+        for model in self._existing:
+            if model.field_of_view == field_of_view and model.time_period == time_period:
+                return model
+        return False
+
     @property
     def _expected(self):
         """
@@ -63,6 +69,15 @@ class Fluorescence(BaseTextFile):
         self._channel = int(value)
 
     @property
+    def channel_names(self):
+        names = set()
+        for index, data in self._measurements.items():
+            for name, channel_data in data.items():
+                names.add(name)
+        for name in names:
+            yield name
+
+    @property
     def filename(self):
         return "tp%s-fov%s-channel%s.txt" % (self.time_period, self.field_of_view, self.channel_number)
 
@@ -73,27 +88,35 @@ class Fluorescence(BaseTextFile):
 
     def _parse_line(self, line):
         match = self._line_regex.match(line)
-        return int(match.group("index")), float(match.group("mean")), float(match.group("stddev")), float(match.group("median")), int(match.group("area")), int(match.group("centroid"))
+        return int(match.group("index")), str(match.group("channel_name")), float(match.group("mean")), float(match.group("stddev")), float(match.group("median")), int(match.group("area")), int(match.group("centroid"))
 
     def load(self, data):
         for line in data:
             try:
-                index, mean, stddev, median, area, centroid = self._parse_line(line)
+                index, channel_name, mean, stddev, median, area, centroid = self._parse_line(line)
             except Exception as e:
                 log.error("Could not parse line: '%s' because of: %s" % (line, e))
             else:
-                self._measurements[index] = mean, stddev, median, area, centroid
+                self._measurements[index][channel_name] = mean, stddev, median, area, centroid
 
     @property
     def _ordered_data(self):
         for index, channel_data in sorted(self._measurements.items()):
-            for channel_name, (mean, stddev, median, area, centroid) in sorted(channel_data.items()):
+            for channel_name, line_data in sorted(channel_data.items()):
+                mean, stddev, median, area, centroid = line_data
                 yield index, channel_name, mean, stddev, median, area, centroid
+
+    def get_measurement(self, time_index, channel_name):
+        for tindex in map(int, (time_index, time_index - 1)):
+            if tindex in self._measurements.keys():
+                mean, stddev, median, area, centroid = self._measurements[tindex][channel_name]
+                return mean, stddev, median, area, centroid
+        raise ValueError("Could not get fluorescence measurement for given time index or the one before that.")
 
     @property
     def data(self):
         for index, channel_name, mean, stddev, median, area, centroid in self._ordered_data:
-            yield mean, stddev, median, area, centroid
+            yield channel_name, mean, stddev, median, area, centroid
 
     def add(self, time_index, channel_name, mean, stddev, median, area, centroid):
         log.debug("Fluorescence data: %s %s %s %s %s %s %s" % (time_index, channel_name, mean, stddev, median, area, centroid))
