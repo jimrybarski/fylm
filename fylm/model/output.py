@@ -44,19 +44,36 @@ class Output(BaseTextFile):
         self.channel_number = None
         self.timestamp_set = None  # TimestampSet
         self.annotation = None  # ChannelAnnotationGroup or None
-        self.fluorescence_data = None
+        self.fluorescence_set = None
         self.time_periods = None  # [<int>]
 
     @property
     def lines(self):
         for time_period in self.time_periods:
-            # TODO: load fluorescence data here
+            log.debug("Getting new fl model tp %s" % time_period)
+            fl_model = self.fluorescence_set.get_model(self.field_of_view, time_period)
+            # log.debug("FL models is:")
+            # print(fl_model.__dict__)
             for time_index, timestamp in self.timestamp_set.get_data(self.field_of_view, time_period):
+                # log.debug("FL TINDEX %s" % time_index)
                 if self.annotation:
                     length = self.annotation.get_cell_lengths(time_period, time_index - 1)  # fixes off-by-one error
                 else:
                     length = None
-                yield "%s\t%s" % (timestamp, length if length is not None else "NaN")
+                line = "%s\t%s" % (timestamp, length if length is not None else "NaN")
+                if fl_model and length:
+                    for channel_name in sorted(fl_model.channel_names):
+                        # log.debug("channel name %s" % channel_name)
+                        # log.debug("*** %s %s %s %s" % (time_period, time_index, fl_model.field_of_view, fl_model.channel_number))
+                        try:
+                            mean, stddev, median, area, centroid = fl_model.get_measurement(time_index, channel_name)
+                        except ValueError:
+                            line += "\tNaN" * 5
+                        else:
+                            fl_line = "\t%s\t%s\t%s\t%s\t%s" % (mean, stddev, median, area, centroid)
+                            line += fl_line
+                log.debug(line)
+                yield line
 
     @property
     def filename(self):

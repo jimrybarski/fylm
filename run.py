@@ -45,7 +45,7 @@ try:
                         "kymograph")
 
     manual_activities = ("annotation",
-                         # "fluorescence",
+                         "fluorescence",
                          "output",
                          "summary")
 
@@ -58,7 +58,7 @@ try:
                "kymograph": act.create_kymographs,
                "movies": act.make_movies,
                "annotation": act.annotate_kymographs,
-               # "fluorescence": act.quantify_fluorescence,
+               "fluorescence": act.quantify_fluorescence,
                "output": act.generate_output,
                "summary": act.generate_summary
                }

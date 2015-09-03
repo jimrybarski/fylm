@@ -44,7 +44,7 @@ class MovieSet(BaseSet):
                         continue
                     image_slice = location_model.get_image_slice(channel_number)
                     annotation = self._annotation_set_model.get_model(location_model.field_of_view, channel_number)
-                    if location_model.get_channel_location(channel_number) and image_slice and annotation:
+                    if location_model.get_channel_location(channel_number) and image_slice:
                         model = self._model()
                         model.base_path = self.base_path
                         model.image_slice = image_slice

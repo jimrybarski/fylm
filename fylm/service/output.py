@@ -5,6 +5,8 @@ from fylm.service.timestamp import TimestampSet as TimestampService
 from fylm.service.annotation import AnnotationSet
 from fylm.model.kymograph import KymographSet
 from fylm.service.kymograph import KymographSet as KymographSetService
+from fylm.model.fluorescence import FluorescenceSet
+from fylm.service.fluorescence import FluorescenceSet as FluorescenceService
 import logging
 
 
@@ -30,7 +32,11 @@ class OutputSet(BaseSetService):
         self._annotation_set.kymograph_set = kymograph_set
         annotation_service = AnnotationSet(experiment)
         annotation_service.load_existing_models(self._annotation_set)
+        self._fluorescence_set = FluorescenceSet(experiment)
+        fl_service = FluorescenceService(experiment)
+        fl_service.load_existing_models(self._fluorescence_set)
 
     def save_action(self, model):
         model.timestamp_set = self._timestamp_set
+        model.fluorescence_set = self._fluorescence_set
         model.annotation = self._annotation_set.get_model(model.field_of_view, model.channel_number)
