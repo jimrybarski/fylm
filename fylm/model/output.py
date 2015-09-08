@@ -51,8 +51,9 @@ class Output(BaseTextFile):
     def lines(self):
         for time_period in self.time_periods:
             # log.debug("Getting new fl model tp %s" % time_period)
-            fl_model = self.fluorescence_set.get_model(self.field_of_view, time_period)
-            fl_model.channel_number = self.channel_number
+            fl_model = self.fluorescence_set.get_model(self.field_of_view, time_period, self.channel_number)
+
+            log.critical("%s %s" % (self.channel_number, fl_model.channel_number if fl_model else "False"))
             # NEED TO SET CHANNEL NUMBER?
             # log.debug("FL models is:")
             # print(fl_model.__dict__)

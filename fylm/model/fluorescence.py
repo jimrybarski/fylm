@@ -25,9 +25,9 @@ class FluorescenceSet(BaseSet):
         self._annotation_set_model.kymograph_set = kymograph_set
         KymographSetService(experiment).load_existing_models(self._annotation_set_model)
 
-    def get_model(self, field_of_view, time_period):
-        for model in self._existing:
-            if model.field_of_view == field_of_view and model.time_period == time_period:
+    def get_model(self, field_of_view, time_period, channel_number):
+        for model in self.existing:
+            if model.field_of_view == field_of_view and model.time_period == time_period and model.channel_number == channel_number:
                 return model
         return False
 
