@@ -50,8 +50,10 @@ class Output(BaseTextFile):
     @property
     def lines(self):
         for time_period in self.time_periods:
-            log.debug("Getting new fl model tp %s" % time_period)
+            # log.debug("Getting new fl model tp %s" % time_period)
             fl_model = self.fluorescence_set.get_model(self.field_of_view, time_period)
+            fl_model.channel_number = self.channel_number
+            # NEED TO SET CHANNEL NUMBER?
             # log.debug("FL models is:")
             # print(fl_model.__dict__)
             for time_index, timestamp in self.timestamp_set.get_data(self.field_of_view, time_period):
@@ -71,8 +73,12 @@ class Output(BaseTextFile):
                             line += "\tNaN" * 5
                         else:
                             fl_line = "\t%s\t%s\t%s\t%s\t%s" % (mean, stddev, median, area, centroid)
+                            # log.debug(fl_line)
                             line += fl_line
-                log.debug(line)
+                else:
+                    for _ in range(self.fluorescence_set.fl_channel_count):
+                        line += "\tNaN\tNaN\tNaN\tNaN\tNaN"
+                # log.debug(line)
                 yield line
 
     @property

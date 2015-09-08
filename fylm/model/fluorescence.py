@@ -32,6 +32,15 @@ class FluorescenceSet(BaseSet):
         return False
 
     @property
+    def fl_channel_count(self):
+        """ Needed so we can write the correct number of NaNs in the output file even when we don't have a Fluorescence object to work with """
+        counts = defaultdict(int)
+        for model in self._existing:
+            counts[model.field_of_view] += 1
+        values, keys = list(counts.values()), list(counts.keys())
+        return keys[values.index(max(values))]
+
+    @property
     def _expected(self):
         """
         Yields instantiated children of BaseFile that represent the work we expect to have done.
@@ -107,10 +116,10 @@ class Fluorescence(BaseTextFile):
                 yield index, channel_name, mean, stddev, median, area, centroid
 
     def get_measurement(self, time_index, channel_name):
-        for tindex in map(int, (time_index, time_index - 1)):
-            if tindex in self._measurements.keys():
-                mean, stddev, median, area, centroid = self._measurements[tindex][channel_name]
-                return mean, stddev, median, area, centroid
+        # for tindex in map(int, (time_index, time_index - 1)):
+        if time_index in self._measurements.keys():
+            mean, stddev, median, area, centroid = self._measurements[time_index][channel_name]
+            return mean, stddev, median, area, centroid
         raise ValueError("Could not get fluorescence measurement for given time index or the one before that.")
 
     @property
