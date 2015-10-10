@@ -9,7 +9,7 @@ from fylm.service.utilities import timer
 import logging
 from fylm.service.image_reader import ImageReader
 import numpy as np
-from skimage import measure, draw
+from skimage import measure, draw, io
 
 log = logging.getLogger(__name__)
 

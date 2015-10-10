@@ -25,11 +25,19 @@ class FluorescenceSet(BaseSet):
         self._annotation_set_model.kymograph_set = kymograph_set
         KymographSetService(experiment).load_existing_models(self._annotation_set_model)
 
-    def get_model(self, field_of_view, time_period):
-        for model in self._existing:
-            if model.field_of_view == field_of_view and model.time_period == time_period:
+    def get_model(self, field_of_view, time_period, channel_number):
+        for model in self.existing:
+            if model.field_of_view == field_of_view and model.time_period == time_period and model.channel_number == channel_number:
                 return model
         return False
+
+    @property
+    def fl_channel_count(self):
+        """ Needed so we can write the correct number of NaNs in the output file even when we don't have a Fluorescence object to work with """
+        counts = defaultdict(int)
+        for model in self.existing:
+            counts[model.field_of_view] = len([name for name in model.channel_names])
+        return max(counts.values())
 
     @property
     def _expected(self):
@@ -107,10 +115,10 @@ class Fluorescence(BaseTextFile):
                 yield index, channel_name, mean, stddev, median, area, centroid
 
     def get_measurement(self, time_index, channel_name):
-        for tindex in map(int, (time_index, time_index - 1)):
-            if tindex in self._measurements.keys():
-                mean, stddev, median, area, centroid = self._measurements[tindex][channel_name]
-                return mean, stddev, median, area, centroid
+        # for tindex in map(int, (time_index, time_index - 1)):
+        if time_index in self._measurements.keys():
+            mean, stddev, median, area, centroid = self._measurements[time_index][channel_name]
+            return mean, stddev, median, area, centroid
         raise ValueError("Could not get fluorescence measurement for given time index or the one before that.")
 
     @property
