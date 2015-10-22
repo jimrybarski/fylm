@@ -60,6 +60,7 @@ class Output(BaseTextFile):
                     length = None
                 line = "%s\t%s" % (timestamp, length if length is not None else "NaN")
                 if fl_model and length:
+                    log.debug("FLML")
                     for channel_name in sorted(fl_model.channel_names):
                         # log.debug("channel name %s" % channel_name)
                         # log.debug("*** %s %s %s %s" % (time_period, time_index, fl_model.field_of_view, fl_model.channel_number))
@@ -72,9 +73,10 @@ class Output(BaseTextFile):
                             log.debug(fl_line)
                             line += fl_line
                 else:
+                    log.debug("Channel count: %s" % self.fluorescence_set.fl_channel_count)
                     for _ in range(self.fluorescence_set.fl_channel_count):
                         line += "\tNaN\tNaN\tNaN\tNaN\tNaN"
-                # log.debug(line)
+                log.debug(line)
                 yield line
 
     @property

@@ -36,7 +36,9 @@ class FluorescenceSet(BaseSet):
         """ Needed so we can write the correct number of NaNs in the output file even when we don't have a Fluorescence object to work with """
         counts = defaultdict(int)
         for model in self.existing:
-            counts[model.field_of_view] = len([name for name in model.channel_names])
+            channel_names = [name for name in model.channel_names]
+            if len(channel_names) > 0:
+                counts[model.field_of_view] = len(channel_names)
         return max(counts.values())
 
     @property
