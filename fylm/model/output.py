@@ -3,7 +3,7 @@ from fylm.model.constants import Constants
 import logging
 import re
 
-log = logging.getLogger(__name__)
+#log = logging.getLogger(__name__)
 
 
 class OutputSet(BaseSet):
