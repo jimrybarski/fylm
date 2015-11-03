@@ -29,7 +29,7 @@ try:
     parser.add_argument('--action', help='Do an optional action')
     parser.add_argument('-t', '--timeperiod', default=1, type=int, help='Specifies a time period (needed only for some steps)')
     parser.add_argument('-f', '--fov', type=int, default=0, help='Specifies a field of view (needed only for some steps)')
-    parser.add_argument('-c', '--channel', type=int, default=0, help='Specifies a catch channel (needed only for some steps)')
+    parser.add_argument('-c', '--channels', type=int, nargs="+", help='Specifies a catch channel (needed only for some steps)')
     parser.add_argument('--movies', action='store_true', help='Make movies for space-separated time periods')
     parser.add_argument("-v", "--verbosity", action="count", default=0, help="Specify -v through -vvvvv")
     parser.add_argument('-r', "--review", action='store_true', help="Review all annotations regardless of whether they've been completed")
@@ -75,7 +75,7 @@ try:
         # movies get special treatment since they're almost always needed but take a very long time to produce
         if args.movies:
             # args.movies will be either None (make all movies) or a list (make specified movies)
-            actions["movies"](int(args.fov))
+            actions["movies"](int(args.fov), args.channels)
 
         for activity in manual_activities:
             if activity not in args.skip:

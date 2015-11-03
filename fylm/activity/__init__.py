@@ -61,12 +61,11 @@ class Activity(object):
         annotation_set = KymographAnnotationSet(self._experiment)
         annotation_service.save(annotation_set)
 
-    def make_movies(self, field_of_view):
+    def make_movies(self, field_of_view, catch_channels):
         movie_service = MovieSetService(self._experiment)
         movie_set = MovieSet(self._experiment, field_of_view)
         movie_service.find_current(movie_set)
-        movie_service.save(movie_set)
-        exit()
+        movie_service.save(movie_set, field_of_view, catch_channels)
 
     def generate_output(self):
         self._calculate_and_save_text(OutputSet, OutputSetService)

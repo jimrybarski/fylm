@@ -43,7 +43,7 @@ class MovieSet(BaseSetService):
         kymograph_service.load_existing_models(kymograph_set)
         self._annotation.kymograph_set = kymograph_set
 
-    def save(self, movie_model_set):
+    def save(self, movie_model_set, field_of_view, catch_channels):
         """
         Runs the creation of AVIs of catch channels.
 
@@ -53,12 +53,12 @@ class MovieSet(BaseSetService):
         self.load_existing_models(movie_model_set)
         time_periods = self._experiment.time_periods
 
-        did_work = self._action(movie_model_set, time_periods)
+        did_work = self._action(movie_model_set, time_periods, field_of_view, catch_channels)
         if not did_work:
             log.info("All %s have been created." % self._name)
 
     @timer
-    def _action(self, movie_model_set, time_periods):
+    def _action(self, movie_model_set, time_periods, field_of_view, catch_channels):
         """
         Acquires all the movie objects that need to be created, sets up some variables, and gets the movies made.
 
@@ -71,14 +71,13 @@ class MovieSet(BaseSetService):
         did_work = False
         movies = [movie for movie in movie_model_set.remaining]
         for time_period in time_periods:
-            for field_of_view in self._experiment.fields_of_view:
-                log.info("Making movies for fov: %s" % field_of_view)
-                if self._make_field_of_view_movie(movies, time_period, field_of_view):
-                    did_work = True
+            log.info("Making movies for time period %s, fov: %s" % (time_period, field_of_view))
+            if self._make_field_of_view_movie(movies, time_period, field_of_view, catch_channels):
+                did_work = True
         return did_work
 
     @timer
-    def _make_field_of_view_movie(self, movies, time_period, field_of_view):
+    def _make_field_of_view_movie(self, movies, time_period, field_of_view, catch_channels):
         """
         Actually extracts the images from the ND2s, then calls the movie creation method when finished.
 
@@ -91,7 +90,7 @@ class MovieSet(BaseSetService):
         """
         # movies contains movie objects from every field of view. We separate out the ones for the current field
         # of view and act only on them. We also update the time period as that's used in the output file name
-        fov_movies = [movie for movie in movies if movie.field_of_view == field_of_view and movie.time_period == time_period]
+        fov_movies = [movie for movie in movies if movie.field_of_view == field_of_view and movie.time_period == time_period and movie.catch_channel_number in catch_channels]
 
         # If this field of view has any movies, we're necessarily going to be creating files that don't yet exist,
         # so we can be certain work will be done.
