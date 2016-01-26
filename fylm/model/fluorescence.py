@@ -39,7 +39,7 @@ class FluorescenceSet(BaseSet):
             channel_names = [name for name in model.channel_names]
             if len(channel_names) > 0:
                 counts[model.field_of_view] = len(channel_names)
-        return max(counts.values())
+        return max(counts.values()) if counts.values() else 0
 
     @property
     def _expected(self):
