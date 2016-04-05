@@ -112,7 +112,7 @@ class MovieSet(BaseSetService):
                     image = image_set.get_image(channel, 1)
                     if image is not None:
                         movie.image_slice.set_image(image, y_margin=int(movie.image_slice.height / 2))
-                        image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.png" % (time_period,
+                        image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.tif" % (time_period,
                                                                                      field_of_view,
                                                                                      movie.catch_channel_number,
                                                                                      channel,
@@ -140,7 +140,7 @@ class MovieSet(BaseSetService):
             vertical_center = height / 2
             image[vertical_center, left] = 1
             image[vertical_center, right] = 1
-        image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.png" % (time_period,
+        image_filename = "tp%s-fov%s-catch%s-channel_%s-%06d.tif" % (time_period,
                                                                      field_of_view,
                                                                      catch_channel_number,
                                                                      "annotation",
@@ -153,12 +153,12 @@ class MovieSet(BaseSetService):
 
         """
         command = ("/usr/bin/mencoder",
-                   'mf://%s/tp%s-fov%s-channel%s-*.png' % (movie.base_path,
+                   'mf://%s/tp%s-fov%s-channel%s-*.tif' % (movie.base_path,
                                                            time_period,
                                                            movie.field_of_view,
                                                            movie.catch_channel_number),
                    '-mf',
-                   'w=%s:h=%s:fps=24:type=png' % movie.shape,
+                   'w=%s:h=%s:fps=24:type=tif' % movie.shape,
                    '-ovc', 'copy', '-oac', 'copy', '-o', '%s' % movie.base_path + "/" + movie.filename)
 
         DEVNULL = open(os.devnull, "w")
@@ -227,7 +227,7 @@ class MovieSet(BaseSetService):
             for filename in os.listdir(movie.base_path):
                 if filename.startswith("tp%s-fov%s-channel%s" % (time_period,
                                                                  movie.field_of_view,
-                                                                 movie.catch_channel_number)) and filename.endswith(".png"):
+                                                                 movie.catch_channel_number)) and filename.endswith(".tif"):
                     log.debug("Deleting %s" % filename)
                     os.remove(movie.base_path + "/" + filename)
         except OSError:
