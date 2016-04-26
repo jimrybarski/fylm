@@ -17,7 +17,7 @@ class KymographSet(BaseSet):
         super(KymographSet, self).__init__(experiment, "kymograph")
         self._experiment = experiment
         self._model = Kymograph
-        self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.tif""")
+        self._regex = re.compile(r"""tp\d+-fov\d+-channel\d+.png""")
 
     def get_kymographs(self, field_of_view, channel_number):
         kymographs = []
@@ -130,4 +130,4 @@ class Kymograph(BaseImage):
 
     @property
     def filename(self):
-        return "tp%s-fov%s-channel%s.tif" % (self.time_period, self.field_of_view, self.channel_number)
+        return "tp%s-fov%s-channel%s.png" % (self.time_period, self.field_of_view, self.channel_number)
