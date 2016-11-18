@@ -35,9 +35,9 @@ class RegistrationSet(BaseSetService):
         base_nd2 = nd2reader.Nd2(base_nd2_filename)
         nd2 = nd2reader.Nd2(nd2_filename)
         # gets the first out-of-focus image from the first time_period in the stack
-        base_image = base_nd2.get_image(0, registration_model.field_of_view, "", 0)
+        base_image = base_nd2.get_image(0, registration_model.field_of_view, "Mono", 0)
         for i in range(nd2.time_index_count):
-            image = nd2.get_image(i, registration_model.field_of_view, "", 0)
+            image = nd2.get_image(i, registration_model.field_of_view, "Mono", 0)
             dx, dy = self._determine_registration_offset(base_image.data, image.data)
             registration_model.add(dx, dy)
 

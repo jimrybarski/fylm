@@ -65,7 +65,7 @@ class Movie(BaseMovie):
     def __init__(self):
         super(Movie, self).__init__()
         self.catch_channel_number = None
-        self._channel_order = {0: ""}
+        self._channel_order = {0: "Mono"}
         self.__frame_height = None
         self.image_slice = None
         self.__slots = defaultdict(dict)

@@ -53,7 +53,7 @@ class ImageReader(object):
             self._nd2 = Nd2(filename)
         return self._nd2
 
-    def get_image(self, index, channel="", z_level=1):
+    def get_image(self, index, channel="Mono", z_level=1):
         rotation_offset = self._rotation_set.existing[index].offset
         dx, dy = next(self._registration_set.get_data(self.field_of_view, self.time_period))
         timestamp = next(self._timestamp_set.get_data(self.field_of_view, self.time_period))

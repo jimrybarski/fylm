@@ -38,7 +38,7 @@ class RotationSet(BaseSetService):
         nd2 = nd2reader.Nd2(nd2_filename)
         # gets the first in-focus image from the first timpoint in the stack
         # TODO: Update nd2reader to figure out which one is in focus or to be able to set it
-        image = nd2.get_image(0, rotation_model.field_of_view, "", 1)
+        image = nd2.get_image(0, rotation_model.field_of_view, "Mono", 1)
         offset = self._determine_rotation_offset(image.data)
         rotation_model.offset = offset
 

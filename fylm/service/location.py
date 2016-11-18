@@ -16,7 +16,7 @@ class LocationSet(BaseSetService):
     def save_action(self, model):
         self._image_reader.field_of_view = model.field_of_view
         self._image_reader.time_period = 1
-        image = self._image_reader.get_image(0, channel="", z_level=1)
+        image = self._image_reader.get_image(0, channel="Mono", z_level=1)
         acf = ApproximateChannelFinder(image.data, model.field_of_view)
         top_left_x, top_left_y, bottom_right_x, bottom_right_y = acf.results
         model.set_header(top_left_x, top_left_y, bottom_right_x, bottom_right_y)

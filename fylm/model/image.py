@@ -13,7 +13,7 @@ class ImageSet(object):
         self._time_index = time_index
         self._timestamp = timestamp
 
-    def get_image(self, channel="", z_level=1):
+    def get_image(self, channel="Mono", z_level=1):
         for image in self._nd2_image_set:
             if image.channel == channel and image.z_level == z_level:
                 return self._correct_image(image)

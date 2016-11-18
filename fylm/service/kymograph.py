@@ -74,7 +74,7 @@ class KymographSet(BaseSetService):
             if not self._experiment.review_annotations:
                 for time_index, image_set in enumerate(image_reader):
                     log.debug("Adding lines for kymographs from time index %s" % time_index)
-                    image = image_set.get_image(channel="", z_level=0)
+                    image = image_set.get_image(channel="Mono", z_level=0)
                     for kymograph_model in available_kymographs:
                         if kymograph_model.time_period == time_period:
                             kymograph_model.set_image(image)

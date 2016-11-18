@@ -130,7 +130,7 @@ class Experiment(object):
                 experiment_log['field_of_view_count'] = nd2.field_of_view_count
                 experiment_log['has_fluorescent_channels'] = False
                 for channel in nd2.channels:
-                    if channel.name != "":
+                    if channel.name != "Mono":
                         log.info("Experiment has fluorescent channels.")
                         experiment.has_fluorescent_channels = True
                         experiment_log['has_fluorescent_channels'] = True

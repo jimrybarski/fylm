@@ -43,7 +43,7 @@ class TimestampSet(BaseSetService):
         # subtract 1 from the field of view since nd2reader uses 0-based indexing, but we
         # refer to the fields of view with 1-based indexing
         for image_set in nd2.image_sets(field_of_view=timestamps_model.field_of_view,
-                                        channels=[""],
+                                        channels=["Mono"],
                                         z_levels=[0]):
             image = [i for i in image_set][0]
             timestamp = image.timestamp + timestamp_offset
